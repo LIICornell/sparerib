@@ -1,0 +1,67 @@
+<div class="breadcrumbs">
+    <%=agency%> &raquo;
+</div>
+<h2><%=title%></h2>
+<div class="dates">
+    <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
+</div>
+
+<div class="chart-row">
+    <div class="double-chart" id="submission-timeline"></div>
+</div>
+
+<div class="chart-row">
+    <div class="chart rules left">
+        <h4>Rules</h4>
+        <table>
+            <tr>
+                <th>Rule</th><th>Date</th><th>Type</th>
+            </tr>
+            <% for (var i = 0; i < stats.rules.length; i++) { %>
+            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                <td><a href="/document/<%=stats.rules[i].id%>"><%=stats.rules[i].title%></a></td>
+                <td><%=formatDate(stats.rules[i].date)%></td>
+                <td><span class="<%=stats.rules[i].type%>"><%=({'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.rules[i].type]%></span></td>
+            </tr>
+            <% } %>
+        </table>
+    </div>
+
+    <div class="chart">
+        <h4>Type Breakdown</h4>
+        <div id="type-breakdown"></div>
+    </div>
+</div>
+
+<div class="chart-row">
+    <h3>Entities</h3>
+    <% for (var j = 0; j < 2; j++) { 
+        var submission_type = (['top_submitter_entities', 'top_text_entities'])[j];
+    %>
+    <div class="chart entities <%=(j == 0 ? "left" : "")%>">
+        <h4><%=({'top_submitter_entities': 'Top Submitters', 'top_text_entities': 'Most Mentions'})[submission_type]%></h4>
+        <table>
+            <tr>
+                <th>Entity</th><th><%=({'top_submitter_entities': 'Submissions', 'top_text_entities': 'Mentions'})[submission_type]%></th>
+            </tr>
+            <% for (var i = 0; i < stats[submission_type].length; i++) { %>
+            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                <td>
+                    <% if (stats[submission_type][i].type == 'organization') { %>
+                        <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
+                    <% } else { %>
+                        <%=stats[submission_type][i].name%>
+                    <% } %>
+                </td>
+                <td><%=stats[submission_type][i].total%></td>
+            </tr>
+            <% } %>
+        </table>
+    </div>
+    <% } %>
+</div>
+
+<div class="pagination">
+    <a href="#" class="prev">see documents &raquo;</a><a href="#" class="next">view on regulations.gov &raquo;</a>
+    <div class="clear"></div>
+</div>
