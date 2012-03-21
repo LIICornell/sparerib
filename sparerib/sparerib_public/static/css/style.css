@@ -176,6 +176,10 @@ ul.results span.document-count {
   background-color: #ddeeff;
 }
 
+.double-chart {
+  margin-bottom: 30px;
+}
+
 .rules .rule {
   font-size: 80%;
   text-transform: uppercase;

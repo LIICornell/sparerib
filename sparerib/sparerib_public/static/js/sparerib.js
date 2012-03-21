@@ -48,11 +48,19 @@ var DocketDetailView = Backbone.View.extend({
             {
                 'success': $.proxy(function() {
                     var context = _.extend(helpers, this.model.toJSON());
-                    console.log(context);
                     $(this.el).html(this.template(context));
 
                     // charts
                     SpareribCharts.type_breakdown_piechart('type-breakdown', context.stats.type_breakdown);
+                    
+                    var timeline_data = [{
+                        'name': 'Submission Timline',
+                        'href': '',
+                        'timeline': _.map(context.stats.weeks, function(week) {
+                            return week.total;
+                        })
+                    }];
+                    SpareribCharts.timeline_chart('submission-timeline', timeline_data);
                 }, this),
                 'error': function() {
                     console.log('failed');

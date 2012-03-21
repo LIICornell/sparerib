@@ -7,7 +7,9 @@
 </div>
 
 <div class="chart-row">
-    <div class="double-chart" id="submission-timeline"></div>
+    <div class="double-chart">
+        <div id="submission-timeline"></div>
+    </div>
 </div>
 
 <div class="chart-row">
@@ -15,7 +17,7 @@
         <h4>Rules</h4>
         <table>
             <tr>
-                <th>Rule</th><th>Date</th><th>Type</th>
+                <th>Title</th><th>Date</th><th>Type</th>
             </tr>
             <% for (var i = 0; i < stats.rules.length; i++) { %>
             <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">

@@ -332,7 +332,7 @@ D3Charts = {
                     .attr("y", y)
                     .attr("dy", ".45em") // vertical-align: middle
                     .attr('fill', opts.text_color)
-                    .text(function(d, i) { return '$' + format(d); })
+                    .text(function(d, i) { return format(d); })
                     .style('font', '11px arial,sans-serif')
                     .style('text-anchor', 'end');
         
@@ -444,7 +444,7 @@ D3Charts = {
                         var series = d3.select(this.parentNode).attr('data-series');
                         var color = opts.colors[parseInt(series)];
                         var dthis = d3.select(this).attr('fill', color);
-                        this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, '$' + format(d));
+                        this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, format(d));
 
                         var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle')
                             .attr('transform', 'scale(1.5)');
@@ -542,10 +542,28 @@ SpareribCharts = {
                 opts.colors.push(type_colors[row[0]]);
             }
         })
-        console.log(div, in_data, opts);
         D3Charts.piechart(div, in_data, opts);
     },
     timeline_chart: function(div, data) {
-        D3Charts.timeline_chart(div, data);
+        var opts = {
+            chart_height: 250,
+            chart_width: 800,
+            chart_x: 40,
+            chart_y: 10,
+            right_gutter: 135,
+            label_padding: 10,
+            legend_padding: 15,
+            legend_r: 5,
+            dot_r: 5,
+            row_height: 14,
+            colors : ["#0a6e92", "#e96d24", "#15576e", "#f2e388", "#f2f1e4", "#efcc01"],
+            axis_color: "#827d7d",
+            tick_color: '#dcddde',
+            text_color: "#666666",
+            link_color: "#0a6e92",
+            tick_length: 5
+        }
+
+        D3Charts.timeline_chart(div, data, opts);
     }
 }
