@@ -40,7 +40,7 @@ class DocketView(ResponseMixin, View):
 
         stats = docket.get('stats', None)
         if stats:
-            # stitch on some additional data
+            # cleanup, plus stitch on some additional data
             stats.update({
                 'type_breakdown': [{
                     'type': key,
@@ -61,7 +61,7 @@ class DocketView(ResponseMixin, View):
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
-            ids = [record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']]
+            ids = list(set([record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']]))
             entities_search = db.entities.find({'_id': {'$in': ids}}, ['_id', 'td_type', 'aliases'])
             entities = dict([(entity['_id'], entity) for entity in entities_search])
 
@@ -167,5 +167,91 @@ class DocumentView(ResponseMixin, View):
                 'name': entities[item]['aliases'][0],
                 'url': '/%s/%s/%s' % (entities[item]['td_type'], slugify(entities[item]['aliases'][0]), item)
             } for item in items]
+
+        return self.render(Response(200, out))
+
+class EntityView(ResponseMixin, View):
+    "TD entity view"
+
+    renderers = DEFAULT_RENDERERS
+
+    def get(self, request, *args, **kwargs):
+        "Access aggregate information about entities as they occur in regulations.gov data."
+
+        db = get_db()
+
+        results = list(db.entities.find({'_id': kwargs['entity_id']}))
+        if not results:
+            return self.render(Response(status.HTTP_404_NOT_FOUND, 'Docket not found.'))
+
+        entity = results[0]
+
+        # basic docket metadata
+        out = {
+            'name': entity['aliases'][0],
+            'url': reverse('entity-view', args=args, kwargs=kwargs),
+            'id': entity['_id'],
+            'type': entity['td_type'],
+            'stats': entity['stats']
+        }
+
+        stats = entity.get('stats', None)
+        if stats:
+            # cleanup, plus stitch on some additional data
+            for mention_type in ["text_mentions", "submitter_mentions"]:
+                stats[mention_type].update({
+                    'months': [{
+                        'month': key,
+                        'count': value
+                    } for key, value in stats[mention_type]['months']],
+                })
+
+                # limit ourselves to the top ten of each match type, and grab their extra metadata
+                agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)
+                if len(agencies) > 5:
+                    agencies = agencies[:5] + ('Other', sum([a[1] for a in agencies[5:]]))
+
+                dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
+
+                for label, items in [('top_dockets', dockets), ('top_agencies', agencies)]:
+                    stats[mention_type][label] = [{
+                        'id': item[0],
+                        'count': item[1]
+                    } for item in items]
+                del stats[mention_type]['dockets'], stats[mention_type]['agencies']
+
+            # grab additional docket metadata
+            ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
+            dockets_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'title', 'year', 'details.dk_type'])
+            dockets = dict([(docket['_id'], docket) for docket in dockets_search])
+
+            # stitch this back onto the main records
+            for mention_type in ['text_mentions', 'submitter_mentions']:
+                for docket in stats[mention_type]['top_dockets']:
+                    rdocket = dockets[docket['id']]
+                    docket.update({
+                        'title': rdocket['title'],
+                        'url': reverse('docket-view', kwargs={'docket_id': rdocket['_id']}),
+                        'year': rdocket['year'],
+                        'rulemaking': rdocket.get('details', {}).get('dk_type', 'Nonrulemaking').lower() == 'rulemaking'
+                    })
+
+            # repeat for agencies
+            ids = list(set([record['id'] for record in stats['submitter_mentions']['top_agencies']] + [record['id'] for record in stats['text_mentions']['top_agencies']]))
+            agencies_search = db.agencies.find({'_id': {'$in': ids}}, ['_id', 'name'])
+            agencies = dict([(agency['_id'], agency) for agency in agencies_search])
+
+            # ...and stitch
+            for mention_type in ['text_mentions', 'submitter_mentions']:
+                for agency in stats[mention_type]['top_agencies']:
+                    ragency = agencies.get(agency['id'], None)
+                    agency.update({
+                        'name': ragency['name'] if ragency else agency['id'],
+                        'url': '/agency/%s' % agency['id']
+                    })
+
+            out['stats'] = stats
+        else:
+            out['stats'] = {'count': 0}
 
         return self.render(Response(200, out))
