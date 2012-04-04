@@ -7,5 +7,6 @@ class IndexView(TemplateView):
 urlpatterns = patterns('',
     url(r'^docket/(?P<docket_id>[A-Z0-9-]+$)', IndexView.as_view()),
     url(r'^document/(?P<document_id>[A-Z0-9-]+$)', IndexView.as_view()),
+    url(r'^(organization|individual|politician|entity)/[a-zA-Z0-9-]*/[a-z0-9-]+$', IndexView.as_view()),
     url(r'^$', IndexView.as_view())
 )

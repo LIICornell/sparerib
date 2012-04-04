@@ -1,15 +1,10 @@
 (function($) {
 // Models
-var Docket = Backbone.Model.extend({
-    url: function() {
-        return "/api/1.0/docket/" + this.id;
-    }
-});
+var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
+var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.0/docket" });
 
-var DocketCollection = Backbone.Collection.extend({
-    model: Docket,
-    url: "/api/1.0/docket"
-})
+var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
+var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
 
 // Template helpers
 var helpers = {
@@ -64,27 +59,67 @@ var DocketDetailView = Backbone.View.extend({
     }
 })
 
+var EntityDetailView = Backbone.View.extend({
+    tagName: 'div',
+    id: 'entity-view',
+
+    template: _.template($('#entity-tpl').html()),
+    render: function() {
+        this.model.fetch(
+            {
+                'success': $.proxy(function() {
+                    var context = _.extend(helpers, this.model.toJSON());
+                    $(this.el).html(this.template(context));
+
+                    // charts
+                    _.each(['submitter_mentions', 'text_mentions'], function(submission_type) {
+                        if (context.stats[submission_type].count == 0) {
+                            return;
+                        }
+
+                        var timeline_data = [{
+                            'name': 'Submission Timline',
+                            'href': '',
+                            'timeline': _.map(context.stats[submission_type].months, function(month) {
+                                return month.count;
+                            })
+                        }];
+                        SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
+                    });
+                }, this),
+                'error': function() {
+                    console.log('failed');
+                }
+            }
+        );
+        return this;
+    }
+})
+
 // Router
-var AppRouter = Backbone.Router.extend({
- 
-    routes:{
-        "": "results",
-        "docket/:id": "docketDetail"
-    },
-    
+var AppRouter = Backbone.Router.extend({   
     initialize: function() {
-        this.docketCollection = new DocketCollection();
+        // routes
+        this.route("", "results");
+        this.route("docket/:id", "docketDetail");
+        this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
     },
 
-    results: function () {
+    results: function() {
         var resultsView = new ResultsView();
         $('#main').html(resultsView.render().el);
     },
  
-    docketDetail:function (id) {
+    docketDetail: function(id) {
         var docket = new Docket({'id': id});
         var docketView = new DocketDetailView({model: docket});
         $('#main').html(docketView.render().el);
+    },
+
+    entityDetail: function(type, id) {
+        var entity = new Entity({'id': id});
+        var entityView = new EntityDetailView({model: entity});
+        $('#main').html(entityView.render().el);
     }
 });
  

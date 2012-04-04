@@ -196,6 +196,14 @@ ul.results span.document-count {
   display: block;
   padding: 3px;
 }
+.notice {
+  padding: 10px;
+  text-align: center;
+  background: #DDEEFF;
+  font-family: georgia, sans-serif;
+  font-style: italic;
+  margin-bottom: 20px;
+}
 
 footer {
   padding: 15px;

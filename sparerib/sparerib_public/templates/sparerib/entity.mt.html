@@ -1,0 +1,51 @@
+<h2><%=name%></h2>
+<% for (var k = 0; k < 2; k++) {
+    var submission_type = (['submitter_mentions', 'text_mentions'])[k];
+
+    if (stats[submission_type].count == 0) {
+        %>
+            <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
+            <div class="notice">This <%=type%> <%=({'submitter_mentions': 'has not submitted any documents.', 'text_mentions': 'was not mentioned in any documents.'})[submission_type]%></div>
+        <%
+        continue;
+    }
+%>
+<div class="chart-row">
+    <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
+    <div class="dates">
+        <%=formatDate(stats[submission_type].date_range[0])%> &mdash; <%=formatDate(stats[submission_type].date_range[1])%>
+    </div>
+    <div class="double-chart">
+        <div id="<%=({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type]%>-timeline"></div>
+    </div>
+</div>
+
+<div class="chart-row">
+    <% for (var j = 0; j < 2; j++) { 
+        var breakdown_type = (['top_agencies', 'top_dockets'])[j];
+    %>
+    <div class="chart entities <%=(j == 0 ? "left" : "")%>">
+        <h4><%=({'top_agencies': 'Top Agencies', 'top_dockets': 'Top Dockets'})[breakdown_type]%></h4>
+        <table>
+            <tr>
+                <th>Entity</th><th><%=({'submitter_mentions': 'Submissions', 'text_mentions': 'Mentions'})[submission_type]%></th>
+            </tr>
+            <% 
+            for (var i = 0; i < stats[submission_type][breakdown_type].length; i++) { %>
+            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                <td>
+                    <a href="<%=stats[submission_type][breakdown_type][i].url%>"><%=stats[submission_type][breakdown_type][i][({'top_agencies': 'name', 'top_dockets': 'title'})[breakdown_type]]%></a>
+                </td>
+                <td><%=stats[submission_type][breakdown_type][i].count%></td>
+            </tr>
+            <% } %>
+        </table>
+    </div>
+    <% } %>
+</div>
+<% } %>
+
+<div class="pagination">
+    <a href="#" class="prev">see documents &raquo;</a><a href="#" class="next">view on influence explorer &raquo;</a>
+    <div class="clear"></div>
+</div>
