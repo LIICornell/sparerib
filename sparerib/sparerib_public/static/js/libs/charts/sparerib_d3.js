@@ -537,9 +537,9 @@ SpareribCharts = {
         }
 
         _.each(data, function(row) {
-            if (row[1] > 0 && row[0]) {
-                in_data.push({'key': row[0].replace('_', ' '), 'value': row[1]});
-                opts.colors.push(type_colors[row[0]]);
+            if (row['count'] > 0 && row['type'] != 'None') {
+                in_data.push({'key': row['type'].replace('_', ' '), 'value': row['count']});
+                opts.colors.push(type_colors[row['type']]);
             }
         })
         D3Charts.piechart(div, in_data, opts);

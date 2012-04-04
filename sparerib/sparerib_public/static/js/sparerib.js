@@ -57,7 +57,7 @@ var DocketDetailView = Backbone.View.extend({
                         'name': 'Submission Timline',
                         'href': '',
                         'timeline': _.map(context.stats.weeks, function(week) {
-                            return week.total;
+                            return week.count;
                         })
                     }];
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
