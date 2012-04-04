@@ -24,17 +24,10 @@ var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
 
-    events: {
-        'click a': 'link_click'
-    },
     template: _.template($('#results-tpl').html()),
     render: function() {
         $(this.el).html(this.template({}));
         return this;
-    },
-    'link_click': function(event) {
-        app.navigate($(event.target).attr('href'), {trigger: true});
-        return false;
     }
 })
 
@@ -98,6 +91,20 @@ var AppRouter = Backbone.Router.extend({
 var app = new AppRouter();
 window.app = app;
 
-Backbone.history.start();
+Backbone.history.start({pushState: true});
+
+/* assume backbone link handling, from Tim Branyen */
+$(document).on("click", "a:not([data-bypass])", function(evt) {
+    var href = $(this).attr("href");
+    var protocol = this.protocol + "//";
+
+    if (href && href.slice(0, protocol.length) !== protocol &&
+        href.indexOf("javascript:") !== 0) {
+        evt.preventDefault();
+        Backbone.history.navigate(href, true);
+    }
+});
+
+
 
 })(jQuery);
