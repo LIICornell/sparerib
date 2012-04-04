@@ -6,6 +6,9 @@ var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
 var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
 
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { console.log(this); return "/api/1.0/search/" + encodeURIComponent(this.id); } });
+var SearchResultsCollection = Backbone.Collection.extend({ model: SearchResults, url: "/api/1.0/search" });
+
 // Template helpers
 var helpers = {
     'formatDate': function(iso_date) {
@@ -15,13 +18,44 @@ var helpers = {
     }
 }
 // Views
+var SearchView = Backbone.View.extend({
+    tagName: 'div',
+    id: 'search-view',
+
+    events: {
+        'submit form': 'search'
+    },
+
+    template: _.template($('#search-tpl').html()),
+    render: function() {
+        $(this.el).html(this.template(this));
+        return this;
+    },
+
+    search: function(evt) {
+        evt.preventDefault();
+        app.navigate('/search/' + encodeURIComponent($(this.el).find('.search-query').val()), {trigger: true});
+        return false;
+    }
+})
+
 var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
 
     template: _.template($('#results-tpl').html()),
     render: function() {
-        $(this.el).html(this.template({}));
+        this.model.fetch(
+            {
+                'success': $.proxy(function() {
+                    var context = _.extend(helpers, this.model.toJSON());
+                    $(this.el).html(this.template(context));
+                }, this),
+                'error': function() {
+                    console.log('failed');
+                }
+            }
+        );
         return this;
     }
 })
@@ -100,14 +134,30 @@ var EntityDetailView = Backbone.View.extend({
 var AppRouter = Backbone.Router.extend({   
     initialize: function() {
         // routes
-        this.route("", "results");
+        this.route("", "searchLanding");
         this.route("docket/:id", "docketDetail");
         this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
+        this.route("search/:term", "searchResults");
     },
 
-    results: function() {
-        var resultsView = new ResultsView();
-        $('#main').html(resultsView.render().el);
+    searchLanding: function() {
+        var searchView = new SearchView();
+        $('#main').html(searchView.render().el);
+    },
+
+    searchResults: function(query) {
+        // are we on a search page?
+        var resultSet = $('.result-set');
+        if (resultSet.length == 0) {
+            this.searchLanding();
+            resultSet = $('.result-set');
+        }
+
+        console.log(query);
+
+        var results = new SearchResults({'query': query});
+        var resultsView = new ResultsView({model: results});
+        resultSet.html(resultsView.render().el);
     },
  
     docketDetail: function(id) {

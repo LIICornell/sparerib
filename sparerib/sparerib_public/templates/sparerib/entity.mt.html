@@ -34,7 +34,7 @@
             for (var i = 0; i < stats[submission_type][breakdown_type].length; i++) { %>
             <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
                 <td>
-                    <a href="<%=stats[submission_type][breakdown_type][i].url%>"><%=stats[submission_type][breakdown_type][i][({'top_agencies': 'name', 'top_dockets': 'title'})[breakdown_type]]%></a>
+                    <a href="<%=stats[submission_type][breakdown_type][i].url.replace('/api/1.0', '')%>"><%=stats[submission_type][breakdown_type][i][({'top_agencies': 'name', 'top_dockets': 'title'})[breakdown_type]]%></a>
                 </td>
                 <td><%=stats[submission_type][breakdown_type][i].count%></td>
             </tr>

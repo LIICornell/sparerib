@@ -13,6 +13,9 @@ import itertools, isoweek
 
 from django.template.defaultfilters import slugify
 
+from django.conf import settings
+import pyes
+
 class DocketView(ResponseMixin, View):
     "Regulations.gov docket view"
 
@@ -68,6 +71,9 @@ class DocketView(ResponseMixin, View):
             # stitch this back onto the main records
             for label in ['top_text_entities', 'top_submitter_entities']:
                 for entity in stats[label]:
+                    if 'td_type' not in entities[entity['id']]:
+                        continue
+                    
                     entity['type'] = entities[entity['id']]['td_type']
                     entity['name'] = entities[entity['id']]['aliases'][0]
                     entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
@@ -253,5 +259,23 @@ class EntityView(ResponseMixin, View):
             out['stats'] = stats
         else:
             out['stats'] = {'count': 0}
+
+        return self.render(Response(200, out))
+
+class SearchView(ResponseMixin, View):
+    "Regulations.gov docket view"
+
+    renderers = DEFAULT_RENDERERS
+
+    def get(self, request, *args, **kwargs):
+        # HACK! use a filter to restrict us to the only agencies we support at the moment
+        query = {'filter': {'terms': {'agency': ['ED', 'CPSC']}}, 'query': {'text': {'files.text': kwargs['query']}}}
+        
+        es = pyes.ES(settings.ES_SETTINGS)
+        out = es.search_raw(query)
+
+        # HACK #2 -- the docket IDs are all document IDs by accident.  Oops.  Clumsily fix that.
+        for hit in out['hits']['hits']:
+            hit['_source']['docket_id'] = '-'.join(hit['_source']['docket_id'].split('-')[:-1])
 
         return self.render(Response(200, out))

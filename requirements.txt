@@ -6,3 +6,4 @@ wsgiref==0.1.2
 pymongo
 djangorestframework
 isoweek
+-e git+https://github.com/aparo/pyes.git#egg=pyes

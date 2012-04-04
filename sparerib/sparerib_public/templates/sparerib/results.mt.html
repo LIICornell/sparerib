@@ -1,9 +1,16 @@
-<h2>Search</h2>
-<div class="search">
-    <form>
-        <input type="text" name="query" /> <input type="submit" value="go" />
-    </form>
-</div>
+<% if (hits.total == 0) { %>
+<div class="notice">We didn't find any search results for this term.</div>
+<% } else { %>
+<ul class="results">
+    <% for (var i = 0; i < hits.hits.length; i++) { %>
+    <li>
+        <a class="title" href="/docket/<%=hits.hits[i]._source.docket_id%>"><%=hits.hits[i]._source.title%></a>
+        <a class="agency"><%=hits.hits[i]._source.agency%></a> document <%=hits.hits[i]._source.document_id%>
+    </li>
+    <% } %>
+</ul>
+
+<!--
 <ul class="results">
     <li>
         <span class="document-count">54 items</span>
@@ -35,3 +42,5 @@
     <a href="#" class="prev">&laquo; previous</a><a href="#" class="next">next &raquo;</a>
     <div class="clear"></div>
 </div>
+-->
+<% } %>
