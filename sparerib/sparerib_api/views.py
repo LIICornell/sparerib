@@ -23,7 +23,7 @@ class DocketView(ResponseMixin, View):
 
         db = get_db()
 
-        results = list(db.dockets.find({'docket_id': kwargs['docket_id']}))
+        results = list(db.dockets.find({'_id': kwargs['docket_id']}))
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, 'Docket not found.'))
 
@@ -33,105 +33,64 @@ class DocketView(ResponseMixin, View):
         out = {
             'title': docket['title'],
             'url': reverse('docket-view', kwargs=kwargs),
-            'id': docket['docket_id'],
-
-            'agency': docket['agency'],
+            'id': docket['_id'],
             'year': docket['year'],
             'rulemaking': docket['details'].get('dk_type', 'Nonrulemaking').lower() == 'rulemaking'
         }
 
-        # grab the documents to calculate stats (temporary until we can get some map/reduce action done)
-        total = 0
-        weeks = defaultdict(int)
-        types = defaultdict(int)
-        text_entities = defaultdict(int)
-        submitter_entities = defaultdict(int)
-        rules = []
-        earliest = None
-        latest = None
-        docs = db.docs.find({'docket_id': out['id']}, fields=[
-            'document_id',
-            'title',
-            'details.fr_publish_date',
-            'type',
-            'views.entities',
-            'attachments.views.entities',
-            'submitter_entities'
-        ])
-
-        # iterate over the docs to aggregate some useful stuff
-        for doc in docs:
-            total += 1
-
-            date = doc.get('details', {}).get('fr_publish_date', None)
-            if date:
-                week = date.isocalendar()[:-1]
-                weeks[week] += 1
-
-                real_date = date.date()
-                if earliest == None or real_date < earliest:
-                    earliest = real_date
-                if latest == None or real_date > latest:
-                    latest = real_date
-
-            if 'type' in doc:
-                types[doc['type']] += 1
-
-                if doc['type'] in ['rule', 'proposed_rule']:
-                    rules.append({
-                        'date': date.date().isoformat() if date else None,
-                        'type': doc['type'],
-                        'id': doc['document_id'],
-                        'url': reverse('document-view', kwargs={'document_id': doc['document_id']}),
-                        'title': doc['title']
-                    })
-
-            # views and attachment views together
-            views = itertools.chain.from_iterable([doc.get('views', [])] + [attachment.get('views', []) for attachment in doc.get('attachments', [])])
-            for view in views:
-                for entity in view.get('entities', []):
-                    text_entities[entity] += 1
-
-            # submitters
-            for entity in doc.get('submitter_entities', []):
-                submitter_entities[entity] += 1
-
-        # clean some of that up a bit
-        stats = {
-            'document_count': total,
-            'type_breakdown': sorted(types.items(), key=lambda x: x[0]),
-            'rules': sorted(rules, key=lambda x: x['date']),
-            'weeks': [],
-            'date_range': [earliest.isoformat(), latest.isoformat()]
-        }
-
-        for week in sorted(weeks.items(), key=lambda x: x[0]):
-            isw = isoweek.Week(*week[0])
-            stats['weeks'].append({
-                'date_range': [isw.monday().isoformat(), isw.sunday().isoformat()],
-                'total': week[1]
+        stats = docket.get('stats', None)
+        if stats:
+            # stitch on some additional data
+            stats.update({
+                'type_breakdown': [{
+                    'type': key,
+                    'count': value
+                } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)],
+                'weeks': [{
+                    'date_range': key,
+                    'count': value
+                } for key, value in stats['weeks']],
             })
 
-        # limit ourselves to the top ten of each match type, and grab their extra metadata
-        for label, items in [('top_text_entities', text_entities.items()), ('top_submitter_entities', submitter_entities.items())]:
-            stats[label] = [{
-                'id': item[0],
-                'total': item[1]
-            } for item in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+            # limit ourselves to the top ten of each match type, and grab their extra metadata
+            for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
+                stats[label] = [{
+                    'id': item[0],
+                    'count': item[1]
+                } for item in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+            del stats['text_entities'], stats['submitter_entities']
 
-        # grab additional info about these ones from the database
-        ids = [record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']]
-        entities_search = db.entities.find({'_id': {'$in': ids}})
-        entities = dict([(entity['_id'], entity) for entity in entities_search])
+            # grab additional info about these ones from the database
+            ids = [record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']]
+            entities_search = db.entities.find({'_id': {'$in': ids}}, ['_id', 'td_type', 'aliases'])
+            entities = dict([(entity['_id'], entity) for entity in entities_search])
 
-        # stitch this back onto the main records
-        for label in ['top_text_entities', 'top_submitter_entities']:
-            for entity in stats[label]:
-                entity['type'] = entities[entity['id']]['td_type']
-                entity['name'] = entities[entity['id']]['aliases'][0]
-                entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
+            # stitch this back onto the main records
+            for label in ['top_text_entities', 'top_submitter_entities']:
+                for entity in stats[label]:
+                    entity['type'] = entities[entity['id']]['td_type']
+                    entity['name'] = entities[entity['id']]['aliases'][0]
+                    entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
 
-        out['stats'] = stats
+            out['stats'] = stats
+        else:
+            out['stats'] = {'count': 0}
+
+        # do something with the agency
+        agency = docket.get('agency', None)
+        if agency:
+            agency_meta = list(db.agencies.find({'_id': agency}))
+            if agency_meta:
+                out['agency'] = {
+                    'id': agency,
+                    'name': agency_meta[0]['name'],
+                    'url': '/agency/%s' % agency
+                }
+            else:
+                agency = None
+        
+        if not agency:
+            out['agency'] = None
 
         return self.render(Response(200, out))
 
