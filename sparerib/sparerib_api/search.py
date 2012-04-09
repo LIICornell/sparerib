@@ -60,6 +60,18 @@ class SearchResultsView(PaginatorMixin, DRFView):
     def get_es_text_query(self):
         return {'text': {'files.text': self.text_query}} if self.text_query else {'match_all': {}}
 
+    # slight tweak to how this was done in the original - this will be the default
+    limit = 10
+    # and this will be the max
+    max_limit = 50
+
+    def get_limit(self):
+        try:
+            limit = int(self.request.GET.get('limit', self.limit))
+            return min(limit, self.max_limit)
+        except ValueError:
+            return self.limit
+
 class DeferredInt(int):
     def __init__(self):
         super(DeferredInt, self).__init__()
