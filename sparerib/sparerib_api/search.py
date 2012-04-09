@@ -186,14 +186,14 @@ class AggregatedSearchResultsView(SearchResultsView):
                         'order': 'total'
                     }
                 }
-            }
+            },
+            'size': 0
         }
 
         filters = self.get_es_filters()
         if filters:
             query['facets'][self.aggregation_level]['facet_filter'] = filters
 
-        print query
         es = pyes.ES(settings.ES_SETTINGS)
         results = es.search_raw(query)
 
