@@ -6,7 +6,7 @@ var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
 var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
 
-var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { console.log(this); return "/api/1.0/search/" + encodeURIComponent(this.id) + "?page=" + this.get('page'); } });
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
 var SearchResultsCollection = Backbone.Collection.extend({ model: SearchResults, url: "/api/1.0/search" });
 
 // Template helpers
@@ -50,6 +50,10 @@ var ResultsView = Backbone.View.extend({
                 'success': $.proxy(function() {
                     var context = _.extend(helpers, this.model.toJSON());
                     $(this.el).html(this.template(context));
+
+                    // update the URL for the right type
+                    if (!this.model.get('level'))
+                    app.navigate('/search-' + this.model.attributes.search.aggregation_level + '/' + encodeURIComponent(this.model.attributes.search.raw_query) + (this.model.get('in_page') ? '/' + this.model.get('in_page') : ''), {trigger: false, replace: true});
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -134,11 +138,17 @@ var EntityDetailView = Backbone.View.extend({
 var AppRouter = Backbone.Router.extend({   
     initialize: function() {
         // routes
+
+        // resource pages
         this.route("", "searchLanding");
         this.route("docket/:id", "docketDetail");
         this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
-        this.route("search/:term/:page", "searchResults");
-        this.route("search/:term", "searchResults");
+        
+        // search
+        this.route("search/:term/:page", "defaultSearchResults");
+        this.route("search/:term", "defaultSearchResults");
+        this.route("search-:type/:term/:page", "searchResults");
+        this.route("search-:type/:term", "searchResults");
     },
 
     searchLanding: function() {
@@ -146,7 +156,10 @@ var AppRouter = Backbone.Router.extend({
         $('#main').html(searchView.render().el);
     },
 
-    searchResults: function(query, page) {
+    defaultSearchResults: function(query, page) {
+        this.searchResults(null, query, page);
+    },
+    searchResults: function(type, query, page) {
         console.log(query, page);
         // are we on a search page?
         var resultSet = $('.result-set');
@@ -156,11 +169,12 @@ var AppRouter = Backbone.Router.extend({
         }
 
         if (typeof page == "undefined") {
-            page = 1;
+            page = null;
         }
 
-        var results = new SearchResults({'query': query, 'page': page});
+        var results = new SearchResults({'query': query, 'in_page': page, 'level': type});
         var resultsView = new ResultsView({model: results});
+
         resultSet.html(resultsView.render().el);
     },
  

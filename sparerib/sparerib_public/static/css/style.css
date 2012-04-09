@@ -205,6 +205,22 @@ ul.results span.document-count {
   margin-bottom: 20px;
 }
 
+.view-by {
+  float: right;
+  padding-top: 4px;
+}
+.view-by .label {
+  font-family: georgia, sans-serif;
+  font-style: italic;
+  text-transform: lowercase;
+}
+.view-by .current {
+  background: #333333;
+  color: #ffffff;
+  padding: 4px;
+  border-radius: 3px;
+}
+
 footer {
   padding: 15px;
   text-align: center;
