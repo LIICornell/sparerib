@@ -13,6 +13,8 @@ from query_parse import parse_query
 
 from collections import defaultdict
 
+from util import get_db
+
 ALLOWED_FILTERS = ['agency', 'docket']
 
 class SearchResultsView(PaginatorMixin, DRFView):
@@ -96,7 +98,12 @@ class DocumentSearchResults(object):
             es = pyes.ES(settings.ES_SETTINGS)
             self._results = es.search_raw(self.query)
             self._count.resolve(self._results['hits']['total'])
-        return self._results['hits']['hits']
+
+        def stitch_record(match):
+            match['url'] = reverse('document-view', kwargs={'document_id': match['fields']['document_id']})
+            return match
+
+        return map(stitch_record, self._results['hits']['hits'])
 
     def count(self):
         return self._count
@@ -131,13 +138,40 @@ class AggregatedSearchResults(list):
 
     def __getslice__(self, start, end):
         s = super(AggregatedSearchResults, self).__getslice__(start, end)
-        return [{
-            '_type': self.aggregation_level,
-            '_index': 'regulations',
-            'fields': match,
-            '_score': match['total'],
-            '_id': match['term']
-        } for match in s]
+
+        db = get_db()
+
+        ids = [match['term'] for match in s]
+        agg_search = db[self.aggregation_collection].find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
+        agg_map = dict([(result['_id'], result) for result in agg_search])
+
+        def stitch_record(match):
+            out = {
+                '_type': self.aggregation_level,
+                '_index': 'regulations',
+                'fields': {},
+                '_score': match['total'],
+                '_id': match['term'],
+                'matched': match['count'],
+                'url': reverse(self.aggregation_level + '-view', kwargs={self.aggregation_field: match['term']})
+            }
+            if match['term'] in agg_map:
+                agg_data = agg_map[match['term']]
+                out['fields'] = {
+                    self.aggregation_field: agg_map[match['term']]['_id'],
+                    'date_range': agg_data['stats']['date_range'],
+                    'count': agg_data['stats']['count']
+                }
+                for label in ['name', 'title', 'agency', 'year']:
+                    if label in agg_data:
+                        out['fields'][label] = agg_data[label]
+                
+                rulemaking_field = agg_data.get('details', {}).get('dk_type', None)
+                if rulemaking_field:
+                    out['fields']['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
+            return out
+
+        return map(stitch_record, s)
 
 class AggregatedSearchResultsView(SearchResultsView):
     def get_results(self):
