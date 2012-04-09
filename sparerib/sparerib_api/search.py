@@ -121,3 +121,56 @@ class DocumentSearchResultsView(SearchResultsView):
         query['fields'] = ['document_id', 'document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
         return DocumentSearchResults(query)
+
+class AggregatedSearchResults(list):
+    def __init__(self, items, aggregation_level, aggregation_field, aggregation_collection):
+        super(AggregatedSearchResults, self).__init__(items)
+        self.aggregation_level = aggregation_level
+        self.aggregation_field = aggregation_field
+        self.aggregation_collection = aggregation_collection
+
+    def __getslice__(self, start, end):
+        s = super(AggregatedSearchResults, self).__getslice__(start, end)
+        return [{
+            '_type': self.aggregation_level,
+            '_index': 'regulations',
+            'fields': match,
+            '_score': match['total'],
+            '_id': match['term']
+        } for match in s]
+
+class AggregatedSearchResultsView(SearchResultsView):
+    def get_results(self):
+        query = {
+            'query': self.get_es_text_query(),
+            'facets': {
+                self.aggregation_level: {
+                    'terms_stats': {
+                        'key_field': self.aggregation_field,
+                        'value_script': 'doc.score',
+                        'size': 1000000,
+                        'order': 'total'
+                    }
+                }
+            }
+        }
+
+        filters = self.get_es_filters()
+        if filters:
+            query['facets'][self.aggregation_level]['facet_filter'] = filters
+
+        print query
+        es = pyes.ES(settings.ES_SETTINGS)
+        results = es.search_raw(query)
+
+        return AggregatedSearchResults(results['facets'][self.aggregation_level]['terms'], self.aggregation_level, self.aggregation_field, self.aggregation_collection)
+
+class DocketSearchResultsView(AggregatedSearchResultsView):
+    aggregation_level = 'docket'
+    aggregation_field = 'docket_id'
+    aggregation_collection = 'dockets'
+
+class AgencySearchResultsView(AggregatedSearchResultsView):
+    aggregation_level = 'agency'
+    aggregation_field = 'agency'
+    aggregation_collection = 'agencies'
