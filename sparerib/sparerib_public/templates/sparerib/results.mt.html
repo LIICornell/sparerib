@@ -21,7 +21,7 @@
     <% } %>
 </ul>
 <div class="pagination">
-    <% if (previous) { %><a href="<%='/search-' + search.aggregation_level + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
+    <% if (previous) { %><a href="<%='/search-' + search.aggregation_level + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.aggregation_level + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
     <div class="clear"></div>
 </div>
 <% } %>
