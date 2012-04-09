@@ -146,7 +146,7 @@ ul.results span.document-count {
   font-size: 80%;
   color: #444444;
 }
-.dates {
+.dates, .pages {
   font-family: georgia, serif;
   font-style: italic;
   margin-bottom: 20px;

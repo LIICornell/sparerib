@@ -6,7 +6,7 @@ var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
 var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
 
-var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { console.log(this); return "/api/1.0/search/" + encodeURIComponent(this.id); } });
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { console.log(this); return "/api/1.0/search/" + encodeURIComponent(this.id) + "?page=" + this.get('page'); } });
 var SearchResultsCollection = Backbone.Collection.extend({ model: SearchResults, url: "/api/1.0/search" });
 
 // Template helpers
@@ -137,6 +137,7 @@ var AppRouter = Backbone.Router.extend({
         this.route("", "searchLanding");
         this.route("docket/:id", "docketDetail");
         this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
+        this.route("search/:term/:page", "searchResults");
         this.route("search/:term", "searchResults");
     },
 
@@ -145,7 +146,8 @@ var AppRouter = Backbone.Router.extend({
         $('#main').html(searchView.render().el);
     },
 
-    searchResults: function(query) {
+    searchResults: function(query, page) {
+        console.log(query, page);
         // are we on a search page?
         var resultSet = $('.result-set');
         if (resultSet.length == 0) {
@@ -153,9 +155,11 @@ var AppRouter = Backbone.Router.extend({
             resultSet = $('.result-set');
         }
 
-        console.log(query);
+        if (typeof page == "undefined") {
+            page = 1;
+        }
 
-        var results = new SearchResults({'query': query});
+        var results = new SearchResults({'query': query, 'page': page});
         var resultsView = new ResultsView({model: results});
         resultSet.html(resultsView.render().el);
     },

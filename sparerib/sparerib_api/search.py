@@ -26,6 +26,7 @@ class SearchResultsView(PaginatorMixin, DRFView):
 
     def set_query(self, query):
         parsed = parse_query(query)
+        self.raw_query = query
         self.text_query = parsed['text']
         self.filters = parsed['filters']
 
@@ -43,6 +44,7 @@ class SearchResultsView(PaginatorMixin, DRFView):
                 'id': f[1],
                 'name': f[2] if len(f) > 2 else f[1]
             } for f in self.filters if f[0] in ALLOWED_FILTERS],
+            'raw_query': self.raw_query,
             'aggregation_level': self.aggregation_level
         }
 
@@ -220,3 +222,17 @@ class AgencySearchResultsView(AggregatedSearchResultsView):
     aggregation_level = 'agency'
     aggregation_field = 'agency'
     aggregation_collection = 'agencies'
+
+class DefaultSearchResultsView(DRFView):
+    def get(self, request, query):
+        parsed = parse_query(query)
+        if any([f for f in parsed['filters'] if f[0] == 'docket']):
+            # they've filtered to a single docket, so default to document aggregation
+            new_url = reverse('search-documents-view', kwargs={'query': query})
+        else:
+            # default to docket aggregation
+            new_url = reverse('search-dockets-view', kwargs={'query': query})
+        if request.META['QUERY_STRING']:
+            new_url += "?" + request.META['QUERY_STRING']
+
+        raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})

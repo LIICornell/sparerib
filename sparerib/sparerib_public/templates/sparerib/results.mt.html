@@ -1,14 +1,21 @@
-<% if (hits.total == 0) { %>
+<h3>Results</h3>
+<div class="pages">page <%=page%> of <%=pages%></div>
+<% if (total == 0) { %>
 <div class="notice">We didn't find any search results for this term.</div>
 <% } else { %>
 <ul class="results">
-    <% for (var i = 0; i < hits.hits.length; i++) { %>
+    <% for (var i = 0; i < results.length; i++) { %>
     <li>
-        <a class="title" href="/docket/<%=hits.hits[i]._source.docket_id%>"><%=hits.hits[i]._source.title%></a>
-        <a class="agency"><%=hits.hits[i]._source.agency%></a> document <%=hits.hits[i]._source.document_id%>
+        <span class="document-count">matched <%=results[i].matched %> items of <%=results[i].fields.count%></span>
+        <a class="title" href="/docket/<%=results[i].fields.docket_id%>"><%=results[i].fields.title%></a>
+        <a class="agency"><%=results[i].fields.agency%></a> <%=results[i].fields.rulemaking ? "rulemaking" : "non-rulemaking" %> docket <%=results[i].fields.docket_id%>
     </li>
     <% } %>
 </ul>
+<div class="pagination">
+    <% if (previous) { %><a href="<%='/search/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
+    <div class="clear"></div>
+</div>
 
 <!--
 <ul class="results">
