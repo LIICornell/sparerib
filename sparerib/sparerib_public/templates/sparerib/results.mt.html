@@ -12,7 +12,9 @@
 <ul class="results">
     <% for (var i = 0; i < results.length; i++) { %>
     <li>
+        <% if (typeof results[i].fields.count !== "undefined") { %>
         <span class="document-count">matched <%=results[i].matched %> items of <%=results[i].fields.count%></span>
+        <% } %>
         <a class="title" href="/docket/<%=results[i].fields.docket_id%>"><%=results[i].fields.title%></a>
         <a class="agency"><%=results[i].fields.agency%></a> <%=results[i].fields.rulemaking ? "rulemaking" : "non-rulemaking" %> docket <%=results[i].fields.docket_id%>
     </li>
