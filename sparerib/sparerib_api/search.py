@@ -236,3 +236,28 @@ class DefaultSearchResultsView(DRFView):
             new_url += "?" + request.META['QUERY_STRING']
 
         raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})
+
+# monkey-patch the DRF version of the paginator to make deferred counts work
+from djangorestframework import mixins as drf_mixins
+from django.core.paginator import EmptyPage, PageNotAnInteger
+_Paginator = drf_mixins.Paginator
+class ContainsEverything(list):
+    def __contains__(self, val):
+        return True
+
+class HackedPaginator(_Paginator):
+    def _get_page_range(self):
+        return ContainsEverything(super(HackedPaginator, self)._get_page_range())
+    page_range = property(_get_page_range)
+
+    def validate_number(self, number):
+        "Validates the given 1-based page number."
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise PageNotAnInteger('That page number is not an integer')
+        if number < 1:
+            raise EmptyPage('That page number is less than 1')
+        return number
+
+drf_mixins.Paginator = HackedPaginator
