@@ -56,7 +56,7 @@ class SearchResultsView(PaginatorMixin, DRFView):
         return {'terms': terms} if len(terms.values()) else None
 
     def get_es_text_query(self):
-        return {'text': {'files.text': self.text_query}} if self.text_query else None
+        return {'text': {'files.text': self.text_query}} if self.text_query else {'match_all': {}}
 
 class DeferredInt(int):
     def __init__(self):
@@ -101,8 +101,6 @@ class DocumentSearchResults(object):
     def count(self):
         return self._count
 
-
-
 class DocumentSearchResultsView(SearchResultsView):
     aggregation_level = 'document'
 
@@ -117,5 +115,9 @@ class DocumentSearchResultsView(SearchResultsView):
 
         if text_query:
             query['query'] = text_query
+            if 'text' in text_query:
+                query['highlight'] = {'fields': dict([(key, {}) for key in text_query['text'].keys()])}
+
+        query['fields'] = ['document_id', 'document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
         return DocumentSearchResults(query)
