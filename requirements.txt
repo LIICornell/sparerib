@@ -6,4 +6,6 @@ wsgiref==0.1.2
 pymongo
 djangorestframework
 isoweek
+thrift
 -e git+https://github.com/aparo/pyes.git#egg=pyes
+pyparsing
