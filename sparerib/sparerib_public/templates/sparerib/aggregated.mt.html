@@ -1,7 +1,9 @@
+<% if (typeof agency !== "undefined") { %>
 <div class="breadcrumbs">
     <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
 </div>
-<h2><%=title%></h2>
+<% } %>
+<h2><%=(typeof title === "undefined" ? name : title)%></h2>
 <div class="dates">
     <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
 </div>
@@ -13,6 +15,7 @@
 </div>
 
 <div class="chart-row">
+    <% if (typeof stats.rules !== "undefined") { %>
     <div class="chart rules left">
         <h4>Rules</h4>
         <table>
@@ -30,6 +33,11 @@
     </div>
 
     <div class="chart">
+    <% } else { %>
+    <div class="chart left">
+    <% } %>
+
+    
         <h4>Type Breakdown</h4>
         <div id="type-breakdown"></div>
     </div>

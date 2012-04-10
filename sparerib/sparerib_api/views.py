@@ -16,7 +16,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-class DocketView(ResponseMixin, View):
+class AggregatedView(ResponseMixin, View):
     "Regulations.gov docket view"
 
     renderers = DEFAULT_RENDERERS
@@ -26,41 +26,51 @@ class DocketView(ResponseMixin, View):
 
         db = get_db()
 
-        results = list(db.dockets.find({'_id': kwargs['docket_id']}))
+        results = list(db[self.aggregation_collection].find({'_id': kwargs[self.aggregation_field]}))
         if not results:
-            return self.render(Response(status.HTTP_404_NOT_FOUND, 'Docket not found.'))
+            return self.render(Response(status.HTTP_404_NOT_FOUND, '%s not found.' % self.aggregation_level.title()))
 
-        docket = results[0]
+        item = results[0]
 
         # basic docket metadata
         out = {
-            'title': docket['title'],
-            'url': reverse('docket-view', kwargs=kwargs),
-            'id': docket['_id'],
-            'year': docket['year'],
-            'rulemaking': docket['details'].get('dk_type', 'Nonrulemaking').lower() == 'rulemaking'
+            'url': reverse('%s-view' % self.aggregation_level, kwargs=kwargs),
+            'id': item['_id'],
+            'type': self.aggregation_level
         }
+        for label in ['name', 'title', 'year']:
+            if label in item:
+                out[label] = item[label]
+        rulemaking_field = item.get('details', {}).get('dk_type', None)
+        if rulemaking_field:
+            out['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
 
-        stats = docket.get('stats', None)
+        stats = item.get('stats', None)
         if stats:
             # cleanup, plus stitch on some additional data
-            stats.update({
-                'type_breakdown': [{
+            stats['type_breakdown'] = [{
                     'type': key,
                     'count': value
-                } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)],
-                'weeks': [{
+                } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)]
+
+            if 'weeks' in stats:
+                stats['weeks'] = [{
                     'date_range': key,
                     'count': value
-                } for key, value in stats['weeks']],
-            })
+                } for key, value in stats['weeks']]
+
+            if 'months' in stats:
+                stats['months'] = [{
+                    'month': key,
+                    'count': value
+                } for key, value in stats['months']]
 
             # limit ourselves to the top ten of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
                 stats[label] = [{
-                    'id': item[0],
-                    'count': item[1]
-                } for item in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+                    'id': i[0],
+                    'count': i[1]
+                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
@@ -82,23 +92,34 @@ class DocketView(ResponseMixin, View):
         else:
             out['stats'] = {'count': 0}
 
-        # do something with the agency
-        agency = docket.get('agency', None)
-        if agency:
-            agency_meta = list(db.agencies.find({'_id': agency}))
-            if agency_meta:
-                out['agency'] = {
-                    'id': agency,
-                    'name': agency_meta[0]['name'],
-                    'url': '/agency/%s' % agency
-                }
-            else:
-                agency = None
-        
-        if not agency:
-            out['agency'] = None
+        # do something with the agency if this is not, itself, an agency request
+        if self.aggregation_level != 'agency':
+            agency = item.get('agency', None)
+            if agency:
+                agency_meta = list(db.agencies.find({'_id': agency}))
+                if agency_meta:
+                    out['agency'] = {
+                        'id': agency,
+                        'name': agency_meta[0]['name'],
+                        'url': '/agency/%s' % agency
+                    }
+                else:
+                    agency = None
+            
+            if not agency:
+                out['agency'] = None
 
         return self.render(Response(200, out))
+
+class DocketView(AggregatedView):
+    aggregation_level = 'docket'
+    aggregation_field = 'docket_id'
+    aggregation_collection = 'dockets'
+
+class AgencyView(AggregatedView):
+    aggregation_level = 'agency'
+    aggregation_field = 'agency'
+    aggregation_collection = 'agencies'
 
 class DocumentView(ResponseMixin, View):
     "Regulations.gov document view"

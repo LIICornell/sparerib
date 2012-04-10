@@ -1,7 +1,13 @@
 (function($) {
 // Models
+var Document = Backbone.Model.extend({ url: function() { return "/api/1.0/document/" + this.id; } });
+var DocumentCollection = Backbone.Collection.extend({ model: Document, url: "/api/1.0/document" });
+
 var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
 var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.0/docket" });
+
+var Agency = Backbone.Model.extend({ url: function() { return "/api/1.0/agency/" + this.id; } });
+var AgencyCollection = Backbone.Collection.extend({ model: Agency, url: "/api/1.0/agency" });
 
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
 var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
@@ -15,6 +21,9 @@ var helpers = {
         var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         var date = new Date(iso_date);
         return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+    },
+    'capitalize': function(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
 }
 // Views
@@ -48,7 +57,7 @@ var ResultsView = Backbone.View.extend({
         this.model.fetch(
             {
                 'success': $.proxy(function() {
-                    var context = _.extend(helpers, this.model.toJSON());
+                    var context = _.extend({}, helpers, this.model.toJSON());
                     $(this.el).html(this.template(context));
 
                     // update the URL for the right type
@@ -64,26 +73,27 @@ var ResultsView = Backbone.View.extend({
     }
 })
 
-var DocketDetailView = Backbone.View.extend({
+var AggregatedDetailView = Backbone.View.extend({
     tagName: 'div',
     id: 'docket-view',
 
-    template: _.template($('#docket-tpl').html()),
+    template: _.template($('#aggregated-tpl').html()),
     render: function() {
         this.model.fetch(
             {
                 'success': $.proxy(function() {
-                    var context = _.extend(helpers, this.model.toJSON());
+                    var context = _.extend({}, helpers, this.model.toJSON());
                     $(this.el).html(this.template(context));
 
                     // charts
                     SpareribCharts.type_breakdown_piechart('type-breakdown', context.stats.type_breakdown);
                     
+                    var timeGranularity = this.model.get('type') == 'docket' ? 'weeks' : 'months';
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': _.map(context.stats.weeks, function(week) {
-                            return week.count;
+                        'timeline': _.map(context.stats[timeGranularity], function(period) {
+                            return period.count;
                         })
                     }];
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
@@ -106,7 +116,7 @@ var EntityDetailView = Backbone.View.extend({
         this.model.fetch(
             {
                 'success': $.proxy(function() {
-                    var context = _.extend(helpers, this.model.toJSON());
+                    var context = _.extend({}, helpers, this.model.toJSON());
                     $(this.el).html(this.template(context));
 
                     // charts
@@ -140,11 +150,13 @@ var AppRouter = Backbone.Router.extend({
         // routes
 
         // resource pages
-        this.route("", "searchLanding");
+        this.route("document/:id", "documentDetail");
         this.route("docket/:id", "docketDetail");
+        this.route("agency/:id", "agencyDetail");
         this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
         
         // search
+        this.route("", "searchLanding");
         this.route("search/:term/:page", "defaultSearchResults");
         this.route("search/:term", "defaultSearchResults");
         this.route("search-:type/:term/:page", "searchResults");
@@ -178,10 +190,22 @@ var AppRouter = Backbone.Router.extend({
         resultSet.html(resultsView.render().el);
     },
  
+    documentDetail: function(id) {
+        var doc = new Document({'id': id});
+        var view = new DocumentDetailView({model: doc});
+        $('#main').html(view.render().el);
+    },
+
     docketDetail: function(id) {
         var docket = new Docket({'id': id});
-        var docketView = new DocketDetailView({model: docket});
-        $('#main').html(docketView.render().el);
+        var view = new AggregatedDetailView({model: docket});
+        $('#main').html(view.render().el);
+    },
+
+    agencyDetail: function(id) {
+        var agency = new Agency({'id': id});
+        var view = new AggregatedDetailView({model: agency});
+        $('#main').html(view.render().el);
     },
 
     entityDetail: function(type, id) {

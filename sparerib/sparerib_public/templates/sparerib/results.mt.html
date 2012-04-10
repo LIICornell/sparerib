@@ -15,8 +15,15 @@
         <% if (typeof results[i].fields.count !== "undefined") { %>
         <span class="document-count">matched <%=results[i].matched %> items of <%=results[i].fields.count%></span>
         <% } %>
-        <a class="title" href="/docket/<%=results[i].fields.docket_id%>"><%=results[i].fields.title%></a>
-        <a class="agency"><%=results[i].fields.agency%></a> <%=results[i].fields.rulemaking ? "rulemaking" : "non-rulemaking" %> docket <%=results[i].fields.docket_id%>
+        <a class="title" href="/<%=search.aggregation_level%>/<%=results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]]%>"><%=typeof results[i].fields.title === "undefined" ? results[i].fields.name : results[i].fields.title %></a>
+        
+        <% if (search.aggregation_level == "agency") { %>
+        Federal agency
+        <% } else if (search.aggregation_level == "docket") { %>
+        <a class="agency" href="/agency/<%=results[i].fields.agency%>"><%=results[i].fields.agency%></a> <%=results[i].fields.rulemaking ? "rulemaking" : "non-rulemaking" %> docket <%=results[i].fields.docket_id%>
+        <% } else { %>
+        <%=capitalize(results[i].fields.document_type.split('_').join(' '))%> in docket <a href="/docket/<%=results[i].fields.docket_id%>"><%=results[i].fields.docket_id%></a>
+        <% } %>
     </li>
     <% } %>
 </ul>
