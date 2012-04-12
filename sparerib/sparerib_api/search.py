@@ -57,6 +57,10 @@ class SearchResultsView(PaginatorMixin, DRFView):
                 terms['agency'] += [f[1]]
             elif f[0] == 'docket':
                 terms['docket_id'] += [f[1]]
+            elif f[0] == 'submitter':
+                terms['submitter_entities'] += [f[1]]
+            elif f[0] == 'mentioned':
+                terms['files.entities'] += [f[1]]
         return {'terms': terms} if len(terms.values()) else None
 
     def get_es_text_query(self):
