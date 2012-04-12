@@ -63,7 +63,10 @@
                         <%=stats[submission_type][i].name%>
                     <% } %>
                 </td>
-                <td><%=stats[submission_type][i].count%></td>
+                <td>
+                    <%=stats[submission_type][i].count%>
+                    <a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>" class="view-link">view &raquo;</a>
+                </td>
             </tr>
             <% } %>
         </table>
@@ -72,6 +75,9 @@
 </div>
 
 <div class="pagination">
-    <a href="#" class="prev">see documents &raquo;</a><a href="#" class="next">view on regulations.gov &raquo;</a>
+    <a href="/search-document/<%=encodeURIComponent(type + ":" + id)%>" class="prev">see documents &raquo;</a>
+    <% if (type == "docket") { %>
+    <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>" class="next">view on regulations.gov &raquo;</a>
+    <% } %>
     <div class="clear"></div>
 </div>

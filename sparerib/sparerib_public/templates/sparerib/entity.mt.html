@@ -36,7 +36,10 @@
                 <td>
                     <a href="<%=stats[submission_type][breakdown_type][i].url.replace('/api/1.0', '')%>"><%=stats[submission_type][breakdown_type][i][({'top_agencies': 'name', 'top_dockets': 'title'})[breakdown_type]]%></a>
                 </td>
-                <td><%=stats[submission_type][breakdown_type][i].count%></td>
+                <td>
+                    <%=stats[submission_type][breakdown_type][i].count%>
+                    <a href="/search-document/<%=encodeURIComponent(({'submitter_mentions': 'submitter:', 'text_mentions': 'mentioned:'})[submission_type] + id + " " + ({'top_agencies': 'agency', 'top_dockets': 'docket'})[breakdown_type] + ":" + stats[submission_type][breakdown_type][i].id)%>" class="view-link">view &raquo;</a>
+                </td>
             </tr>
             <% } %>
         </table>
@@ -46,6 +49,7 @@
 <% } %>
 
 <div class="pagination">
-    <a href="#" class="prev">see documents &raquo;</a><a href="#" class="next">view on influence explorer &raquo;</a>
+    <a href="/search-document/<%=encodeURIComponent('submitter:' + id)%>" class="prev">see submissions &raquo;</a>
+    <a href="http://influenceexplorer.com/<%=type%>/<%=slug%>/<%=id%>" class="next">view on influence explorer &raquo;</a>
     <div class="clear"></div>
 </div>

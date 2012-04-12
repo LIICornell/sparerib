@@ -250,7 +250,7 @@ var AppRouter = Backbone.Router.extend({
         this.route("document/:id", "documentDetail");
         this.route("docket/:id", "docketDetail");
         this.route("agency/:id", "agencyDetail");
-        this.route(/^(organization|individual|politician|entity)\/[a-zA-Z0-9-]*\/([a-z0-9-]*)$/, "entityDetail");
+        this.route(/^(organization|individual|politician|entity)\/([a-zA-Z0-9-]*)\/([a-z0-9-]*)$/, "entityDetail");
         
         // search
         this.route("", "searchLanding");
@@ -318,8 +318,8 @@ var AppRouter = Backbone.Router.extend({
         $('#main').html(view.render().el);
     },
 
-    entityDetail: function(type, id) {
-        var entity = new Entity({'id': id});
+    entityDetail: function(type, slug, id) {
+        var entity = new Entity({'id': id, 'slug': slug});
         var entityView = new EntityDetailView({model: entity});
         $('#main').html(entityView.render().el);
     }

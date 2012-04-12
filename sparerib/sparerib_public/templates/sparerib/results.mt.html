@@ -13,7 +13,10 @@
     <% for (var i = 0; i < results.length; i++) { %>
     <li>
         <% if (typeof results[i].fields.count !== "undefined") { %>
-        <span class="document-count">matched <%=results[i].matched %> items of <%=results[i].fields.count%></span>
+        <span class="document-count">
+            matched <%=results[i].matched %> items of <%=results[i].fields.count%>
+            <a href="/search-document/<%=encodeURIComponent(search.raw_query + " " + search.aggregation_level + ":" + results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]])%>" class="view-link">view &raquo;</a>
+        </span>
         <% } %>
         <a class="title" href="/<%=search.aggregation_level%>/<%=results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]]%>"><%=typeof results[i].fields.title === "undefined" ? results[i].fields.name : results[i].fields.title %></a>
         

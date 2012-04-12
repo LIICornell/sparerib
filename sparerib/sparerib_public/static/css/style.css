@@ -116,7 +116,6 @@ ul.results li {
 }
 ul.results li:hover {
   background: #ddeeff;
-  cursor: pointer;
 }
 ul.results a.title {
   display: block;
@@ -128,6 +127,9 @@ ul.results span.document-count {
   font-family: georgia, serif;
   font-style: italic;
 }
+a.view-link { background: url("../img/icons/small/magnifier.png") top left no-repeat; float: right; width: 16px; height: 16px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-left: 6px; padding: 0; }
+.chart table a.view-link { margin-top: 0; }
+
 .pagination {
   padding-top: 20px;
   width: 400px;
