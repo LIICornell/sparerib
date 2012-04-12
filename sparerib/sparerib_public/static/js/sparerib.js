@@ -24,6 +24,28 @@ var helpers = {
     },
     'capitalize': function(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
+    },
+    'prettifyLabel': function(string) {
+        return _.map(string.split('_'), helpers.capitalize).join(' ');
+    },
+    'getIcon': function(file_type) {
+        var icons = {
+            'html':   'html',
+            'xml':    'html',
+            'crtext': 'html',
+
+            'msw':    'msw',
+            'msw6':   'msw',
+            'msw8':   'msw',
+            'msw12':  'msw',
+
+            'pdf':    'pdf',
+            'rtf':    'rtf',
+            'txt':    'txt',
+            'wp8':    'wp8',
+            '?':      'unknown'
+        }
+        return '/static/img/icons/64x64/icon_' + (typeof icons[file_type] == "undefined" ? icons['?'] : icons[file_type]) + '.png';
     }
 }
 // Views
@@ -97,6 +119,33 @@ var AggregatedDetailView = Backbone.View.extend({
                         })
                     }];
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
+                }, this),
+                'error': function() {
+                    console.log('failed');
+                }
+            }
+        );
+        return this;
+    }
+})
+
+var DocumentDetailView = Backbone.View.extend({
+    tagName: 'div',
+    id: 'document-view',
+
+    template: _.template($('#document-tpl').html()),
+    render: function() {
+        this.model.fetch(
+            {
+                'success': $.proxy(function() {
+                    var context = _.extend({}, helpers, this.model.toJSON());
+
+                    // tweak attachments a bit
+                    context['full_attachments'] = [{'title': 'Main Views', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {
+                        attachment['attachment'] = true;
+                        return attachment;
+                    }));
+                    $(this.el).html(this.template(context));
                 }, this),
                 'error': function() {
                     console.log('failed');

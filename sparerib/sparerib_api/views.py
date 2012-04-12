@@ -150,7 +150,9 @@ class DocumentView(ResponseMixin, View):
             'agency': document['agency'],
             'date': document.get('details', {}).get('fr_publish_date', None),
             'type': document.get('type', None),
-            'views': []
+            'views': [],
+            'attachments': [],
+            'details': document.get('details', {})
         }
 
         if out['date']:
@@ -165,24 +167,29 @@ class DocumentView(ResponseMixin, View):
             out['views'].append({
                 'object_id': object_id,
                 'file_type': view['type'],
-                'view_type': 'document_view',
-                'title': None
+                'extracted': view.get('extracted', False),
+                'url': view['url']
             })
 
             for entity in view.get('entities', []):
                 text_entities.add(entity)
 
         for attachment in document.get('attachments', []):
+            a = {
+                'title': attachment['title'],
+                'views': []
+            }
             for view in attachment.get('views', []):
-                out['views'].append({
+                a['views'].append({
                     'object_id': attachment['object_id'],
                     'file_type': view['type'],
-                    'view_type': 'attachment_view',
-                    'title': attachment['title']
+                    'extracted': view.get('extracted', False),
+                    'url': view['url']
                 })
 
                 for entity in view.get('entities', []):
                     text_entities.add(entity)
+            out['attachments'].append(a)
 
         entities_search = db.entities.find({'_id': {'$in': list(submitter_entities.union(text_entities))}})
         entities = dict([(entity['_id'], entity) for entity in entities_search])
@@ -280,23 +287,5 @@ class EntityView(ResponseMixin, View):
             out['stats'] = stats
         else:
             out['stats'] = {'count': 0}
-
-        return self.render(Response(200, out))
-
-class SearchView(ResponseMixin, View):
-    "Regulations.gov docket view"
-
-    renderers = DEFAULT_RENDERERS
-
-    def get(self, request, *args, **kwargs):
-        # HACK! use a filter to restrict us to the only agencies we support at the moment
-        query = {'filter': {'terms': {'agency': ['ED', 'CPSC']}}, 'query': {'text': {'files.text': kwargs['query']}}}
-        
-        es = pyes.ES(settings.ES_SETTINGS)
-        out = es.search_raw(query)
-
-        # HACK #2 -- the docket IDs are all document IDs by accident.  Oops.  Clumsily fix that.
-        for hit in out['hits']['hits']:
-            hit['_source']['docket_id'] = '-'.join(hit['_source']['docket_id'].split('-')[:-1])
 
         return self.render(Response(200, out))

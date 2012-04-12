@@ -1,0 +1,51 @@
+<div class="breadcrumbs">
+    <a href="/agency/<%=agency%>"><%=agency%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.id%></a>
+</div>
+
+<h2><%=title%></h2>
+<div class="dates">
+    <%=formatDate(date)%>
+</div>
+
+<div class="chart-row">
+    <h3>Details</h3>
+    <div class="chart full">
+        <table>
+            <% var i = 0; _.each(details, function(item, name) { %>
+            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                <td><strong><%=prettifyLabel(name)%></strong></td>
+                <td><%=item%></td>
+            </tr>
+            <% i = !i + 0; }); %>
+        </table>
+    </div>
+</div>
+<div class="clear"></div>
+
+<% _.each(full_attachments, function(attachment) { %>
+<div class="attachment">
+    <div class="attachment-name">
+        <% if (attachment.attachment) { %><span class="label">Attachment:</span><% } %>
+        <span class="title"><%=attachment.title%></span>
+    </div>
+    <div class="tabs">
+        <% var i = 0; _.each(attachment.views, function(view) { %>
+            <div class="tab <%=(i == 0 ? 'active' : '')%>" data-tab-id="<%=i%>"><img src="<%=getIcon(view.file_type)%>" /></div>
+        <% i++ }); %>
+    </div>
+    <div class="tab-views">
+        <% var i = 0; _.each(attachment.views, function(view) { %>
+            <div class="tab-view <%=(i == 0 ? 'active' : '')%>" data-tab-id="<%=i%>">
+                <iframe class="document-text" src="" />
+                <a href="<%=view.url.replace('inline', 'attachment')%>" class="label">download from regulations.gov &raquo;</a>
+            </div>
+        <% i++ }); %>
+    </div>
+    <div class="clear"></div>
+</div>
+<% }); %>
+
+<div class="pagination">
+    <a href="#" class="next">view on regulations.gov &raquo;</a>
+    <div class="clear"></div>
+</div>

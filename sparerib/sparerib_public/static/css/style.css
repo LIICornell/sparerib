@@ -164,6 +164,10 @@ ul.results span.document-count {
 .chart.left {
   margin-left: 0;
 }
+.chart.full {
+  margin-left: 0;
+  width: 100%;
+}
 .chart table {
   width: 100%;
 }
@@ -209,7 +213,7 @@ ul.results span.document-count {
   float: right;
   padding-top: 4px;
 }
-.view-by .label {
+.label {
   font-family: georgia, sans-serif;
   font-style: italic;
   text-transform: lowercase;
@@ -219,6 +223,43 @@ ul.results span.document-count {
   color: #ffffff;
   padding: 4px;
   border-radius: 3px;
+}
+
+.attachment {
+  margin-bottom: 12px;
+}
+.attachment .attachment-name {
+  background: #ddeeff;
+  padding: 8px;
+}
+.attachment .tabs {
+  width: 80px;
+  float: left;
+}
+.attachment .tabs .tab {
+  background: #666666;
+  margin-bottom: 6px;
+  padding: 8px;
+}
+.attachment .tabs .active {
+  background: #333333;
+}
+
+.attachment .tab-views {
+  width: 880px;
+  float: right;
+}
+.attachment .tab-views .tab-view {
+  padding: 20px;
+  background: #333333;
+  display: none;
+}
+.attachment .tab-views .active {
+  display: block;
+}
+.attachment .tab-views iframe {
+  width: 100%;
+  height: 400px;
 }
 
 footer {
