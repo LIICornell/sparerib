@@ -15,7 +15,7 @@ from collections import defaultdict
 
 from util import get_db
 
-ALLOWED_FILTERS = ['agency', 'docket']
+ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned']
 
 class SearchResultsView(PaginatorMixin, DRFView):
     aggregation_level = None
@@ -61,7 +61,16 @@ class SearchResultsView(PaginatorMixin, DRFView):
                 terms['submitter_entities'] += [f[1]]
             elif f[0] == 'mentioned':
                 terms['files.entities'] += [f[1]]
-        return {'terms': terms} if len(terms.values()) else None
+        count = len(terms.values())
+        if count == 0:
+            return None
+        elif count == 1:
+            return {'terms': terms}
+        else:
+            term_list = []
+            for key, value in terms.iteritems():
+                term_list.append({'terms': {key: value}})
+            return {'and': term_list}
 
     def get_es_text_query(self):
         return {'text': {'files.text': self.text_query}} if self.text_query else {'match_all': {}}
@@ -145,6 +154,8 @@ class DocumentSearchResultsView(SearchResultsView):
 
         query['fields'] = ['document_id', 'document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
+        print query
+
         return DocumentSearchResults(query)
 
 class AggregatedSearchResults(list):
