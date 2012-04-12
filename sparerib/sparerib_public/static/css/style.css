@@ -83,6 +83,9 @@ header, footer, #main {
   margin-left: auto;
   margin-right: auto;
 }
+header {
+  position: relative;
+}
 #main {
   background-color: #ffffff;
   padding: 20px;
@@ -291,6 +294,21 @@ ul.results span.document-count {
 }
 .attachment .tab-view a:hover, .attachment .tab-view a:active {
   color: #ebf5ff;
+}
+
+#top-search {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+#top-search h2, #top-search .result-set {
+  display: none;
+}
+#top-search .search input {
+  font-size: 120%;
+}
+#top-search .search input[type=text] {
+  width: 300px;
 }
 
 footer {

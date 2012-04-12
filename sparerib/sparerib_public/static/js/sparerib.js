@@ -51,15 +51,22 @@ var helpers = {
 // Views
 var SearchView = Backbone.View.extend({
     tagName: 'div',
-    id: 'search-view',
+    className: 'search-view',
 
     events: {
-        'submit form': 'search'
+        'submit form': 'search',
+        'click ul.results a': 'showTopSearch'
     },
 
     template: _.template($('#search-tpl').html()),
     render: function() {
         $(this.el).html(this.template(this));
+
+        // if we're in the main area, hide the top area
+        if (this.id == 'main-search-form') {
+            $('#top-search').hide().find('input[type=text]').val('');
+        }
+
         return this;
     },
 
@@ -67,6 +74,10 @@ var SearchView = Backbone.View.extend({
         evt.preventDefault();
         app.navigate('/search/' + encodeURIComponent($(this.el).find('.search-query').val()), {trigger: true});
         return false;
+    },
+
+    showTopSearch: function(evt) {
+        $('#top-search').show()
     }
 })
 
@@ -83,8 +94,12 @@ var ResultsView = Backbone.View.extend({
                     $(this.el).html(this.template(context));
 
                     // update the URL for the right type
-                    if (!this.model.get('level'))
-                    app.navigate('/search-' + this.model.attributes.search.aggregation_level + '/' + encodeURIComponent(this.model.attributes.search.raw_query) + (this.model.get('in_page') ? '/' + this.model.get('in_page') : ''), {trigger: false, replace: true});
+                    if (!this.model.get('level')) {
+                        app.navigate('/search-' + this.model.attributes.search.aggregation_level + '/' + encodeURIComponent(this.model.attributes.search.raw_query) + (this.model.get('in_page') ? '/' + this.model.get('in_page') : ''), {trigger: false, replace: true});
+                    }
+
+                    // populate the search input
+                    this.$el.closest('.search-view').find('form input.search-query').val(context.search.raw_query);
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -254,10 +269,14 @@ var AppRouter = Backbone.Router.extend({
         this.route("search/:term", "defaultSearchResults");
         this.route("search-:type/:term/:page", "searchResults");
         this.route("search-:type/:term", "searchResults");
+
+        // load the upper search box at the beginning
+        var topSearchView = new SearchView({'id': 'top-search-form'});
+        $('#top-search').html(topSearchView.render().el);
     },
 
     searchLanding: function() {
-        var searchView = new SearchView();
+        var searchView = new SearchView({'id': 'main-search-form'});
         $('#main').html(searchView.render().el);
     },
 
@@ -267,10 +286,10 @@ var AppRouter = Backbone.Router.extend({
     searchResults: function(type, query, page) {
         console.log(query, page);
         // are we on a search page?
-        var resultSet = $('.result-set');
+        var resultSet = $('#main .result-set');
         if (resultSet.length == 0) {
             this.searchLanding();
-            resultSet = $('.result-set');
+            resultSet = $('#main .result-set');
         }
 
         if (typeof page == "undefined") {
