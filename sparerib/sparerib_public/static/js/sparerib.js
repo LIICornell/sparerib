@@ -54,19 +54,12 @@ var SearchView = Backbone.View.extend({
     className: 'search-view',
 
     events: {
-        'submit form': 'search',
-        'click ul.results a': 'showTopSearch'
+        'submit form': 'search'
     },
 
     template: _.template($('#search-tpl').html()),
     render: function() {
         $(this.el).html(this.template(this));
-
-        // if we're in the main area, hide the top area
-        if (this.id == 'main-search-form') {
-            $('#top-search').hide().find('input[type=text]').val('');
-        }
-
         return this;
     },
 
@@ -74,10 +67,6 @@ var SearchView = Backbone.View.extend({
         evt.preventDefault();
         app.navigate('/search/' + encodeURIComponent($(this.el).find('.search-query').val()), {trigger: true});
         return false;
-    },
-
-    showTopSearch: function(evt) {
-        $('#top-search').show()
     }
 })
 
@@ -273,6 +262,15 @@ var AppRouter = Backbone.Router.extend({
         // load the upper search box at the beginning
         var topSearchView = new SearchView({'id': 'top-search-form'});
         $('#top-search').html(topSearchView.render().el);
+
+        // on all navigation, check to show/hide the search box
+        this.on('all', function () {
+            if ($('#main .search-view').length != 0) {
+                $('#top-search').hide();
+            } else {
+                $('#top-search').show().find('input[type=text]').val('');
+            }
+        });
     },
 
     searchLanding: function() {
@@ -329,6 +327,7 @@ var AppRouter = Backbone.Router.extend({
  
 var app = new AppRouter();
 window.app = app;
+console.log(app);
 
 Backbone.history.start({pushState: true});
 
