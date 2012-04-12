@@ -134,7 +134,8 @@ var DocumentDetailView = Backbone.View.extend({
     id: 'document-view',
 
     events: {
-        'click .tab': 'switchTab'
+        'click .tab': 'switchTab',
+        'click .attachment-name': 'toggleAttachment'
     },
 
     template: _.template($('#document-tpl').html()),
@@ -151,8 +152,8 @@ var DocumentDetailView = Backbone.View.extend({
                     }));
                     $(this.el).html(this.template(context));
 
-                    // click on the first item in each visible tab area
-                    $(this.el).find('.tab-area:visible .tab:first-child').click()
+                    // make the first attachment visible
+                    $(this.el).find('.attachment-name').eq(0).click()
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -175,6 +176,26 @@ var DocumentDetailView = Backbone.View.extend({
             if (!iframe.attr('src')) {
                 iframe.attr('src', iframe.attr('data-src'));
             }
+        }
+    },
+
+    toggleAttachment: function(evt) {
+        var $name = $(evt.target).closest('.attachment-name');
+        var $attachment = $name.closest('.attachment');
+        var $area = $attachment.find('.tab-area');
+        if (!$name.hasClass('active')) {
+            // first make sure something is visible in the hidden area
+            var tabs = $area.find('.tab');
+            if (tabs.filter('.active').length == 0) {
+                tabs.eq(0).click();
+            }
+
+            // then show the whole thing
+            $name.addClass('active');
+            $area.slideDown('fast');
+        } else {
+            $name.removeClass('active');
+            $area.slideUp('fast');
         }
     }
 })

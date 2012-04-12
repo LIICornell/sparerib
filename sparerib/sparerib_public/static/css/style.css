@@ -70,6 +70,7 @@ a, a:visited { color: #0a6e92; text-decoration: none; }
 a:active, a:hover { color: #35a1ce; }
 h1, h2 { font-family: 'Share', sans-serif; font-weight: normal; }
 h1 { color: #ffffff; font-size: 250%; }
+h1 a, h1 a:hover { color: #ffffff !important; }
 h2 { font-size: 210%; margin-bottom: 10px; margin-top: 0; padding-top: 0; line-height: 1;}
 h3, h4 { font-weight: bold; padding: 0; margin: 0; }
 h3 { font-size: 140%; }
@@ -203,7 +204,7 @@ ul.results span.document-count {
 .notice {
   padding: 10px;
   text-align: center;
-  background: #DDEEFF;
+  background: #ddeeff;
   font-family: georgia, sans-serif;
   font-style: italic;
   margin-bottom: 20px;
@@ -231,7 +232,18 @@ ul.results span.document-count {
 .attachment .attachment-name {
   background: #ddeeff;
   padding: 8px;
+  cursor: pointer;
 }
+.attachment .attachment-name:hover {
+  background: #ebf5ff;
+}
+.attachment-name .toggle { background: url("../img/icons/small/toggle.png") bottom left no-repeat; float: left; width: 13px; height: 12px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-right: 6px; padding: 0; }
+.attachment-name.active .toggle { background: url("../img/icons/small/toggle.png") top left no-repeat; }
+
+.attachment .tab-area {
+  display: none;
+}
+
 .attachment .tabs {
   width: 80px;
   float: left;
@@ -273,6 +285,12 @@ ul.results span.document-count {
   height: 400px;
   background: #ffffff;
   border: 1px solid #666666;
+}
+.attachment .tab-view a {
+  color: #ddeeff;
+}
+.attachment .tab-view a:hover, .attachment .tab-view a:active {
+  color: #ebf5ff;
 }
 
 footer {

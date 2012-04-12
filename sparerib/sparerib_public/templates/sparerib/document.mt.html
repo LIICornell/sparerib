@@ -22,9 +22,11 @@
 </div>
 <div class="clear"></div>
 
+<h3>Files</h3>
 <% _.each(full_attachments, function(attachment) { %>
 <div class="attachment">
     <div class="attachment-name">
+        <a class="toggle">Toggle</a>
         <% if (attachment.attachment) { %><span class="label">Attachment:</span><% } %>
         <span class="title"><%=attachment.title%></span>
     </div>
