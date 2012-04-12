@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from views import AgencyView, DocketView, DocumentView, EntityView
+from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView
 
 from search import DocumentSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
@@ -15,4 +15,7 @@ urlpatterns = patterns('',
     url(r'^search/docket/(?P<query>.*$)', DocketSearchResultsView.as_view(), name='search-dockets-view'),
     url(r'^search/agency/(?P<query>.*$)', AgencySearchResultsView.as_view(), name='search-agency-view'),
     url(r'^search/(?P<query>.*$)', DefaultSearchResultsView.as_view(), name='search-default-view'),
+
+    # raw text
+    url(r'^file/(?P<es_id>[0-9a-f]+)/(?P<object_id>[0-9a-z]+)_(?P<file_type>[0-9a-z]+)\.txt$', RawTextView.as_view(), name='raw-text-view'),
 )

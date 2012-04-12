@@ -133,6 +133,10 @@ var DocumentDetailView = Backbone.View.extend({
     tagName: 'div',
     id: 'document-view',
 
+    events: {
+        'click .tab': 'switchTab'
+    },
+
     template: _.template($('#document-tpl').html()),
     render: function() {
         this.model.fetch(
@@ -146,6 +150,9 @@ var DocumentDetailView = Backbone.View.extend({
                         return attachment;
                     }));
                     $(this.el).html(this.template(context));
+
+                    // click on the first item in each visible tab area
+                    $(this.el).find('.tab-area:visible .tab:first-child').click()
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -153,6 +160,22 @@ var DocumentDetailView = Backbone.View.extend({
             }
         );
         return this;
+    },
+
+    switchTab: function(evt) {
+        var $tab = $(evt.target).closest('.tab');
+        var $this = $(this.el);
+        var $area = $tab.closest('.tab-area');
+        if (!$tab.hasClass('active')) {
+            $area.find('.tab').removeClass('active');
+            $tab.addClass('active');
+
+            var view = $area.find('.tab-view').hide().filter('[data-tab-id=' + $tab.attr('data-tab-id') + ']').show();
+            var iframe = view.find('iframe');
+            if (!iframe.attr('src')) {
+                iframe.attr('src', iframe.attr('data-src'));
+            }
+        }
     }
 })
 

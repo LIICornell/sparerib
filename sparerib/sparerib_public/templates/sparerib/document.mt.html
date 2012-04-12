@@ -28,20 +28,28 @@
         <% if (attachment.attachment) { %><span class="label">Attachment:</span><% } %>
         <span class="title"><%=attachment.title%></span>
     </div>
-    <div class="tabs">
-        <% var i = 0; _.each(attachment.views, function(view) { %>
-            <div class="tab <%=(i == 0 ? 'active' : '')%>" data-tab-id="<%=i%>"><img src="<%=getIcon(view.file_type)%>" /></div>
-        <% i++ }); %>
+    <div class="tab-area">
+        <div class="tabs">
+            <% var i = 0; _.each(attachment.views, function(view) { %>
+                <div class="tab<%=(view.raw_text ? '' : ' failed')%>" data-tab-id="<%=i%>"><img src="<%=getIcon(view.file_type)%>" /></div>
+            <% i++ }); %>
+        </div>
+        <div class="tab-views">
+            <% var i = 0; _.each(attachment.views, function(view) { %>
+                <div class="tab-view" data-tab-id="<%=i%>">
+                    <% if (view.raw_text) { %>
+                    <iframe class="document-text" src="" data-src="<%=view.raw_text%>" />
+                    <% } else { %>
+                    <div class="iframe-placeholder">
+                        <div class="notice">We were unable to extract text from this document.</div>
+                    </div>
+                    <% } %>
+                    <a href="<%=view.url.replace('inline', 'attachment')%>" class="label">download from regulations.gov &raquo;</a>
+                </div>
+            <% i++ }); %>
+        </div>
+        <div class="clear"></div>
     </div>
-    <div class="tab-views">
-        <% var i = 0; _.each(attachment.views, function(view) { %>
-            <div class="tab-view <%=(i == 0 ? 'active' : '')%>" data-tab-id="<%=i%>">
-                <iframe class="document-text" src="" />
-                <a href="<%=view.url.replace('inline', 'attachment')%>" class="label">download from regulations.gov &raquo;</a>
-            </div>
-        <% i++ }); %>
-    </div>
-    <div class="clear"></div>
 </div>
 <% }); %>
 

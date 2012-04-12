@@ -240,9 +240,14 @@ ul.results span.document-count {
   background: #666666;
   margin-bottom: 6px;
   padding: 8px;
+  cursor: pointer;
 }
 .attachment .tabs .active {
   background: #333333;
+  cursor: auto;
+}
+.attachment .tabs .failed img {
+  opacity: 0.4;
 }
 
 .attachment .tab-views {
@@ -257,9 +262,17 @@ ul.results span.document-count {
 .attachment .tab-views .active {
   display: block;
 }
+.attachment .tab-views .iframe-placeholder {
+  width: 100%;
+  height: 400px;
+  padding-top: 2px;
+  padding-bottom: 7px;
+}
 .attachment .tab-views iframe {
   width: 100%;
   height: 400px;
+  background: #ffffff;
+  border: 1px solid #666666;
 }
 
 footer {

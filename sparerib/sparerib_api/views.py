@@ -3,6 +3,8 @@ from djangorestframework.renderers import DEFAULT_RENDERERS
 from djangorestframework.response import Response, ErrorResponse
 from djangorestframework import status
 
+from django.http import HttpResponse, Http404
+
 from django.views.generic import View
 from django.core.urlresolvers import reverse
 
@@ -15,6 +17,8 @@ from django.template.defaultfilters import slugify
 
 from django.conf import settings
 import pyes
+
+import re
 
 class AggregatedView(ResponseMixin, View):
     "Regulations.gov docket view"
@@ -167,8 +171,9 @@ class DocumentView(ResponseMixin, View):
             out['views'].append({
                 'object_id': object_id,
                 'file_type': view['type'],
-                'extracted': view.get('extracted', False),
-                'url': view['url']
+                'extracted': view.get('extracted', False) is True,
+                'url': view['url'],
+                'raw_text': reverse('raw-text-view', kwargs=dict(zip(['es_id', 'object_id', 'file_type'], re.split('[./]', view['es_address'])))) if 'es_address' in view else None
             })
 
             for entity in view.get('entities', []):
@@ -183,8 +188,9 @@ class DocumentView(ResponseMixin, View):
                 a['views'].append({
                     'object_id': attachment['object_id'],
                     'file_type': view['type'],
-                    'extracted': view.get('extracted', False),
-                    'url': view['url']
+                    'extracted': view.get('extracted', False) is True,
+                    'url': view['url'],
+                    'raw_text': reverse('raw-text-view', kwargs=dict(zip(['es_id', 'object_id', 'file_type'], re.split('[./]', view['es_address'])))) if 'es_address' in view else None
                 })
 
                 for entity in view.get('entities', []):
@@ -289,3 +295,31 @@ class EntityView(ResponseMixin, View):
             out['stats'] = {'count': 0}
 
         return self.render(Response(200, out))
+
+class RawTextView(View):
+    def get(self, request, es_id, object_id, file_type):
+        # use ES for text -- architecting it so we can ditch Mongo text if we want
+        # this is a query that finds our record and uses some MVEL nonsense to just
+        # pull our particular text entry; input has already been sanitized by the
+        # URL router
+        query = {
+            'filter': {
+                'term': {'_id': es_id}
+            },
+            'script_fields': {
+                'file': {
+                    'script': '($ in _source.files if $.object_id == "%s" && $.file_type == "%s")' % (object_id, file_type)
+                }
+            }
+        }
+        
+        es = pyes.ES(settings.ES_SETTINGS)
+        results = es.search_raw(query)
+
+        if len(results['hits']['hits']) == 0:
+            raise Http404
+
+        if len(results['hits']['hits'][0]['fields']['file']) == 0:
+            raise Http404
+
+        return HttpResponse(results['hits']['hits'][0]['fields']['file'][0]['text'], content_type='text/plain')
