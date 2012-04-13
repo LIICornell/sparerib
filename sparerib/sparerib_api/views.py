@@ -8,7 +8,7 @@ from django.http import HttpResponse, Http404
 from django.views.generic import View
 from django.core.urlresolvers import reverse
 
-from util import get_db
+from util import *
 
 from collections import defaultdict
 import itertools, isoweek
@@ -18,7 +18,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re
+import re, datetime, calendar
 
 class AggregatedView(ResponseMixin, View):
     "Regulations.gov docket view"
@@ -57,17 +57,12 @@ class AggregatedView(ResponseMixin, View):
                     'count': value
                 } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)]
 
-            if 'weeks' in stats:
-                stats['weeks'] = [{
-                    'date_range': key,
-                    'count': value
-                } for key, value in stats['weeks']]
+            if 'weeks' in stats and len(stats['weeks']) != 0:
+                stats['weeks'] = expand_weeks(stats['weeks'])
 
-            if 'months' in stats:
-                stats['months'] = [{
-                    'month': key,
-                    'count': value
-                } for key, value in stats['months']]
+
+            if 'months' in stats and len(stats['months']) != 0:
+                stats['months'] = expand_months(stats['months'])
 
             # limit ourselves to the top ten of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
@@ -240,10 +235,7 @@ class EntityView(ResponseMixin, View):
             # cleanup, plus stitch on some additional data
             for mention_type in ["text_mentions", "submitter_mentions"]:
                 stats[mention_type].update({
-                    'months': [{
-                        'month': key,
-                        'count': value
-                    } for key, value in stats[mention_type]['months']],
+                    'months': expand_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
                 })
 
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
