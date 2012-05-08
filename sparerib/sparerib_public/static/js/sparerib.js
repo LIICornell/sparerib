@@ -118,8 +118,16 @@ var AggregatedDetailView = Backbone.View.extend({
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': context.stats[timeGranularity]
+                        'timeline': context.stats[timeGranularity],
+                        'overlays': []
                     }];
+                    _.each(context.stats.fr_docs, function(doc) {
+                        timeline_data[0].overlays.push({
+                            'name': doc.title,
+                            'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
+                            'type': doc.type
+                        });
+                    });
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
                 }, this),
                 'error': function() {
@@ -223,9 +231,7 @@ var EntityDetailView = Backbone.View.extend({
                         var timeline_data = [{
                             'name': 'Submission Timline',
                             'href': '',
-                            'timeline': _.map(context.stats[submission_type].months, function(month) {
-                                return month.count;
-                            })
+                            'timeline': context.stats[submission_type].months
                         }];
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
                     });
@@ -280,7 +286,6 @@ var AppRouter = Backbone.Router.extend({
         this.searchResults(null, query, page);
     },
     searchResults: function(type, query, page) {
-        console.log(query, page);
         // are we on a search page?
         var resultSet = $('#main .result-set');
         if (resultSet.length == 0) {
@@ -325,7 +330,6 @@ var AppRouter = Backbone.Router.extend({
  
 var app = new AppRouter();
 window.app = app;
-console.log(app);
 
 Backbone.history.start({pushState: true});
 

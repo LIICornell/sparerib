@@ -277,6 +277,7 @@ D3Charts = {
         chart_y: 10,
         right_gutter: 135,
         label_padding: 10,
+        show_legend: true,
         legend_padding: 15,
         legend_r: 5,
         dot_r: 5,
@@ -286,7 +287,8 @@ D3Charts = {
         tick_color: '#dcddde',
         text_color: "#666666",
         link_color: "#0a6e92",
-        tick_length: 5
+        tick_length: 5,
+        overlay_colors: {}
     },
     _get_timeline_size: function(opts) {
         return {
@@ -305,9 +307,11 @@ D3Charts = {
             .attr("height", size.height);
         
         // scalers
-        y = d3.scale.linear().domain([0, d3.max(_.flatten(_.map(data, function(d) { return _.map(d.timeline, function(e) { return e.count; }); })))]).range([opts.chart_height, 0]);
+        var all_timelines = _.flatten(_.map(data, function(d) { return d.timeline; }));
+        y = d3.scale.linear().domain([0, d3.max(_.map(all_timelines, function(d) { return d.count; }))]).range([opts.chart_height, 0]);
 
-        x = d3.time.scale.utc().domain([new Date(data[0].timeline[0].date_range[0]), new Date(data[0].timeline[data[0].timeline.length - 1].date_range[1])]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
+        var all_dates = _.flatten(_.map(all_timelines, function(d) { return d.date_range; }));
+        x = d3.time.scale.utc().domain([new Date(d3.min(all_dates)), new Date(d3.max(all_dates))]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
 
         // attach mean dates to all the data to make the rest of it easier, and tack zeros onto the beginning and end
         _.each(data, function(series) {
@@ -347,7 +351,6 @@ D3Charts = {
         
         // x-ticks
         var tickFormat = x.tickFormat(8);
-        console.log(tickFormat);
         var ticks = chart.append('g')
             .classed('ticks', true)
             .selectAll('line.graph-tick')
@@ -392,7 +395,11 @@ D3Charts = {
                 .style('fill-opacity', 0.1);
         
         // floating box
-        var make_box = function(x, y, color, text) {
+        var make_box = function(x, y, color, text, left) {
+            if (typeof left === "undefined") {
+                left = true;
+            }
+
             var box = chart.append('g')
                 .classed('graph-float', true);
                 
@@ -400,22 +407,27 @@ D3Charts = {
             
             var label = box.append("text")
                 .classed('chart-number', true)
-                .attr("x", x - (2 * opts.label_padding))
                 .attr("y", y)
                 .attr("dy", ".5em") // vertical-align: middle
                 .attr('fill', opts.text_color)
                 .text(text)
-                .style('font', '11px arial,sans-serif')
-                .style('text-anchor', 'end');
+                .style('font', '11px arial,sans-serif');
             
             var width = label.node().getComputedTextLength();
             rect.attr('width', width + (2 * opts.label_padding))
                 .attr('height', opts.row_height + opts.label_padding)
-                .attr('x', x - width - (3 * opts.label_padding))
                 .attr('y', y - opts.label_padding)
                 .style('fill', '#fff')
                 .style('stroke', color)
                 .style('stroke-width', 1);
+
+            if (left) {
+                label.attr("x", x - (2 * opts.label_padding)).style('text-anchor', 'end');
+                rect.attr('x', x - width - (3 * opts.label_padding));
+            } else {
+                label.attr("x", x - (-2 * opts.label_padding)).style('text-anchor', 'start');
+                rect.attr('x', parseFloat(x) + opts.label_padding);
+            }
             
             return box;
         };
@@ -448,7 +460,7 @@ D3Charts = {
 
                         var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle')
                             .attr('transform', 'scale(1.5)');
-                        clearTimeout(circle.node().timeout);
+                        circle.node() && clearTimeout(circle.node().timeout);
                         chart.selectAll('g.legend-item[data-series="' + series + '"] text')
                             .style('font-weight', 'bold');
                     })
@@ -458,7 +470,7 @@ D3Charts = {
                         this.floatingBox.remove();
 
                         var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle');
-                        circle.node().timeout = setTimeout(function() {
+                        if (circle.node()) circle.node().timeout = setTimeout(function() {
                             circle.transition()
                                 .duration(200)
                                 .attr('transform', 'scale(1)');
@@ -477,49 +489,111 @@ D3Charts = {
             .style("stroke-width", "1");
         
         // legend
-        var legend_x = opts.chart_x + opts.chart_width + opts.legend_padding;
-        var legend_y = opts.chart_y + (opts.chart_height / 2) - (data.length * opts.row_height / 2);
-        var legend = chart.append("g")
-            .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
-        
-        var legendItems = legend.selectAll("g.legend-item")
+        if (opts.show_legend) {
+            var legend_x = opts.chart_x + opts.chart_width + opts.legend_padding;
+            var legend_y = opts.chart_y + (opts.chart_height / 2) - (data.length * opts.row_height / 2);
+            var legend = chart.append("g")
+                .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
+            
+            var legendItems = legend.selectAll("g.legend-item")
+                .data(data)
+                .enter()
+                    .append("g")
+                    .classed("legend-item", true)
+                    .attr("data-series", function(d, i) { return i; })
+                    .attr("transform", function(d, i) { return "translate(0," + ((i + .5) * opts.row_height) + ")"; })
+            
+                legendItems.append("circle")
+                    .attr("fill", function(d, i) { return opts.colors[i]; })
+                    .attr("cx", 0)
+                    .attr("cy", 0)
+                    .attr("r", opts.legend_r)
+                    .each(function() {
+                        this.timeout = null;
+                    })
+                
+                legendItems.each(function(d, i) {
+                    var parent = d3.select(this);
+                    if (d.href) {
+                        parent = parent.append("a")
+                        parent.attr('xlink:href', d.href);
+                    }
+                
+                    parent.append("text")
+                        .attr("y", ".45em") // vertical-align: middle
+                        .attr("x", opts.legend_padding)
+                        .attr('fill', parent.node().tagName.toLowerCase() == 'a' ? opts.link_color : opts.text_color)
+                        .text(function(d, i) { return d.name; })
+                        .style('font', '11px arial,sans-serif');
+                });
+        }
+
+        // overlays
+        var overlayGroups = chart.selectAll("g.overlay-group")
             .data(data)
             .enter()
-                .append("g")
-                .classed("legend-item", true)
-                .attr("data-series", function(d, i) { return i; })
-                .attr("transform", function(d, i) { return "translate(0," + ((i + .5) * opts.row_height) + ")"; })
-        
-            legendItems.append("circle")
-                .attr("fill", function(d, i) { return opts.colors[i]; })
-                .attr("cx", 0)
-                .attr("cy", 0)
-                .attr("r", opts.legend_r)
-                .each(function() {
-                    this.timeout = null;
-                })
-            
-            legendItems.each(function(d, i) {
-                var parent = d3.select(this);
-                if (d.href) {
-                    parent = parent.append("a")
-                    parent.attr('xlink:href', d.href);
+            .append("g")
+            .classed("overlay-group", true)
+            .each(function(d, i) {
+                if (typeof d.overlays !== "undefined" && d.overlays) {
+                    var group = d3.select(this).selectAll("g.overlay")
+                        .data(d.overlays.slice(0,10))
+                        .enter()
+                        .append("g")
+                        .classed("overlay", true)
+                        .each(function(d, i) {
+                            var overlay = d3.select(this);
+                            var x1 = x(new Date(d.date_range[0]));
+                            var x2 = d.date_range[1] ? x(new Date(d.date_range[1])) : null;
+                            var y0 = ((1 - (0.05 * (i + 1))) * opts.chart_height) + opts.chart_y;
+                            var color = typeof opts.overlay_colors[d.type] === "undefined" ? "red": opts.overlay_colors[d.type];
+
+                            if (x2) {
+                                // horizontal long line
+                                overlay.append("line")
+                                    .attr("x1", x1)
+                                    .attr("x2", x2)
+                                    .attr("y1", y0)
+                                    .attr("y2", y0)
+                                    .style("stroke", color)
+                                    .style("stroke-width", "2");
+
+                                // vertical end-tick
+                                overlay.append("line")
+                                    .attr("x1", x2)
+                                    .attr("x2", x2)
+                                    .attr("y1", y0 - opts.tick_length)
+                                    .attr("y2", y0 + opts.tick_length)
+                                    .style("stroke", color)
+                                    .style("stroke-width", "2");
+
+                            }
+                            // start circle
+                            overlay.append("circle")
+                                .attr("cx", x1)
+                                .attr("cy", y0)
+                                .attr("r", opts.tick_length)
+                                .style("stroke", color)
+                                .style("fill", "#ffffff")
+                                .style("stroke-width", "2")
+                                .on('mouseover', function(d, i) {
+                                    var dthis = d3.select(this).style('fill', color);
+                                    this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')), color, d.name, false);
+                                })
+                                .on('mouseout', function(d, i) {
+                                    d3.select(this).style("fill", '#ffffff');
+                                    this.floatingBox.remove();
+                                });
+                    });
+
                 }
-            
-                parent.append("text")
-                    .attr("y", ".45em") // vertical-align: middle
-                    .attr("x", opts.legend_padding)
-                    .attr('fill', parent.node().tagName.toLowerCase() == 'a' ? opts.link_color : opts.text_color)
-                    .text(function(d, i) { return d.name; })
-                    .style('font', '11px arial,sans-serif');
-            });
+            })
     }
 }
 
 SpareribCharts = {
-    type_breakdown_piechart: function(div, data) {
-        var type_colors = {"public_submission": "#ddeeff", "proposed_rule": "#440000", "rule" : "#990000", 'supporting_material': '#cccccc', 'other': '#333333', 'notice': '#0a6e92'};
-        
+    type_colors: {"public_submission": "#ddeeff", "proposed_rule": "#440000", "rule" : "#990000", 'supporting_material': '#cccccc', 'other': '#333333', 'notice': '#0a6e92'},
+    type_breakdown_piechart: function(div, data) { 
         var in_data = []
 
         var opts = {
@@ -539,7 +613,7 @@ SpareribCharts = {
         _.each(data, function(row) {
             if (row['count'] > 0 && row['type'] != 'None') {
                 in_data.push({'key': row['type'].replace('_', ' '), 'value': row['count']});
-                opts.colors.push(type_colors[row['type']]);
+                opts.colors.push(SpareribCharts.type_colors[row['type']]);
             }
         })
         D3Charts.piechart(div, in_data, opts);
@@ -547,10 +621,10 @@ SpareribCharts = {
     timeline_chart: function(div, data) {
         var opts = {
             chart_height: 250,
-            chart_width: 800,
+            chart_width: 900,
             chart_x: 40,
             chart_y: 10,
-            right_gutter: 135,
+            right_gutter: 5,
             label_padding: 10,
             legend_padding: 15,
             legend_r: 5,
@@ -561,7 +635,9 @@ SpareribCharts = {
             tick_color: '#dcddde',
             text_color: "#666666",
             link_color: "#0a6e92",
-            tick_length: 5
+            tick_length: 5,
+            overlay_colors: SpareribCharts.type_colors,
+            show_legend: false
         }
 
         D3Charts.timeline_chart(div, data, opts);
