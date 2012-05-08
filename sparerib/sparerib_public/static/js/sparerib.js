@@ -118,9 +118,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': _.map(context.stats[timeGranularity], function(period) {
-                            return period.count;
-                        })
+                        'timeline': context.stats[timeGranularity]
                     }];
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
                 }, this),

@@ -305,10 +305,19 @@ D3Charts = {
             .attr("height", size.height);
         
         // scalers
-        y = d3.scale.linear().domain([0, d3.max(_.flatten(_.map(data, function(d) { return d.timeline; })))]).range([opts.chart_height, 0]);
+        y = d3.scale.linear().domain([0, d3.max(_.flatten(_.map(data, function(d) { return _.map(d.timeline, function(e) { return e.count; }); })))]).range([opts.chart_height, 0]);
 
-        var max_weeks = d3.max(_.map(data, function(item) { return item.timeline.length; }));
-        x = d3.scale.linear().domain([0, max_weeks - 1]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
+        x = d3.time.scale.utc().domain([new Date(data[0].timeline[0].date_range[0]), new Date(data[0].timeline[data[0].timeline.length - 1].date_range[1])]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
+
+        // attach mean dates to all the data to make the rest of it easier, and tack zeros onto the beginning and end
+        _.each(data, function(series) {
+            _.each(series.timeline, function(point) {
+                var d0 = new Date(point.date_range[0]), d1 = new Date(point.date_range[1]);
+                point.mean_date = new Date(d0.getTime() + ((d1 - d0)/2));
+            })
+
+            series.timeline = [{'count': 0, 'mean_date': new Date(series.timeline[0].date_range[0])}].concat(series.timeline, [{'count': 0, 'mean_date': new Date(series.timeline[series.timeline.length - 1].date_range[1])}])
+        })
 
         // y-ticks
         var ticks = chart.append('g')
@@ -337,46 +346,36 @@ D3Charts = {
                     .style('text-anchor', 'end');
         
         // x-ticks
-        var dayToPx = function(d) { return x(d.day / 7) - .5; };
-        // 0-indexed quarter starts
-        var quarters = _.filter([
-            {'label': 'Jan. 1', 'day': 0}, // jan 1
-            {'label': 'Apr. 1', 'day': 90}, // apr 1
-            {'label': 'Jul. 1', 'day': 181}, // jul 1
-            {'label': 'Oct. 1', 'day': 273}, // oct 1
-            {'label': 'Jan. 1', 'day': 365}, // jan 1
-            {'label': 'Apr. 1', 'day': 455}, // apr 1
-            {'label': 'Jul. 1', 'day': 546}, // jul 1
-            {'label': 'Oct. 1', 'day': 638} // oct 1
-        ], function(day) { return day.day < max_weeks * 7; });
-
+        var tickFormat = x.tickFormat(8);
+        console.log(tickFormat);
         var ticks = chart.append('g')
             .classed('ticks', true)
             .selectAll('line.graph-tick')
-            .data(quarters)
+            .data(x.ticks(10))
             .enter();
                 ticks.append('line')
                     .classed('graph-tick', true)
-                    .attr("x1", dayToPx)
-                    .attr("x2", dayToPx)
+                    .attr("x1", x)
+                    .attr("x2", x)
                     .attr("y1", opts.chart_y + opts.chart_height)
                     .attr("y2", opts.chart_y + opts.chart_height + opts.tick_length)
                     .style("stroke", opts.axis_color)
                     .style("stroke-width", "1")
                 ticks.append('text')
                     .classed('chart-number', true)
-                    .attr("x", dayToPx)
+                    .attr("x", x)
                     .attr("y", opts.chart_y + opts.chart_height + opts.tick_length + opts.label_padding)
                     .attr("dy", ".45em") // vertical-align: middle
                     .attr('fill', opts.text_color)
-                    .text(function(d, i) { return String(d.label); })
+                    .text(function(d, i) { return tickFormat(d); })
                     .style('font', '11px arial,sans-serif')
                     .style('text-anchor', 'middle');
         
         // lines
         var line = d3.svg.line()
-            .x(function(d,i) { return x(i); })
-            .y(y);
+            .x(function(d,i) { return x(d.mean_date); })
+            .y(function(d,i) { return y(d.count); })
+            .interpolate('monotone');
         
         chart.append('g')
             .classed('lines', true)
@@ -389,7 +388,8 @@ D3Charts = {
                 .attr('d', function(d, i) { return line(d.timeline); })
                 .style('stroke-width', '3')
                 .style('stroke', function(d, i) { return opts.colors[i]; })
-                .style('fill', 'none');
+                .style('fill', function(d, i) { return opts.colors[i]; })
+                .style('fill-opacity', 0.1);
         
         // floating box
         var make_box = function(x, y, color, text) {
@@ -435,8 +435,8 @@ D3Charts = {
                 .enter()
                     .append('circle')
                     .attr("fill", 'rgba(0,0,0,0)')
-                    .attr("cx", function(d,i) { return x(i); })
-                    .attr("cy", y)
+                    .attr("cx", function(d,i) { return x(d.mean_date); })
+                    .attr("cy", function(d,i) { return y(d.count); })
                     .attr("r", opts.dot_r)
                     .style('stroke', 'rgba(0,0,0,0)')
                     .style('stroke-width', 8)
@@ -444,7 +444,7 @@ D3Charts = {
                         var series = d3.select(this.parentNode).attr('data-series');
                         var color = opts.colors[parseInt(series)];
                         var dthis = d3.select(this).attr('fill', color);
-                        this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, format(d));
+                        this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, format(d.count));
 
                         var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle')
                             .attr('transform', 'scale(1.5)');
