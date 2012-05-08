@@ -15,18 +15,18 @@
 </div>
 
 <div class="chart-row">
-    <% if (typeof stats.rules !== "undefined") { %>
+    <% if (typeof stats.fr_docs !== "undefined") { %>
     <div class="chart rules left">
-        <h4>Rules</h4>
+        <h4>Notices and Rules</h4>
         <table>
             <tr>
                 <th>Title</th><th>Date</th><th>Type</th>
             </tr>
-            <% for (var i = 0; i < stats.rules.length; i++) { %>
+            <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
             <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                <td><a href="/document/<%=stats.rules[i].id%>"><%=stats.rules[i].title%></a></td>
-                <td><%=formatDate(stats.rules[i].date)%></td>
-                <td><span class="<%=stats.rules[i].type%>"><%=({'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.rules[i].type]%></span></td>
+                <td><a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></td>
+                <td><%=formatDate(stats.fr_docs[i].date)%></td>
+                <td><span class="doc-type doc-<%=stats.fr_docs[i].type%>"><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%></span></td>
             </tr>
             <% } %>
         </table>

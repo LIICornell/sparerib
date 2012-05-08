@@ -190,21 +190,21 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   margin-bottom: 30px;
 }
 
-.rules .rule {
+.rules .doc-type {
   font-size: 80%;
   text-transform: uppercase;
-  background: #990000;
   color: #ffffff;
   display: block;
   padding: 3px;
 }
-.rules .proposed_rule {
-  font-size: 80%;
-  text-transform: uppercase;
+.rules .doc-rule {
+  background: #990000;
+}
+.rules .doc-proposed_rule {
   background: #440000;
-  color: #ffffff;
-  display: block;
-  padding: 3px;
+}
+.rules .doc-notice {
+  background: #0a6e92;
 }
 .notice {
   padding: 10px;
