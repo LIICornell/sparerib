@@ -1,19 +1,15 @@
 (function($) {
-// Models
+// General models
 var Document = Backbone.Model.extend({ url: function() { return "/api/1.0/document/" + this.id; } });
-var DocumentCollection = Backbone.Collection.extend({ model: Document, url: "/api/1.0/document" });
-
 var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
-var DocketCollection = Backbone.Collection.extend({ model: Docket, url: "/api/1.0/docket" });
-
 var Agency = Backbone.Model.extend({ url: function() { return "/api/1.0/agency/" + this.id; } });
-var AgencyCollection = Backbone.Collection.extend({ model: Agency, url: "/api/1.0/agency" });
-
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
-var EntityCollection = Backbone.Collection.extend({ model: Entity, url: "/api/1.0/entity" });
-
 var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
-var SearchResultsCollection = Backbone.Collection.extend({ model: SearchResults, url: "/api/1.0/search" });
+
+// Cluster models
+var DocketClusters = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id + "/clusters"; } });
+var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.docket_id + "/cluster/" + this.id; } });
+var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.docket_id + "/cluster/" + this.cluster_id + "/document/" + this.id; } });
 
 // Template helpers
 var helpers = {
@@ -245,6 +241,63 @@ var EntityDetailView = Backbone.View.extend({
     }
 })
 
+var ClusterView = Backbone.View.extend({
+    tagName: 'div',
+    id: 'cluster-view',
+
+    template: _.template($('#clusters-tpl').html()),
+    render: function() {
+        this.model.fetch({
+            'success': $.proxy(function() {
+                $(this.el).html(this.template());
+
+                // treemap for the top-level thing
+                var cell = function() {
+                    console.log("called", this)
+                    this
+                        .style("left", function(d) { return d.x + "px"; })
+                        .style("top", function(d) { return d.y + "px"; })
+                        .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+                        .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+                }
+
+                var width = 960,
+                    height = 250;
+
+                var treemap = d3.layout.treemap()
+                    .size([width, height])
+                    .value(function(d) { return d.size; })
+                    .sort(function(a, b) {
+                        var as = a.id >= 0 ? 1 : 0, bs = b.id >= 0? 1 : 0;
+                        var out = as - bs;
+
+                        return out == 0 ? a.value - b.value : out;
+                    });
+
+                var div = d3.select('.cluster-map').append("div")
+                    .style("position", "relative")
+                    .style("width", width + "px")
+                    .style("height", height + "px");
+
+                var data = [{'children': this.model.get('clusters').concat([{'id': -1, 'size': this.model.get('stats').unclustered}])}];
+
+                div.data(data).selectAll("div")
+                    .data(treemap.nodes)
+                .enter().append("div")
+                    .attr("class", "cluster-cell")
+                    .style("background", function(d) { return d.id >= 0 ? "#74AEC9" : "#666666" })
+                    .style("position", "absolute")
+                    .style("border", "1px solid #ffffff")
+                    .call(cell);
+            }, this),
+            'error': function() {
+                console.log('failed');
+            }
+        });
+        return this;
+    }
+})
+
 // Router
 var AppRouter = Backbone.Router.extend({   
     initialize: function() {
@@ -262,6 +315,9 @@ var AppRouter = Backbone.Router.extend({
         this.route("search/:term", "defaultSearchResults");
         this.route("search-:type/:term/:page", "searchResults");
         this.route("search-:type/:term", "searchResults");
+
+        // clusters
+        this.route("docket/:id/clusters", "docketClusters");
 
         // load the upper search box at the beginning
         var topSearchView = new SearchView({'id': 'top-search-form'});
@@ -325,6 +381,12 @@ var AppRouter = Backbone.Router.extend({
         var entity = new Entity({'id': id, 'slug': slug});
         var entityView = new EntityDetailView({model: entity});
         $('#main').html(entityView.render().el);
+    },
+
+    docketClusters: function(id) {
+        var clusters = new DocketClusters({'id': id});
+        var clusterView = new ClusterView({model: clusters});
+        $('#main').html(clusterView.render().el);
     }
 });
  

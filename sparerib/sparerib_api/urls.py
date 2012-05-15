@@ -3,6 +3,8 @@ from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView
 
 from search import DocumentSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
+from clustering import DocketClusterView, SingleClusterView, DocumentClusterView
+
 urlpatterns = patterns('',
     # resource pages
     url(r'^agency/(?P<agency>[A-Z-]+$)', AgencyView.as_view(), name='agency-view'),
@@ -18,4 +20,9 @@ urlpatterns = patterns('',
 
     # raw text
     url(r'^file/(?P<es_id>[0-9a-f]+)/(?P<object_id>[0-9a-z]+)_(?P<file_type>[0-9a-z]+)\.txt$', RawTextView.as_view(), name='raw-text-view'),
+
+    # clusters
+    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/clusters$', DocketClusterView.as_view(), name='docket-clusters'),
+    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)$', SingleClusterView.as_view(), name='single-cluster'),
+    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)/document/(?P<document_id>\d+)$', DocumentClusterView.as_view(), name='document-cluster'),
 )
