@@ -313,6 +313,86 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   width: 300px;
 }
 
+.cluster-map {
+  height: 250px;
+  width: 960px;
+}
+.cluster-docs {
+  margin-top: 10px;
+  height: 600px;
+}
+.cluster-doc {
+  float: left;
+  width: 685px;
+  border: 1px solid #999999;
+  height: 100%;
+  overflow: auto;
+}
+.cluster-doc pre {
+  white-space: pre;
+  font-size: 85%;
+}
+.cluster-doc-list {
+  float: right;
+  width: 260px;
+  border: 1px solid #999999;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.cluster-cell-alive {
+  background-color: #74aec9;
+}
+.cluster-cell-alive:hover {
+  cursor: pointer;
+  background-color: #ddeeff;
+}
+.cluster-cell-dead {
+  background-color: #666666;
+}
+.cluster-cell-selected {
+  background-color: #990000;
+}
+
+.cluster-doc-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 80%;
+}
+.cluster-doc-list ul li {
+  margin: 0;
+  padding: 6px;
+}
+.cluster-doc-list ul li:hover {
+  background-color: #ddeeff;
+  cursor: pointer;
+}
+.cluster-doc-list ul li span {
+  display: block;
+}
+.cluster-doc-list ul li span.cluster-doc-title {
+  font-weight: bold;
+}
+.cluster-doc-selected {
+  background-color: #990000;
+  color: #ffffff;
+}
+
+.cluster-cutoff {
+  text-transform: lowercase;
+  font-family: georgia, serif;
+  font-style: italic;
+  float: right;
+}
+.cluster-cutoff .label {
+  padding-right: 6px;
+}
+
+#cluster-view .loading {
+  background: #eeeeee url("../img/loading.gif") no-repeat center center;
+}
+
 footer {
   padding: 15px;
   text-align: center;

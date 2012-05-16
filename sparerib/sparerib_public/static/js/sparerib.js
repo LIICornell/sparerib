@@ -7,9 +7,9 @@ var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/"
 var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
 
 // Cluster models
-var DocketClusters = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id + "/clusters"; } });
-var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.docket_id + "/cluster/" + this.id; } });
-var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.docket_id + "/cluster/" + this.cluster_id + "/document/" + this.id; } });
+var DocketClusters = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id + "/clusters?cutoff=" + this.get('cutoff'); } });
+var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.id + "?cutoff=" + this.get('cutoff'); } });
+var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.get('cluster_id') + "/document/" + this.id + "?cutoff=" + this.get('cutoff'); } });
 
 // Template helpers
 var helpers = {
@@ -245,15 +245,27 @@ var ClusterView = Backbone.View.extend({
     tagName: 'div',
     id: 'cluster-view',
 
+    events: {
+        'click .cluster-cell-alive': 'switchCluster',
+        'click .cluster-doc-list li': 'switchDoc',
+        'change .cluster-cutoff-selector': 'renderMap'
+    },
+
     template: _.template($('#clusters-tpl').html()),
     render: function() {
+        this.$el.html(this.template({'docket_id': this.model.id}));
+        this.renderMap();
+        return this;
+    },
+    renderMap: function() {
+        console.log('running');
+        this.$el.find('.cluster-map').html("").addClass('loading');
+        this.model.set('cutoff', this.$el.find('.cluster-cutoff-selector').val());
+
         this.model.fetch({
             'success': $.proxy(function() {
-                $(this.el).html(this.template());
-
                 // treemap for the top-level thing
                 var cell = function() {
-                    console.log("called", this)
                     this
                         .style("left", function(d) { return d.x + "px"; })
                         .style("top", function(d) { return d.y + "px"; })
@@ -274,7 +286,9 @@ var ClusterView = Backbone.View.extend({
                         return out == 0 ? a.value - b.value : out;
                     });
 
-                var div = d3.select('.cluster-map').append("div")
+                var div = d3.select('.cluster-map')
+                    .classed('loading', false)
+                    .append("div")
                     .style("position", "relative")
                     .style("width", width + "px")
                     .style("height", height + "px");
@@ -284,17 +298,72 @@ var ClusterView = Backbone.View.extend({
                 div.data(data).selectAll("div")
                     .data(treemap.nodes)
                 .enter().append("div")
-                    .attr("class", "cluster-cell")
-                    .style("background", function(d) { return d.id >= 0 ? "#74AEC9" : "#666666" })
+                    .classed("cluster-cell", true)
+                    .classed("cluster-cell-alive", function(d) { return d.id >= 0; })
+                    .classed("cluster-cell-dead", function(d) { return d.id < 0; })
+                    .attr("data-cluster-id", function(d) { return d.id; })
                     .style("position", "absolute")
                     .style("border", "1px solid #ffffff")
                     .call(cell);
+
+                $(this.el).find('.cluster-cell-alive').eq(0).click();
             }, this),
             'error': function() {
                 console.log('failed');
             }
         });
         return this;
+    },
+
+    switchCluster: function(evt) {
+        var $box = $(evt.target).closest('.cluster-cell');
+        var clusterId = $box.attr('data-cluster-id');
+        this.clusterModel = new Cluster({'cutoff': this.model.get('cutoff'), 'docket_id': this.model.id, 'id': clusterId});
+        
+        var list = $(this.el).find('.cluster-doc-list');
+        list.html("").addClass('loading');
+
+        this.clusterModel.fetch({
+            'success': $.proxy(function() {
+                // TODO: make this a real template with a real view
+                var ul = $("<ul>");
+                list.removeClass("loading").append(ul);
+                _.each(this.clusterModel.get('documents'), function(item) {
+                    ul.append("<li data-document-id='" + item.id + "'><span class='cluster-doc-title'>" + item.title + "</span><span class='cluster-doc-submitter'>" + item.submitter + "</span>");
+                });
+
+                ul.find('li').eq(0).click();
+            }, this),
+            'error': function() {
+                console.log('failed');
+            }
+        });
+
+        $box.parent().find('.cluster-cell-selected').removeClass('cluster-cell-selected');
+        $box.addClass('cluster-cell-selected');
+    },
+
+    switchDoc: function(evt) {
+        var $box = $(evt.target).closest('li');
+        var docId = $box.attr('data-document-id');
+        this.documentModel = new ClusterDocument({'cutoff': this.model.get('cutoff'), 'docket_id': this.model.id, 'cluster_id': this.clusterModel.id, 'id': docId});
+
+        var doc_area = $(this.el).find('.cluster-doc');
+        doc_area.html("").addClass("loading");
+
+        this.documentModel.fetch({
+            'success': $.proxy(function() {
+                var pre = $("<pre>");
+                doc_area.removeClass("loading").append(pre);
+                pre.html(this.documentModel.get('frequency_html'));
+            }, this),
+            'error': function() {
+                console.log('failed');
+            }
+        });
+
+        $box.parent().find('.cluster-doc-selected').removeClass('cluster-doc-selected');
+        $box.addClass('cluster-doc-selected');
     }
 })
 

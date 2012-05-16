@@ -1,3 +1,32 @@
-<h2>Clusters</h2>
+<div class="cluster-cutoff">
+    <span class="label">Group documents with a similarity of</span>
+    <select class="cluster-cutoff-selector">
+        <% _.each(_.range(.5,1,.05), function(i) {
+            var percent = Math.round(100*i);
+            var cutoff = percent / 100;
+        %>
+            <option
+                value=<%=cutoff%>
+                <% if (percent == 90) { %>
+                selected="selected"
+                <% } %>
+            >
+                <%=percent%>%
+            </option>
+        <% }); %>
+    </select>
+</div>
+
+<h2>Clusters for <%=docket_id%></h2>
 
 <div class="cluster-map"></div>
+
+<div class="cluster-docs">
+    <div class="cluster-doc">
+
+    </div>
+    <div class="cluster-doc-list">
+
+    </div>
+    <div class="clear"></div>
+</div>

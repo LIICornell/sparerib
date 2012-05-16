@@ -30,11 +30,11 @@ class CommonClusterView(DRFView):
     @property
     def corpus(self):
         if self._corpus is None:
-            corpora = get_corpora_by_metadata('docket', self.kwargs['docket_id'])
+            corpora = cached_get_corpora_by_metadata('docket', self.kwargs['docket_id'])
             if corpora:
                 self._corpus = corpora[0]
             else:
-                self.corpus = Corpus()
+                self.corpus = CacheCorpus(-1)
         return self._corpus
 
     @property
@@ -123,7 +123,11 @@ class DocumentClusterView(CommonClusterView):
 
 ### UTILITIES ####
 
+from cache import cache
+hour_cache = cache(seconds=3600)
+
 # this is mostly a copy of the centroid_doc method as of 87d6e4, except it returns all docs, and their metadata instead of their text
+@hour_cache
 def docs_by_centrality(corpus, doc_ids):
     """Return the document from given document set with minimum average
     distance to other documents in the set.
@@ -160,3 +164,19 @@ def docs_by_centrality(corpus, doc_ids):
     """, dict(corpus_id=corpus.id, doc_ids=tuple(doc_ids)))
             
     return corpus.cursor.fetchall()
+
+class CacheCorpus(Corpus):
+    def __hash__(self):
+        return hash(self.id)
+
+    def __repr__(self):
+        return 'corpus_%s' % self.id
+
+    clusters = hour_cache(Corpus.clusters)
+
+@hour_cache
+def _cached_get_corpora_by_metadata(key, value):
+    return [c.id for c in get_corpora_by_metadata(key, value)]
+
+def cached_get_corpora_by_metadata(key, value):
+    return [CacheCorpus(n) for n in _cached_get_corpora_by_metadata(key, value)]
