@@ -115,7 +115,7 @@ class DocumentClusterView(CommonClusterView):
                 numpy.maximum(frequencies[occurrence.start:occurrence.end], phrase['count'], frequencies[occurrence.start:occurrence.end])
 
         freq_ranges = [(f[0], len(list(f[1]))) for f in itertools.groupby(frequencies)]
-        max_freq = float(numpy.amax(frequencies))
+        cluster_size = float(len(cluster))
 
         components = []
         cursor = 0
@@ -123,7 +123,7 @@ class DocumentClusterView(CommonClusterView):
             components.append((fr[0], text[cursor:cursor + fr[1]]))
             cursor += fr[1]
 
-        html = ''.join(['<span style="background-color:rgba(255,255,0,%s)">%s</span>' % (round(p[0]/max_freq, 2), p[1]) for p in components])
+        html = ''.join(['<span style="background-color:rgba(255,255,0,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
         return {'frequency_html': html}
 
 
