@@ -12,6 +12,11 @@ import itertools
 import numpy
 
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
+CORPUS_PREFERENCE = {
+    '4-gram':   1,
+    'sentence': 2,
+    'other':    3
+}
 
 class CommonClusterView(DRFView):
     _cutoff = None
@@ -32,6 +37,7 @@ class CommonClusterView(DRFView):
         if self._corpus is None:
             corpora = cached_get_corpora_by_metadata('docket', self.kwargs['docket_id'])
             if corpora:
+                sorted_corpora = sorted(corpora, key=lambda c: CORPUS_PREFERENCE.get(c.metadata.get('parser', 'other'), CORPUS_PREFERENCE['other']))
                 self._corpus = corpora[0]
             else:
                 self.corpus = CacheCorpus(-1)
@@ -165,6 +171,7 @@ def docs_by_centrality(corpus, doc_ids):
             
     return corpus.cursor.fetchall()
 
+from django.db import connection
 class CacheCorpus(Corpus):
     def __hash__(self):
         return hash(self.id)
@@ -172,11 +179,16 @@ class CacheCorpus(Corpus):
     def __repr__(self):
         return 'corpus_%s' % self.id
 
+    def __init__(self, id, metadata={}):
+        self.id = id
+        self.metadata = metadata
+        self.cursor = connection.cursor()
+
     clusters = hour_cache(Corpus.clusters)
 
 @hour_cache
 def _cached_get_corpora_by_metadata(key, value):
-    return [c.id for c in get_corpora_by_metadata(key, value)]
+    return [(c.id, c.metadata) for c in get_corpora_by_metadata(key, value)]
 
 def cached_get_corpora_by_metadata(key, value):
-    return [CacheCorpus(n) for n in _cached_get_corpora_by_metadata(key, value)]
+    return [CacheCorpus(n, m) for n, m in _cached_get_corpora_by_metadata(key, value)]
