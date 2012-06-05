@@ -240,8 +240,8 @@ class EntityView(ResponseMixin, View):
 
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
                 agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)
-                if len(agencies) > 5:
-                    agencies = agencies[:5] + ('Other', sum([a[1] for a in agencies[5:]]))
+                if len(agencies) > 10:
+                    agencies = agencies[:9] + [('Other', sum([a[1] for a in agencies[9:]]))]
 
                 dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
 
