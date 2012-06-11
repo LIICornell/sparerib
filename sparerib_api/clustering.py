@@ -64,19 +64,40 @@ class DocketClusterView(CommonClusterView):
         db = get_db()
         docket = db.dockets.find({'_id': docket_id})[0]
 
+        sorted_clusters = sorted(self.clusters, key=lambda c: len(c), reverse=True)
         sized_clusters = [{
             'id': min(cluster),
             'size': len(cluster)
-        } for cluster in self.clusters]
+        } for cluster in sorted_clusters]
 
         total_clustered = sum([cluster['size'] for cluster in sized_clusters])
-        return {
-            'clusters': sorted(sized_clusters, key=lambda c: c['size'], reverse=True),
+        out = {
+            'clusters': sized_clusters,
             'stats': {
                 'clustered': total_clustered,
                 'unclustered': docket['stats']['count'] - total_clustered
-            }
+            },
+            'prepopulate': None
         }
+
+        # choose a cluster and document to prepopulate if one hasn't been requested
+        prepop = int(request.GET.get('prepopulate_document', 0))
+        if prepop:
+            pp_cluster = [cluster for cluster in self.clusters if prepop in cluster]
+            if pp_cluster:
+                out['prepopulate'] = {
+                    'document': prepop,
+                    'cluster': min(pp_cluster[0])
+                }
+        if not out['prepopulate'] and out['stats']['clustered'] > 0:
+            pp_docs = docs_by_centrality(self.corpus, sorted_clusters[0])
+            pp_doc = pp_docs[0]
+            out['prepopulate'] = {
+                'document': pp_doc[0],
+                'cluster': sized_clusters[0]['id']
+            }
+
+        return out
 
 class SingleClusterView(CommonClusterView):
     def get(self, request, docket_id, cluster_id):

@@ -3,11 +3,11 @@
     <select class="cluster-cutoff-selector">
         <% _.each(_.range(.5,1,.05), function(i) {
             var percent = Math.round(100*i);
-            var cutoff = percent / 100;
+            var fcutoff = percent / 100;
         %>
             <option
-                value=<%=cutoff%>
-                <% if (percent == 90) { %>
+                value=<%=fcutoff%>
+                <% if (fcutoff == cutoff) { %>
                 selected="selected"
                 <% } %>
             >
