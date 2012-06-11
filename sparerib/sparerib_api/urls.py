@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView
+from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView, NotFoundView
 
 from search import DocumentSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
@@ -25,4 +25,7 @@ urlpatterns = patterns('',
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/clusters$', DocketClusterView.as_view(), name='docket-clusters'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)$', SingleClusterView.as_view(), name='single-cluster'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)/document/(?P<document_id>\d+)$', DocumentClusterView.as_view(), name='document-cluster'),
+
+    # explicitly do our own fall-through to make sure we don't serve up the Backbone HTML on API calls
+    url(r'', NotFoundView.as_view()),
 )

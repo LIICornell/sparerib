@@ -1,6 +1,7 @@
 from djangorestframework.mixins import ResponseMixin
 from djangorestframework.renderers import DEFAULT_RENDERERS
 from djangorestframework.response import Response, ErrorResponse
+from djangorestframework.views import View as DRFView
 from djangorestframework import status
 
 from django.http import HttpResponse, Http404
@@ -315,3 +316,7 @@ class RawTextView(View):
             raise Http404
 
         return HttpResponse(results['hits']['hits'][0]['fields']['file'][0]['text'], content_type='text/plain')
+
+class NotFoundView(DRFView):
+    def get(self, request):
+        raise ErrorResponse(404, {})
