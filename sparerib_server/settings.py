@@ -31,10 +31,10 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
 )
 
-ROOT_URLCONF = 'sparerib.urls'
+ROOT_URLCONF = 'sparerib_server.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'sparerib.wsgi.application'
+WSGI_APPLICATION = 'sparerib_server.wsgi.application'
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -43,8 +43,8 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'djangorestframework',
-    'sparerib.sparerib_api',
-    'sparerib.sparerib_public'
+    'sparerib_api',
+    'sparerib_public'
 )
 
 try:
