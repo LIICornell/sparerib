@@ -324,10 +324,27 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 .cluster-doc {
   float: left;
   width: 685px;
-  border: 1px solid #999999;
   height: 100%;
+  position: relative;
+}
+.cluster-doc.loading {
+  border: 1px solid #999999;
+}
+.cluster-doc-contents {
+  width: 100%;
+  height: 90%;
+  border: 1px solid #999999;
   overflow: auto;
 }
+.cluster-doc-graph {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 8%;
+  background: #eeeeee;
+  border: 1px solid #cccccc;
+}
+
 .cluster-doc pre {
   white-space: pre;
   font-size: 85%;

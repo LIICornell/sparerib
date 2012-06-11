@@ -392,9 +392,50 @@ var ClusterView = Backbone.View.extend({
 
         this.documentModel.fetch({
             'success': $.proxy(function() {
+                var contents = $("<div class='cluster-doc-contents'>");
                 var pre = $("<pre>");
-                docArea.removeClass("loading").append(pre);
+                contents.append(pre);
+                docArea.removeClass("loading").append(contents);
                 pre.html(this.documentModel.get('frequency_html'));
+
+                var graph = $("<div class='cluster-doc-graph'>");
+                docArea.append(graph);
+
+                // some d3 stuff to draw a graph at the bottom
+                var sizes = this.documentModel.get('cluster_sizes');
+                var x = d3.scale.linear().domain([0.5, 0.95]).range([0, graph.width()]);
+
+                var height = graph.height();
+                var y = d3.scale.linear().domain([0, d3.max(_.map(sizes, function(x) { return x.size; }))]).range([height - 3, 3])
+                window.y = y;
+
+                var chart = d3.selectAll(graph).append("svg")
+                    .classed("chart-canvas", true)
+                    .attr("width", "100%")
+                    .attr("height", "100%");
+
+                var line = d3.svg.line()
+                    .x(function(d,i) { console.log('x', x(d.cutoff)); return x(d.cutoff); })
+                    .y(function(d,i) { console.log('y', y(d.size)); return y(d.size); })
+                    .interpolate("monotone");
+                
+                chart.append('path')
+                    .classed('graph-line', true)
+                    .attr('d', line(sizes.slice(0,sizes.length).reverse()))
+                    .style('stroke-width', '3')
+                    .style('stroke', "#0a6e92")
+                    .style('fill-opacity', 0);
+
+                var cut = x(parseFloat(this.model.get('cutoff')));
+                chart.append('line')
+                    .classed('graph-line', true)
+                    .attr('x1', cut)
+                    .attr('x2', cut)
+                    .attr('y1', 0)
+                    .attr('y2', height)
+                    .style('stroke-width', '3')
+                    .style('stroke', "#990000")
+                    .style('fill-opacity', 0);
             }, this),
             'error': function() {
                 console.log('failed');
