@@ -317,6 +317,18 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   height: 250px;
   width: 960px;
 }
+.cluster-area {
+  background-color: #666666;
+}
+.cluster-tip {
+  position: absolute;
+  width: 150px;
+  background: #ffffff;
+  border: 1px solid #666666;
+  padding: 6px;
+  font-size: 80%;
+  z-index: 1000;
+}
 .cluster-docs {
   margin-top: 10px;
   height: 600px;

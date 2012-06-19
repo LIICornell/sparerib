@@ -269,37 +269,94 @@ var ClusterView = Backbone.View.extend({
 
         this.model.fetch({
             'success': $.proxy(function() {
-                // treemap for the top-level thing
+                var data = this.model.toJSON()['cluster_hierarchy'];
+
+                // partition map for the top-level display
+                // precompute some stuff
+                // - special-case the first row
+                var max_depth = 5;
+
+                var computed = [data];
+                var start = 0;
+                _.each(computed[0], function(item) {
+                    item.start = start;
+                    item.row = 0;
+                    start += item.size;
+                })
+
+                // do the rest of the rows
+                for (var depth = 0; depth < max_depth - 1; depth++) {
+                    computed.push([]);
+                    _.each(computed[depth], function(item) {
+                        var start = item.start;
+                        _.each(item.children, function(child) {
+                            child.start = start;
+                            child.row = depth + 1;
+                            start += child.size;
+                            computed[depth + 1].push(child);
+                        })
+                    })
+                }
+
+                console.log(computed);
+
+                // do the drawing
                 var width = 960,
                     height = 250;
+
+                var width_scale = d3.scale.linear()
+                    .domain([0, d3.sum(_.map(data, function(d) { return d.size; }))])
+                    .range([0, width]);
+
+                var height_scale = d3.scale.linear()
+                    .domain([0, max_depth])
+                    .range([0, height]);
 
                 var div = d3.select('.cluster-map')
                     .classed('loading', false)
                     .append("div")
+                    .classed("cluster-area", true)
                     .style("position", "relative")
                     .style("width", width + "px")
                     .style("height", height + "px");
 
-                var layout = d3.layout.partition()
-                    .size([width, height])
-                    .value(function(d) { console.log('size', d.cutoff, d.name, parseInt(d.size)); return parseInt(d.size); })
-
-                div.data([{'children': this.model.toJSON()['cluster_hierarchy']}])
-                    .selectAll("div")
-                    .data(layout.nodes)
+                div.selectAll("div.cluster-row")
+                    .data(computed)
                     .enter()
                         .append("div")
-                        .style("position", "absolute")
-                        .style("top", function(d) { return d.y + "px"; })
-                        .style("left", function(d) { return d.x + "px"; })
-                        .style("width", function(d) { return d.dx + "px"; })
-                        .style("height", function(d) { return d.dy + "px"; })
-                        .classed("cluster-cell", true)
-                        .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
-                        .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
-                        .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
-                        .attr("data-cluster-size", function(d) { console.log("set-size", d); return d.size; })
-                        .style("border", "1px solid #ffffff")
+                        .classed("cluster-row", true)
+                        .attr("data-row", function(d, i) { return i; })
+                        .selectAll("div.cluster-cell")
+                        .data(function(d, i) { return computed[i]; })
+                        .enter()
+                            .append("div")
+                            .style("position", "absolute")
+                            .style("top", function(d) { return height_scale(d.row) + "px"; })
+                            .style("left", function(d) { return width_scale(d.start) + "px"; })
+                            .style("height", function(d) { return height_scale(1) - 1 + "px"; })
+                            .style("width", function(d) { return width_scale(d.size) + "px"; })
+                            .classed("cluster-cell", true)
+                            .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
+                            .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
+                            .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
+                            .attr("data-cluster-size", function(d) { console.log("set-size", d); return d.size; })
+                            .style("border", "1px solid #ffffff")
+                            .on('mouseover', function(d, i) {
+                                var tip = $("<div>");
+                                tip.addClass("cluster-tip")
+                                tip.css({
+                                    "top": height_scale(d.row + 1) + "px",
+                                    "left": width_scale(d.start) + "px",
+                                });
+                                tip.html("<strong>" + d.size + " documents</strong> at <strong>" + (100*d.cutoff) + "% similarity</strong>");
+
+                                var $this = $(this);
+                                $this.data('tooltip', tip);
+                                $this.parents(".cluster-area").append(tip);
+                            })
+                            .on('mouseout', function() {
+                                $(this).data('tooltip').remove();
+                            })
 
                 var prepopulate = this.model.get('prepopulate');
                 if (prepopulate) {
@@ -321,7 +378,7 @@ var ClusterView = Backbone.View.extend({
         var clusterId = clusterData[1], cutoff = clusterData[0] / 100;
 
         this.switchCluster(clusterId, cutoff);
-        $box.parent().find('.cluster-cell-selected').removeClass('cluster-cell-selected');
+        $box.parents('.cluster-map').find('.cluster-cell-selected').removeClass('cluster-cell-selected');
         $box.addClass('cluster-cell-selected');
     },
     switchCluster: function(clusterId, cutoff) {
