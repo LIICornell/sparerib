@@ -3,7 +3,7 @@ from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView,
 
 from search import DocumentSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
-from clustering import DocketClusterView, SingleClusterView, DocumentClusterView
+from clustering import DocketHierarchyView, DocketClusterView, SingleClusterView, DocumentClusterView
 
 urlpatterns = patterns('',
     # resource pages
@@ -23,6 +23,7 @@ urlpatterns = patterns('',
 
     # clusters
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/clusters$', DocketClusterView.as_view(), name='docket-clusters'),
+    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/hierarchy$', DocketHierarchyView.as_view(), name='docket-hierarchy'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)$', SingleClusterView.as_view(), name='single-cluster'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)/document/(?P<document_id>\d+)$', DocumentClusterView.as_view(), name='document-cluster'),
 

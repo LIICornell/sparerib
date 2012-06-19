@@ -90,7 +90,7 @@ class DocketClusterView(CommonClusterView):
                     'cluster': min(pp_cluster[0])
                 }
         if not out['prepopulate'] and out['stats']['clustered'] > 0:
-            pp_docs = docs_by_centrality(self.corpus, sorted_clusters[0])
+            pp_docs = self.corpus.docs_by_centrality(sorted_clusters[0])
             pp_doc = pp_docs[0]
             out['prepopulate'] = {
                 'document': pp_doc[0],
@@ -99,22 +99,61 @@ class DocketClusterView(CommonClusterView):
 
         return out
 
+class DocketHierarchyView(CommonClusterView):
+    def get(self, request, docket_id):
+        db = get_db()
+        docket = db.dockets.find({'_id': docket_id})[0]
+
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .01))
+        total_clustered = sum([cluster['size'] for cluster in hierarchy])
+        
+        out = {
+            'cluster_hierarchy': sorted(hierarchy, key=lambda x: x['size'], reverse=True),
+            'stats': {
+                'clustered': total_clustered,
+                'unclustered': docket['stats']['count'] - total_clustered
+            },
+            'prepopulate': None
+        }
+
+        # choose a cluster and document to prepopulate if one hasn't been requested
+        prepop = int(request.GET.get('prepopulate_document', 0))
+        if prepop:
+            pp_cluster = self.corpus.cluster(prepop, self.cutoff)
+            if pp_cluster:
+                out['prepopulate'] = {
+                    'document': prepop,
+                    'cluster': pp_cluster[0],
+                    'cutoff': self.cutoff
+                }
+        if not out['prepopulate'] and out['stats']['clustered'] > 0:
+            pp_cluster = self.corpus.cluster(out['cluster_hierarchy'][0]['name'], out['cluster_hierarchy'][0]['cutoff'])
+            pp_docs = self.corpus.docs_by_centrality(pp_cluster[1])
+            pp_doc = pp_docs[0]
+            out['prepopulate'] = {
+                'document': pp_doc[0],
+                'cluster': pp_cluster[0],
+                'cutoff': out['cluster_hierarchy'][0]['cutoff']
+            }
+
+        return out
+
 class SingleClusterView(CommonClusterView):
     def get(self, request, docket_id, cluster_id):
         cluster_id = int(cluster_id)
         
-        try:
-            cluster = [cluster for cluster in self.clusters if cluster_id in cluster][0]
-        except IndexError:
-            raise Http404
+        cluster = self.corpus.cluster(cluster_id, self.cutoff)
 
-        docs = docs_by_centrality(self.corpus, cluster)
+        docs = self.corpus.docs_by_centrality(cluster[1])
 
-        return {'documents': [{
-            'id': doc[0],
-            'title': doc[1]['title'],
-            'submitter': ', '.join([doc[1][field] for field in ['submitter_name', 'submitter_organization'] if doc[1].get(field, False)])
-        } for doc in docs]}
+        return {
+            'id': cluster[0],
+            'documents': [{
+                'id': doc[0],
+                'title': doc[1]['title'],
+                'submitter': ', '.join([doc[1][field] for field in ['submitter_name', 'submitter_organization'] if doc[1].get(field, False)])
+            } for doc in docs]
+        }
 
 class DocumentClusterView(CommonClusterView):
     def get(self, request, docket_id, cluster_id, document_id):
@@ -159,45 +198,6 @@ class DocumentClusterView(CommonClusterView):
 from cache import cache
 hour_cache = cache(seconds=3600)
 
-# this is mostly a copy of the centroid_doc method as of 87d6e4, except it returns all docs, and their metadata instead of their text
-@hour_cache
-def docs_by_centrality(corpus, doc_ids):
-    """Return the document from given document set with minimum average
-    distance to other documents in the set.
-
-    Document set may be any arbitrary collection of IDs from the corpus.
-    
-    Result is (document ID, document text).
-    """
-
-    # SQL doesn't support empty lists with IN operator, so check here to avoid SQL error
-    if not doc_ids:
-        return None
-        
-    corpus.cursor.execute("""
-        with included_sims as (
-            select low_document_id, high_document_id, similarity
-            from similarities
-            where
-                corpus_id = %(corpus_id)s
-                and low_document_id in %(doc_ids)s
-                and high_document_id in %(doc_ids)s
-        )
-        select document_id, metadata
-        from (
-            select low_document_id as document_id, similarity from included_sims
-            union all
-            select high_document_id, similarity from included_sims
-        ) x
-        inner join documents using (document_id)
-        where
-            documents.corpus_id = %(corpus_id)s
-        group by document_id, metadata
-        order by sum(similarity) desc
-    """, dict(corpus_id=corpus.id, doc_ids=tuple(doc_ids)))
-            
-    return corpus.cursor.fetchall()
-
 from django.db import connection
 class CacheCorpus(Corpus):
     def __hash__(self):
@@ -212,6 +212,9 @@ class CacheCorpus(Corpus):
         self.cursor = connection.cursor()
 
     clusters = hour_cache(Corpus.clusters)
+    cluster = hour_cache(Corpus.cluster)
+    hierarchy = hour_cache(Corpus.hierarchy)
+    docs_by_centrality = hour_cache(Corpus.docs_by_centrality)
 
 @hour_cache
 def _cached_get_corpora_by_metadata(key, value):
