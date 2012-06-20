@@ -320,6 +320,16 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 .cluster-area {
   background-color: #666666;
 }
+.cluster-row-label {
+  width: 100px;
+  background: #eeeeee;
+  border-bottom: 1px solid #ffffff;
+  text-align: center;
+  font-family: georgia, serif;
+  font-style: italic;
+  font-size: 110%;
+  line-height: 40px;
+}
 .cluster-tip {
   position: absolute;
   width: 150px;

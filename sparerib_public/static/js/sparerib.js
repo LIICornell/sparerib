@@ -289,7 +289,8 @@ var ClusterView = Backbone.View.extend({
                     computed.push([]);
                     _.each(computed[depth], function(item) {
                         var start = item.start;
-                        _.each(item.children, function(child) {
+                        var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
+                        _.each(children, function(child) {
                             child.start = start;
                             child.row = depth + 1;
                             start += child.size;
@@ -304,9 +305,11 @@ var ClusterView = Backbone.View.extend({
                 var width = 960,
                     height = 250;
 
+                var left_padding = 100;
+
                 var width_scale = d3.scale.linear()
                     .domain([0, d3.sum(_.map(data, function(d) { return d.size; }))])
-                    .range([0, width]);
+                    .range([0, width - left_padding]);
 
                 var height_scale = d3.scale.linear()
                     .domain([0, max_depth])
@@ -317,8 +320,9 @@ var ClusterView = Backbone.View.extend({
                     .append("div")
                     .classed("cluster-area", true)
                     .style("position", "relative")
-                    .style("width", width + "px")
-                    .style("height", height + "px");
+                    .style("width", (width - left_padding) + "px")
+                    .style("height", height + "px")
+                    .style("left", left_padding + "px")
 
                 div.selectAll("div.cluster-row")
                     .data(computed)
@@ -333,8 +337,8 @@ var ClusterView = Backbone.View.extend({
                             .style("position", "absolute")
                             .style("top", function(d) { return height_scale(d.row) + "px"; })
                             .style("left", function(d) { return width_scale(d.start) + "px"; })
-                            .style("height", function(d) { return height_scale(1) - 1 + "px"; })
-                            .style("width", function(d) { return width_scale(d.size) + "px"; })
+                            .style("height", height_scale(1) - 1 + "px")
+                            .style("width", function(d) { return width_scale(d.size) - 1 + "px"; })
                             .classed("cluster-cell", true)
                             .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
                             .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
@@ -357,6 +361,20 @@ var ClusterView = Backbone.View.extend({
                             .on('mouseout', function() {
                                 $(this).data('tooltip').remove();
                             })
+
+                div.selectAll("div.cluster-row-label")
+                    .data(computed)
+                    .enter()
+                        .append("div")
+                        .classed("cluster-row-label", true)
+                        .text(function(d, i) { return (10 * i) + 50 + "%"; })
+                        .style("position", "absolute")
+                        .style("width", left_padding + "px")
+                        .style("height", height_scale(1) - 1 + "px")
+                        .style("top", function(d, i) { return height_scale(i) + 1 + "px"; })
+                        .style("left", (-1 * left_padding) + "px");
+
+
 
                 var prepopulate = this.model.get('prepopulate');
                 if (prepopulate) {

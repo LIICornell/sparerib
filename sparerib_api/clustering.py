@@ -104,7 +104,7 @@ class DocketHierarchyView(CommonClusterView):
         db = get_db()
         docket = db.dockets.find({'_id': docket_id})[0]
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .01))
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005))
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
