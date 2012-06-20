@@ -282,6 +282,7 @@ var ClusterView = Backbone.View.extend({
                     item.start = start;
                     item.row = 0;
                     start += item.size;
+                    item.parent = null;
                 })
 
                 // do the rest of the rows
@@ -294,18 +295,17 @@ var ClusterView = Backbone.View.extend({
                             child.start = start;
                             child.row = depth + 1;
                             start += child.size;
+                            child.parent = item;
                             computed[depth + 1].push(child);
                         })
                     })
                 }
 
-                console.log(computed);
-
                 // do the drawing
                 var width = 960,
                     height = 250;
 
-                var left_padding = 100;
+                var left_padding = 60;
 
                 var width_scale = d3.scale.linear()
                     .domain([0, d3.sum(_.map(data, function(d) { return d.size; }))])
@@ -323,7 +323,10 @@ var ClusterView = Backbone.View.extend({
                     .style("width", (width - left_padding) + "px")
                     .style("height", height + "px")
                     .style("position", "absolute")
-                    .style("left", left_padding);
+                    .style("left", left_padding + "px");
+
+                var divisions = this.chart.append("g");
+                var connections = this.chart.append("g");
 
                 this.chart.selectAll(".cluster-row")
                     .data(computed)
@@ -331,27 +334,39 @@ var ClusterView = Backbone.View.extend({
                         .append("g")
                         .classed("cluster-row", true)
                         .attr("data-row", function(d, i) { return i; })
+                        .each(function(d, i) {
+                            if (i > 0) {
+                                var h = height_scale(i);
+                                connections.append("line")
+                                        .attr('x1', 0)
+                                        .attr('y1', h)
+                                        .attr('x2', width - left_padding)
+                                        .attr('y2', h)
+                                        .attr('stroke-width', 0.5)
+                                        .attr('stroke', '#666666');
+                            }
+                        })
                         .selectAll(".cluster-cell")
                         .data(function(d, i) { return computed[i]; })
                         .enter()
                             .append("rect")
-                            .attr("y", function(d) { return height_scale(d.row); })
-                            .attr("x", function(d) { return width_scale(d.start); })
-                            .attr("height", height_scale(1) - 1)
-                            .attr("width", function(d) { return width_scale(d.size) - 1; })
+                            .attr("y", function(d) { return height_scale(d.row) + 4; })
+                            .attr("x", function(d) { return width_scale(d.start) + 2; })
+                            .attr("height", height_scale(1) - 9)
+                            .attr("width", function(d) { return width_scale(d.size) - 5; })
+                            .attr("rx", 10)
+                            .attr("ry", 10)
                             .classed("cluster-cell", true)
                             .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
                             .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
                             .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
-                            .attr("data-cluster-size", function(d) { console.log("set-size", d); return d.size; })
-                            .style("stroke-width", "1")
-                            .style("stroke", "#ffffff")
+                            .attr("data-cluster-size", function(d) { return d.size; })
                             .on('mouseover', function(d, i) {
                                 var tip = $("<div>");
                                 tip.addClass("cluster-tip")
                                 tip.css({
-                                    "top": height_scale(d.row + 1) + "px",
-                                    "left": width_scale(d.start) + left_padding + "px",
+                                    "top": height_scale(d.row + 1) - 6 + "px",
+                                    "left": width_scale(d.start) + left_padding + 6 + "px",
                                 });
                                 tip.html("<strong>" + d.size + " documents</strong> at <strong>" + (100*d.cutoff) + "% similarity</strong>");
 
@@ -361,6 +376,17 @@ var ClusterView = Backbone.View.extend({
                             })
                             .on('mouseout', function() {
                                 $(this).data('tooltip').remove();
+                            })
+                            .each(function(d, i) {
+                                if (d.parent) {
+                                    connections.append("line")
+                                        .attr('x1', width_scale(d.start + (d.size / 2)))
+                                        .attr('y1', height_scale(d.row + .5))
+                                        .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
+                                        .attr('y2', height_scale(d.row - .5))
+                                        .attr('stroke-width', 2)
+                                        .attr('stroke', '#eeeeee');
+                                }
                             })
 
                 d3.select(map.get(0)).selectAll("div.cluster-row-label")

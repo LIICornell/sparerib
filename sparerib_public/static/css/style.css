@@ -329,7 +329,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   width: 960px;
 }
 .cluster-area {
-  background-color: #666666;
+  background-color: #333333;
 }
 .cluster-label {
   margin-top: 4px;
@@ -394,7 +394,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   overflow-y: auto;
 }
 .cluster-cell-alive {
-  fill: #74aec9;
+  fill: #3f8eae;
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
@@ -404,10 +404,10 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   fill: #666666;
 }
 .cluster-cell-chain {
-  fill: #440000;
+  fill: #660000;
 }
 .cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
-  fill: #aa0000;
+  fill: #cc0000;
 }
 
 .cluster-doc-list ul {
