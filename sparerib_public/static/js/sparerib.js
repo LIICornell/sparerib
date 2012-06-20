@@ -472,7 +472,7 @@ var ClusterView = Backbone.View.extend({
                 docArea.append(graph);
 
                 // some d3 stuff to draw a graph at the bottom
-                var sizes = this.documentModel.get('cluster_sizes');
+                var sizes = this.documentModel.get('clusters');
                 var x = d3.scale.linear().domain([0.5, 0.95]).range([0, graph.width()]);
 
                 var height = graph.height();
@@ -506,6 +506,13 @@ var ClusterView = Backbone.View.extend({
                     .style('stroke-width', '3')
                     .style('stroke', "#990000")
                     .style('fill-opacity', 0);
+
+                // additionally, we'll highlight the relevant clusters in the top view
+                this.$el.find('.cluster-map .cluster-cell.cluster-cell-chain').removeClass('cluster-cell-chain')
+                _.each(sizes, $.proxy(function(item) {
+                    console.log('.cluster-map .cluster-cell[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']');
+                    this.$el.find('.cluster-map .cluster-cell[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']').addClass('cluster-cell-chain');
+                }, this));
             }, this),
             'error': function() {
                 console.log('failed');

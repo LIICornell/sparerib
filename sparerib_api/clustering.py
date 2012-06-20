@@ -186,9 +186,10 @@ class DocumentClusterView(CommonClusterView):
         html = ''.join(['<span style="background-color:rgba(255,255,0,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
         return {
             'frequency_html': html,
-            'cluster_sizes': [{
+            'clusters': [{
                 'cutoff': round(entry[0], 2),
-                'size': entry[1]
+                'id': entry[1],
+                'size': entry[2]
             } for entry in self.corpus.clusters_for_doc(document_id)]
         }
 

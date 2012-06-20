@@ -389,8 +389,11 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 .cluster-cell-dead {
   background-color: #666666;
 }
-.cluster-cell-selected {
-  background-color: #990000;
+.cluster-cell-chain {
+  background-color: #440000;
+}
+.cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
+  background-color: #aa0000;
 }
 
 .cluster-doc-list ul {
@@ -414,7 +417,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-weight: bold;
 }
 .cluster-doc-selected {
-  background-color: #990000;
+  background-color: #aa0000;
   color: #ffffff;
 }
 
