@@ -382,6 +382,9 @@ var ClusterView = Backbone.View.extend({
                     this.switchCluster(prepopulate.cluster, prepopulate.cutoff);
                     this.switchDoc(prepopulate.cluster, prepopulate.document);
                 }
+
+                var stats = this.model.get('stats');
+                this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket belong to a similarity grouping")
             }, this),
             'error': function() {
                 console.log('failed');
@@ -468,44 +471,7 @@ var ClusterView = Backbone.View.extend({
                 docArea.removeClass("loading").append(contents);
                 pre.html(this.documentModel.get('frequency_html'));
 
-                var graph = $("<div class='cluster-doc-graph'>");
-                docArea.append(graph);
-
-                // some d3 stuff to draw a graph at the bottom
                 var sizes = this.documentModel.get('clusters');
-                var x = d3.scale.linear().domain([0.5, 0.95]).range([0, graph.width()]);
-
-                var height = graph.height();
-                var y = d3.scale.linear().domain([0, d3.max(_.map(sizes, function(x) { return x.size; }))]).range([height - 3, 3])
-                window.y = y;
-
-                var chart = d3.selectAll(graph).append("svg")
-                    .classed("chart-canvas", true)
-                    .attr("width", "100%")
-                    .attr("height", "100%");
-
-                var line = d3.svg.line()
-                    .x(function(d,i) { return x(d.cutoff); })
-                    .y(function(d,i) { return y(d.size); })
-                    .interpolate("monotone");
-                
-                chart.append('path')
-                    .classed('graph-line', true)
-                    .attr('d', line(sizes.slice(0,sizes.length).reverse()))
-                    .style('stroke-width', '3')
-                    .style('stroke', "#0a6e92")
-                    .style('fill-opacity', 0);
-
-                var cut = x(parseFloat(this.model.get('cutoff')));
-                chart.append('line')
-                    .classed('graph-line', true)
-                    .attr('x1', cut)
-                    .attr('x2', cut)
-                    .attr('y1', 0)
-                    .attr('y2', height)
-                    .style('stroke-width', '3')
-                    .style('stroke', "#990000")
-                    .style('fill-opacity', 0);
 
                 // additionally, we'll highlight the relevant clusters in the top view
                 this.$el.find('.cluster-map .cluster-cell.cluster-cell-chain').removeClass('cluster-cell-chain')
