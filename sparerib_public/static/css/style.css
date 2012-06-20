@@ -394,20 +394,20 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   overflow-y: auto;
 }
 .cluster-cell-alive {
-  background-color: #74aec9;
+  fill: #74aec9;
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
-  background-color: #ddeeff;
+  fill: #ddeeff;
 }
 .cluster-cell-dead {
-  background-color: #666666;
+  fill: #666666;
 }
 .cluster-cell-chain {
-  background-color: #440000;
+  fill: #440000;
 }
 .cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
-  background-color: #aa0000;
+  fill: #aa0000;
 }
 
 .cluster-doc-list ul {
