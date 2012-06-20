@@ -289,8 +289,11 @@ var ClusterView = Backbone.View.extend({
                 for (var depth = 0; depth < max_depth - 1; depth++) {
                     computed.push([]);
                     _.each(computed[depth], function(item) {
-                        var start = item.start;
                         var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
+                        var child_total = d3.sum(_.map(children, function(d) { return d.size; }));
+
+                        // start used to start at the parent's start, but is now adjusted to center the trees
+                        var start = item.start + ((item.size - child_total) / 2);
                         _.each(children, function(child) {
                             child.start = start;
                             child.row = depth + 1;
