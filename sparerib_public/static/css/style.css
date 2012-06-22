@@ -401,7 +401,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   overflow-y: auto;
 }
 .cluster-cell-alive {
-  fill: #3f8eae;
+  fill: #74aec9;
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
@@ -411,10 +411,19 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   fill: #666666;
 }
 .cluster-cell-chain {
-  fill: #660000;
+  stroke: #ff3333;
+  stroke-width: 2px;
 }
 .cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
+  stroke-width: 0;
   fill: #cc0000;
+}
+.cluster-connection {
+  stroke-width: 2px;
+  stroke: #eeeeee;
+}
+.cluster-connection-chain {
+  stroke: #ff3333;
 }
 
 .cluster-doc-list ul {

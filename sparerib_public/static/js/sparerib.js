@@ -336,6 +336,7 @@ var ClusterView = Backbone.View.extend({
 
                 var divisions = this.chart.append("g");
                 var connections = this.chart.append("g");
+                this.connections = connections;
 
                 this.chart.selectAll(".cluster-row")
                     .data(computed)
@@ -360,8 +361,8 @@ var ClusterView = Backbone.View.extend({
                             .attr("x", function(d) { return width_scale(d.start) + 2; })
                             .attr("height", height_scale(1) - 9)
                             .attr("width", function(d) { return width_scale(d.size) - 5; })
-                            .attr("rx", 10)
-                            .attr("ry", 10)
+                            .attr("rx", 5)
+                            .attr("ry", 5)
                             .classed("cluster-cell", true)
                             .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
                             .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
@@ -390,8 +391,8 @@ var ClusterView = Backbone.View.extend({
                                         .attr('y1', height_scale(d.row + .5))
                                         .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
                                         .attr('y2', height_scale(d.row - .5))
-                                        .attr('stroke-width', 2)
-                                        .attr('stroke', '#eeeeee');
+                                        .classed('cluster-connection', true)
+                                        .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
                                 }
                             })
 
@@ -505,10 +506,13 @@ var ClusterView = Backbone.View.extend({
 
                 var sizes = this.documentModel.get('clusters');
 
-                // additionally, we'll highlight the relevant clusters in the top view
+                // additionally, we'll highlight the relevant clusters in the top view 
                 d3.selectAll($(this.chart[0]).find('.cluster-cell.cluster-cell-chain').toArray()).classed('cluster-cell-chain', false);
+                this.connections.selectAll('.cluster-connection-chain').classed('cluster-connection-chain', false);
                 _.each(sizes, $.proxy(function(item) {
-                    d3.select($(this.chart[0]).find('.cluster-cell[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']').get(0)).classed('cluster-cell-chain', true);
+                    var filter = '[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']';
+                    d3.select($(this.chart[0]).find('.cluster-cell' + filter).get(0)).classed('cluster-cell-chain', true);
+                    d3.select($(this.chart[0]).find('.cluster-connection' + filter).get(0)).classed('cluster-connection-chain', true);
                 }, this));
             }, this),
             'error': function() {
