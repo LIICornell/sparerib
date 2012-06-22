@@ -404,7 +404,7 @@ var ClusterView = Backbone.View.extend({
                         .style("position", "absolute")
                         .style("width", left_padding  - 1 + "px")
                         .style("height", height_scale(1) + "px")
-                        .style("top", function(d, i) { return height_scale(i) + 1 + "px"; });
+                        .style("top", function(d, i) { return height_scale(i) + "px"; });
 
 
 
