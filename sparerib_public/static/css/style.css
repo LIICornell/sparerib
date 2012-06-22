@@ -329,20 +329,27 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   width: 960px;
 }
 .cluster-area {
-  background-color: #333333;
+  background-color: #222222;
 }
 .cluster-label {
   margin-top: 4px;
 }
 .cluster-row-label {
   width: 100px;
-  background: #eeeeee;
-  border-bottom: 1px solid #ffffff;
+  border-right: 1px solid #aaaaaa;
   text-align: center;
   font-family: georgia, serif;
   font-style: italic;
   font-size: 110%;
-  line-height: 40px;
+  line-height: 45px;
+  color: #eeeeee;
+}
+.cluster-similarity {
+  text-align: center;
+  font-family: georgia, serif;
+  font-style: italic;
+  background: #eeeeee;
+  text-transform: lowercase;
 }
 .cluster-tip {
   position: absolute;
@@ -358,7 +365,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   height: 600px;
 }
 .cluster-doc {
-  float: left;
+  float: right;
   width: 685px;
   height: 100%;
   position: relative;
@@ -386,7 +393,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-size: 85%;
 }
 .cluster-doc-list {
-  float: right;
+  float: left;
   width: 260px;
   border: 1px solid #999999;
   height: 100%;

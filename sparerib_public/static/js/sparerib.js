@@ -318,15 +318,21 @@ var ClusterView = Backbone.View.extend({
                     .domain([0, max_depth])
                     .range([0, height]);
 
+                var gradient_scale = d3.scale.linear()
+                    .domain([0, max_depth - 1])
+                    .range([0, 1]);
+
                 var map = $('.cluster-map').css({'position': 'relative'});
-                this.chart = d3.select(map.get(0))
+                this.svg = d3.select(map.get(0))
                     .classed('loading', false)
                     .append("svg")
                     .classed("cluster-area", true)
-                    .style("width", (width - left_padding) + "px")
-                    .style("height", height + "px")
-                    .style("position", "absolute")
-                    .style("left", left_padding + "px");
+                    .style("width", (width) + "px")
+                    .style("height", height + "px");
+
+                this.chart = this.svg
+                    .append("g")
+                    .attr("transform", "translate(" + left_padding + ",0)");
 
                 var divisions = this.chart.append("g");
                 var connections = this.chart.append("g");
@@ -338,16 +344,13 @@ var ClusterView = Backbone.View.extend({
                         .classed("cluster-row", true)
                         .attr("data-row", function(d, i) { return i; })
                         .each(function(d, i) {
-                            if (i > 0) {
-                                var h = height_scale(i);
-                                connections.append("line")
-                                        .attr('x1', 0)
-                                        .attr('y1', h)
-                                        .attr('x2', width - left_padding)
-                                        .attr('y2', h)
-                                        .attr('stroke-width', 0.5)
-                                        .attr('stroke', '#666666');
-                            }
+                            divisions.append("rect")
+                                    .attr('x', -1 * left_padding)
+                                    .attr('y', height_scale(i))
+                                    .attr('width', width)
+                                    .attr('height', height_scale(1))
+                                    .attr('fill', '#777777')
+                                    .style('opacity', gradient_scale(i));
                         })
                         .selectAll(".cluster-cell")
                         .data(function(d, i) { return computed[i]; })
@@ -399,8 +402,8 @@ var ClusterView = Backbone.View.extend({
                         .classed("cluster-row-label", true)
                         .text(function(d, i) { return (10 * i) + 50 + "%"; })
                         .style("position", "absolute")
-                        .style("width", left_padding + "px")
-                        .style("height", height_scale(1) - 1 + "px")
+                        .style("width", left_padding  - 1 + "px")
+                        .style("height", height_scale(1) + "px")
                         .style("top", function(d, i) { return height_scale(i) + 1 + "px"; });
 
 
@@ -413,7 +416,7 @@ var ClusterView = Backbone.View.extend({
                 }
 
                 var stats = this.model.get('stats');
-                this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket belong to a similarity grouping")
+                this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket are represented above; the rest are unique")
             }, this),
             'error': function() {
                 console.log('failed');
