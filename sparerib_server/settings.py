@@ -47,6 +47,16 @@ INSTALLED_APPS = (
     'sparerib_public'
 )
 
+# hacks to make everything work in pypy
+try:
+    import psycopg2
+except ImportError:
+    # we're running in pypy
+    from psycopg2ct import compat
+    compat.register()
+    
+    import numpypy
+
 try:
     from local_settings import *
 except:

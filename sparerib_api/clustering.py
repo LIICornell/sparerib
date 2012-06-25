@@ -160,10 +160,7 @@ class DocumentClusterView(CommonClusterView):
         document_id = int(document_id)
         cluster_id = int(cluster_id)
 
-        try:
-            cluster = [cluster for cluster in self.clusters if cluster_id in cluster][0]
-        except IndexError:
-            raise Http404
+        cluster = self.corpus.cluster(cluster_id, self.cutoff)[1]
 
         doc = self.corpus.doc(document_id)
         text = doc['text']
@@ -172,7 +169,7 @@ class DocumentClusterView(CommonClusterView):
         frequencies = numpy.zeros(len(text), 'l')
         for phrase in raw_phrases.values():
             for occurrence in phrase['indexes']:
-                numpy.maximum(frequencies[occurrence.start:occurrence.end], phrase['count'], frequencies[occurrence.start:occurrence.end])
+                frequencies[occurrence.start:occurrence.end] = numpy.maximum(frequencies[occurrence.start:occurrence.end], phrase['count'])
 
         freq_ranges = [(f[0], len(list(f[1]))) for f in itertools.groupby(frequencies)]
         cluster_size = float(len(cluster))
