@@ -369,15 +369,8 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   width: 685px;
   height: 100%;
   position: relative;
-}
-.cluster-doc.loading {
-  border: 1px solid #999999;
-}
-.cluster-doc-contents {
-  width: 100%;
-  height: 100%;
-  border: 1px solid #999999;
   overflow: auto;
+  border: 1px solid #999999;
 }
 .cluster-doc-graph {
   position: absolute;
@@ -463,6 +456,9 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 
 #cluster-view .loading {
   background: #eeeeee url("../img/loading.gif") no-repeat center center;
+}
+#cluster-view .pseudo-loading {
+  background: #eeeeee url("../img/loading.gif") no-repeat 97% 2%;
 }
 
 footer {

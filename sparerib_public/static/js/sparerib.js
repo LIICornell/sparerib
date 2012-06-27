@@ -17,6 +17,7 @@ var DocketClusters = Backbone.Model.extend({ url: function() {
 } });
 var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.id + "?cutoff=" + this.get('cutoff'); } });
 var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.get('cluster_id') + "/document/" + this.id + "?cutoff=" + this.get('cutoff'); } });
+var ClusterChain = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/clusters_for_document/" + this.id; } });
 
 // Template helpers
 var helpers = {
@@ -428,14 +429,15 @@ var ClusterView = Backbone.View.extend({
 
     handleSwitchCluster: function(evt) {
         var $box = $(evt.target).closest('.cluster-cell');
+        var dbox = d3.select($box.get(0));
         var clusterData = $box.attr('data-cluster-id').split("-");
         var clusterId = clusterData[1], cutoff = clusterData[0] / 100;
 
-        this.switchCluster(clusterId, cutoff);
+        this.switchCluster(clusterId, cutoff, dbox.classed('cluster-cell-chain'));
         d3.select($box.parents('.cluster-map').get(0)).selectAll('.cluster-cell-selected').classed('cluster-cell-selected', false);
-        d3.select($box.get(0)).classed('cluster-cell-selected', true);
+        dbox.classed('cluster-cell-selected', true);
     },
-    switchCluster: function(clusterId, cutoff) {
+    switchCluster: function(clusterId, cutoff, inChain) {
         if (cutoff != this.model.get('cutoff')) {
             this.model.set('cutoff', cutoff)
             app.navigate(Backbone.history.fragment.replace(/cutoff-[0-9]*/, 'cutoff-' + (100 * cutoff)), {trigger: false});
@@ -446,6 +448,7 @@ var ClusterView = Backbone.View.extend({
         var list = $(this.el).find('.cluster-doc-list');
         list.html("").addClass('loading');
 
+        var docArea = $(this.el).find('.cluster-doc');
         this.clusterModel.fetch({
             'success': $.proxy(function() {
                 // TODO: make this a real template with a real view
@@ -455,7 +458,6 @@ var ClusterView = Backbone.View.extend({
                     ul.append("<li data-document-id='" + item.id + "'><span class='cluster-doc-title'>" + item.title + "</span><span class='cluster-doc-submitter'>" + item.submitter + "</span>");
                 });
 
-                var docArea = $(this.el).find('.cluster-doc');
                 if (ul.attr('data-cluster-id') == docArea.attr('data-cluster-id')) {
                     // the document area is already showing the right thing, so select the right thing on our side
                     ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").addClass("cluster-doc-selected");
@@ -471,6 +473,11 @@ var ClusterView = Backbone.View.extend({
                 console.log('failed');
             }
         });
+        
+        if (typeof inChain !== "undefined" && inChain) {
+            // the new cluster that's been selected appears to be in the same chain as the current cluster, so we can preemptively reload the current document
+            this.switchDoc(this.clusterModel.id, docArea.attr('data-document-id'), true);
+        }
     },
 
     handleSwitchDoc: function(evt) {
@@ -480,7 +487,7 @@ var ClusterView = Backbone.View.extend({
         $box.parent().find('.cluster-doc-selected').removeClass('cluster-doc-selected');
         $box.addClass('cluster-doc-selected');
     },
-    switchDoc: function(clusterId, docId) {
+    switchDoc: function(clusterId, docId, pseudoLoad) {
         // update the model and URL
         this.model.set('docId', docId);
         app.navigate('/docket/' + this.model.id + '/similarity/cutoff-' + (100 * this.model.get('cutoff')) + '/document-' + docId, {
@@ -489,22 +496,40 @@ var ClusterView = Backbone.View.extend({
             replace: Backbone.history.fragment.indexOf("/document-") == -1
         })
 
-        this.documentModel = new ClusterDocument({'cutoff': this.model.get('cutoff'), 'docket_id': this.model.id, 'cluster_id': clusterId, 'id': docId});
-
         var docArea = $(this.el).find('.cluster-doc');
-        docArea.html("").addClass("loading");
+
+        if (typeof pseudoLoad !== "undefined" && pseudoLoad) {
+            docArea.addClass('pseudo-loading');
+        } else {
+            docArea.html("").addClass("loading");
+        }
+        
+
         docArea.attr('data-cluster-id', Math.round(100*this.model.get('cutoff')) + "-" + clusterId);
         docArea.attr('data-document-id', docId);
 
+        this.documentModel = new ClusterDocument({'cutoff': this.model.get('cutoff'), 'docket_id': this.model.id, 'cluster_id': clusterId, 'id': docId});
         this.documentModel.fetch({
             'success': $.proxy(function() {
                 var contents = $("<div class='cluster-doc-contents'>");
                 var pre = $("<pre>");
                 contents.append(pre);
-                docArea.removeClass("loading").append(contents);
+                var children = docArea.children();
+                docArea.removeClass("loading").removeClass("pseudo-loading").append(contents);
+                if (children.length) {
+                    children.remove();
+                }
                 pre.html(this.documentModel.get('frequency_html'));
-
-                var sizes = this.documentModel.get('clusters');
+            }, this),
+            'error': function() {
+                console.log('failed');
+            }
+        });
+        
+        this.chainModel = new ClusterChain({'docket_id': this.model.id, 'id': docId});
+        this.chainModel.fetch({
+            'success': $.proxy(function() {
+                var sizes = this.chainModel.get('clusters');
 
                 // additionally, we'll highlight the relevant clusters in the top view 
                 d3.selectAll($(this.chart[0]).find('.cluster-cell.cluster-cell-chain').toArray()).classed('cluster-cell-chain', false);
