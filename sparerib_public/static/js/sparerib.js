@@ -506,6 +506,8 @@ var ClusterView = Backbone.View.extend({
         
 
         docArea.attr('data-cluster-id', Math.round(100*this.model.get('cutoff')) + "-" + clusterId);
+        
+        var oldDocId = docArea.attr('data-document-id');
         docArea.attr('data-document-id', docId);
 
         this.documentModel = new ClusterDocument({'cutoff': this.model.get('cutoff'), 'docket_id': this.model.id, 'cluster_id': clusterId, 'id': docId});
@@ -526,24 +528,26 @@ var ClusterView = Backbone.View.extend({
             }
         });
         
-        this.chainModel = new ClusterChain({'docket_id': this.model.id, 'id': docId});
-        this.chainModel.fetch({
-            'success': $.proxy(function() {
-                var sizes = this.chainModel.get('clusters');
+        if (docId != oldDocId) {
+            this.chainModel = new ClusterChain({'docket_id': this.model.id, 'id': docId});
+            this.chainModel.fetch({
+                'success': $.proxy(function() {
+                    var sizes = this.chainModel.get('clusters');
 
-                // additionally, we'll highlight the relevant clusters in the top view 
-                d3.selectAll($(this.chart[0]).find('.cluster-cell.cluster-cell-chain').toArray()).classed('cluster-cell-chain', false);
-                this.connections.selectAll('.cluster-connection-chain').classed('cluster-connection-chain', false);
-                _.each(sizes, $.proxy(function(item) {
-                    var filter = '[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']';
-                    d3.select($(this.chart[0]).find('.cluster-cell' + filter).get(0)).classed('cluster-cell-chain', true);
-                    d3.select($(this.chart[0]).find('.cluster-connection' + filter).get(0)).classed('cluster-connection-chain', true);
-                }, this));
-            }, this),
-            'error': function() {
-                console.log('failed');
-            }
-        });
+                    // additionally, we'll highlight the relevant clusters in the top view 
+                    d3.selectAll($(this.chart[0]).find('.cluster-cell.cluster-cell-chain').toArray()).classed('cluster-cell-chain', false);
+                    this.connections.selectAll('.cluster-connection-chain').classed('cluster-connection-chain', false);
+                    _.each(sizes, $.proxy(function(item) {
+                        var filter = '[data-cluster-id=' + Math.round(100 * item.cutoff) + '-' + item.id +']';
+                        d3.select($(this.chart[0]).find('.cluster-cell' + filter).get(0)).classed('cluster-cell-chain', true);
+                        d3.select($(this.chart[0]).find('.cluster-connection' + filter).get(0)).classed('cluster-connection-chain', true);
+                    }, this));
+                }, this),
+                'error': function() {
+                    console.log('failed');
+                }
+            });
+        }
     }
 })
 
