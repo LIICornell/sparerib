@@ -104,7 +104,7 @@ class DocketHierarchyView(CommonClusterView):
         db = get_db()
         docket = db.dockets.find({'_id': docket_id})[0]
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005))
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', False))
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
@@ -218,7 +218,6 @@ class CacheCorpus(Corpus):
 
     clusters = hour_cache(Corpus.clusters)
     cluster = hour_cache(Corpus.cluster)
-    hierarchy = hour_cache(Corpus.hierarchy)
     docs_by_centrality = hour_cache(Corpus.docs_by_centrality)
 
 @hour_cache

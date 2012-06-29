@@ -376,8 +376,11 @@ var ClusterView = Backbone.View.extend({
                                     "top": height_scale(d.row + 1) - 6 + "px",
                                     "left": width_scale(d.start) + left_padding + 6 + "px",
                                 });
-                                tip.html("<strong>" + d.size + " documents</strong> at <strong>" + (100*d.cutoff) + "% similarity</strong>");
-
+                                if (d.phrases) {
+                                    tip.html("<strong>" + d.size + " documents</strong><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
+                                } else {
+                                    tip.html("<strong>" + d.size + " documents</strong>").addClass("loading")
+                                }
                                 var $this = $(this);
                                 $this.data('tooltip', tip);
                                 map.append(tip);

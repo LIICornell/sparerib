@@ -353,7 +353,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 }
 .cluster-tip {
   position: absolute;
-  width: 150px;
+  width: 450px;
   background: #ffffff;
   border: 1px solid #666666;
   padding: 6px;
