@@ -317,12 +317,9 @@ var ClusterView = Backbone.View.extend({
     },
     
     renderMap: function() {
-        console.log('running');
         this.$el.find('.cluster-map').html("").addClass('loading');
 
         this.fetchData($.proxy(function(computed) {
-            console.log("max_depth = " + this.max_depth);
-            
             // do the drawing
             var width = 960,
                 height = 250;
@@ -395,9 +392,9 @@ var ClusterView = Backbone.View.extend({
                                 "left": width_scale(d.start) + left_padding + 6 + "px",
                             });
                             if (d.phrases) {
-                                tip.html("<strong>" + d.size + " documents</strong><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
+                                tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
                             } else {
-                                tip.html("<strong>" + d.size + " documents</strong>").addClass("loading")
+                                tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p>").addClass("loading")
                             }
                             var $this = $(this);
                             $this.data('tooltip', tip);
