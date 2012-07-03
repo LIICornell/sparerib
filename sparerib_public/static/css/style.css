@@ -85,11 +85,61 @@ header, footer, #main {
 }
 header {
   position: relative;
+  background: url("../img/bg/header_bg.png");
+  height: 130px;
+  border-bottom: 1px solid #b5b5b5;
 }
+header h1 {
+  left: 36px;
+  top: 48px;
+  position: absolute;
+  margin: 0;
+}
+header ul#top-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  left: 680px;
+}
+header ul#top-menu li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  float: left;
+  border-left: 1px solid #b5b5b5;
+  height: 35px;
+  line-height: 35px;
+  text-align: center;
+  font-size: 80%;
+}
+header ul#top-menu li a {
+  color: #8d867f;
+}
+header .about-link { width: 70px; }
+header .contact-link { width: 80px; }
+header .sf-link { width: 105px; height: 40px; border-left: 0 !important;}
+header .sf-link a {
+  display: block;
+  width: 105px;
+  height: 40px;
+  text-indent: -9999px;
+  background: url("../img/sf_logo.png") no-repeat top left;
+}
+
+.banner {
+  border-top: 1px solid #e7e7e7;
+  background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
+  padding: 25px 40px 30px;
+}
+.banner h2 {
+  margin-bottom: 0px;
+  margin-top: 12px;
+  font-size: 180%;
+}
+
 #main {
-  background-color: #ffffff;
-  padding: 20px;
-  border: 1px solid #cccccc;
+  background: url("../img/bg/body_bg.png");
 }
 
 .right {
@@ -156,7 +206,12 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-size: 80%;
   color: #444444;
 }
-.dates, .pages {
+.dates {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-top: 30px;
+}
+.pages {
   font-family: georgia, serif;
   font-style: italic;
   margin-bottom: 20px;
@@ -311,8 +366,8 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 
 #top-search {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 75px;
+  left: 680px;
 }
 #top-search h2, #top-search .result-set {
   display: none;
@@ -321,7 +376,7 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-size: 120%;
 }
 #top-search .search input[type=text] {
-  width: 300px;
+  width: 185px;
 }
 
 .cluster-map {

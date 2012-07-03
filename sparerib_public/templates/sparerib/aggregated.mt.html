@@ -1,11 +1,13 @@
-<% if (typeof agency !== "undefined") { %>
-<div class="breadcrumbs">
-    <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
-</div>
-<% } %>
-<h2><%=(typeof title === "undefined" ? name : title)%></h2>
-<div class="dates">
-    <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
+<div class="banner">
+    <% if (typeof agency !== "undefined") { %>
+    <div class="breadcrumbs">
+        <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
+    </div>
+    <% } %>
+    <div class="dates">
+        <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
+    </div>
+    <h2><%=(typeof title === "undefined" ? name : title)%></h2>
 </div>
 
 <div class="chart-row">
