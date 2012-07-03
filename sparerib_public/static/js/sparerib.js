@@ -8,6 +8,32 @@ var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function(
 
 // Cluster models
 var DocketClusters = Backbone.Model.extend({
+    max_depth: 5,
+    flatten: function() {
+        var data = this.toJSON()['cluster_hierarchy'];
+
+        var computed = [data];
+        _.each(computed[0], function(item) {
+            item.row = 0;
+            item.parent = null;
+        })
+
+        // do the rest of the rows
+        for (var depth = 0; depth < this.max_depth - 1; depth++) {
+            computed.push([]);
+            _.each(computed[depth], function(item) {
+                var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
+                _.each(children, function(child) {
+                    child.row = depth + 1;
+                    child.parent = item;
+                    computed[depth + 1].push(child);
+                })
+            })
+        }
+        
+        return computed;
+    },
+    
     url: function() {
         var preselect = this.get('docId');
         var cutoff = this.get('cutoff');
@@ -257,8 +283,6 @@ var ClusterView = Backbone.View.extend({
     tagName: 'div',
     id: 'cluster-view',
     
-    max_depth: 5,
-
     events: {
         'click .cluster-cell-alive': 'handleSwitchCluster',
         'click .cluster-doc-list li': 'handleSwitchDoc',
@@ -270,28 +294,22 @@ var ClusterView = Backbone.View.extend({
         this.renderMap();
         return this;
     },
-    
-    fetchData: function(success_callback) {
+        
+    renderMap: function() {
+        this.$el.find('.cluster-map').html("").addClass('loading');
+
         this.model.fetch({
             'success': $.proxy(function() {
-                var data = this.model.toJSON()['cluster_hierarchy'];
+                var computed = this.model.flatten();
 
-                // partition map for the top-level display
-                // precompute some stuff
-                // - special-case the first row
-
-                var computed = [data];
                 var start = 0;
                 _.each(computed[0], function(item) {
                     item.start = start;
-                    item.row = 0;
                     start += item.size;
-                    item.parent = null;
                 })
 
                 // do the rest of the rows
-                for (var depth = 0; depth < this.max_depth - 1; depth++) {
-                    computed.push([]);
+                for (var depth = 0; depth < this.model.max_depth - 1; depth++) {
                     _.each(computed[depth], function(item) {
                         var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
                         var child_total = d3.sum(_.map(children, function(d) { return d.size; }));
@@ -300,153 +318,153 @@ var ClusterView = Backbone.View.extend({
                         var start = item.start + ((item.size - child_total) / 2);
                         _.each(children, function(child) {
                             child.start = start;
-                            child.row = depth + 1;
                             start += child.size;
-                            child.parent = item;
-                            computed[depth + 1].push(child);
                         })
                     })
+                }           
+            
+                // do the drawing
+                var width = 960,
+                    height = 250;
+
+                var left_padding = 60;
+
+                var width_scale = d3.scale.linear()
+                    .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
+                    .range([0, width - left_padding]);
+
+                var height_scale = d3.scale.linear()
+                    .domain([0, this.model.max_depth])
+                    .range([0, height]);
+
+                var gradient_scale = d3.scale.linear()
+                    .domain([0, this.model.max_depth - 1])
+                    .range([0, 1]);
+
+                var map = $('.cluster-map').css({'position': 'relative'});
+                this.svg = d3.select(map.get(0))
+                    .classed('loading', false)
+                    .append("svg")
+                    .classed("cluster-area", true)
+                    .style("width", (width) + "px")
+                    .style("height", height + "px");
+
+                this.chart = this.svg
+                    .append("g")
+                    .attr("transform", "translate(" + left_padding + ",0)");
+
+                var divisions = this.chart.append("g");
+                var connections = this.chart.append("g");
+                this.connections = connections;
+
+                this.chart.selectAll(".cluster-row")
+                    .data(computed)
+                    .enter()
+                        .append("g")
+                        .classed("cluster-row", true)
+                        .attr("data-row", function(d, i) { return i; })
+                        .each(function(d, i) {
+                            divisions.append("rect")
+                                    .attr('x', -1 * left_padding)
+                                    .attr('y', height_scale(i))
+                                    .attr('width', width)
+                                    .attr('height', height_scale(1))
+                                    .attr('fill', '#777777')
+                                    .style('opacity', gradient_scale(i));
+                        })
+                        .selectAll(".cluster-cell")
+                        .data(function(d, i) { return computed[i]; })
+                        .enter()
+                            .append("rect")
+                            .attr("y", function(d) { return height_scale(d.row) + 4; })
+                            .attr("x", function(d) { return width_scale(d.start) + 2; })
+                            .attr("height", height_scale(1) - 9)
+                            .attr("width", function(d) { return width_scale(d.size) - 5; })
+                            .attr("rx", 5)
+                            .attr("ry", 5)
+                            .classed("cluster-cell", true)
+                            .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
+                            .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
+                            .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
+                            .attr("data-cluster-size", function(d) { return d.size; })
+                            .on('mouseover', function(d, i) {
+                                var tip = $("<div>");
+                                tip.addClass("cluster-tip")
+                                tip.css({
+                                    "top": height_scale(d.row + 1) - 6 + "px",
+                                    "left": width_scale(d.start) + left_padding + 6 + "px",
+                                });
+                                if (d.phrases) {
+                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
+                                } else {
+                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p>").addClass("loading")
+                                }
+                                var $this = $(this);
+                                $this.data('tooltip', tip);
+                                map.append(tip);
+                            })
+                            .on('mouseout', function() {
+                                $(this).data('tooltip').remove();
+                            })
+                            .each(function(d, i) {
+                                if (d.parent) {
+                                    connections.append("line")
+                                        .attr('x1', width_scale(d.start + (d.size / 2)))
+                                        .attr('y1', height_scale(d.row + .5))
+                                        .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
+                                        .attr('y2', height_scale(d.row - .5))
+                                        .classed('cluster-connection', true)
+                                        .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
+                                }
+                            })
+
+                d3.select(map.get(0)).selectAll("div.cluster-row-label")
+                    .data(computed)
+                    .enter()
+                        .append("div")
+                        .classed("cluster-row-label", true)
+                        .text(function(d, i) { return (10 * i) + 50 + "%"; })
+                        .style("position", "absolute")
+                        .style("width", left_padding  - 1 + "px")
+                        .style("height", height_scale(1) + "px")
+                        .style("top", function(d, i) { return height_scale(i) + "px"; });
+
+
+
+                var prepopulate = this.model.get('prepopulate');
+                if (prepopulate) {
+                    var $box = d3.select($(this.chart[0]).find('rect[data-cluster-id=' + Math.round(100*prepopulate.cutoff) + "-" + prepopulate.cluster + ']').get(0)).classed('cluster-cell-selected', true);
+                    this.switchCluster(prepopulate.cluster, prepopulate.cutoff);
+                    this.switchDoc(prepopulate.cluster, prepopulate.document);
                 }
 
-                success_callback(computed);
+                var stats = this.model.get('stats');
+                this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket are represented above; the rest are unique")
+            
+                // re-fetch the data, this time with summaries
+                // when cluster cell's mouseover callback is next called, data will be there
+                this.model.set("require_summaries", true);
+                if (! computed[0][0].phrases) {
+                    this.model.fetch({
+                        'success': $.proxy(function() {
+                            computed = this.model.flatten();
+                            d3.selectAll('.cluster-row')
+                                .each(function(row, i) {
+                                    d3.select(this).selectAll('.cluster-cell')
+                                        .each(function(cell, j) {
+                                            d3.select(this).datum().phrases = computed[i][j].phrases;
+                                        })
+                                });
+                        }, this)
+                    });
+                }
+            
             }, this),
             'error': function() {
-                console.log('failed');
-            }        
-        })
-    },
-    
-    renderMap: function() {
-        this.$el.find('.cluster-map').html("").addClass('loading');
-
-        this.fetchData($.proxy(function(computed) {
-            // do the drawing
-            var width = 960,
-                height = 250;
-
-            var left_padding = 60;
-
-            var width_scale = d3.scale.linear()
-                .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
-                .range([0, width - left_padding]);
-
-            var height_scale = d3.scale.linear()
-                .domain([0, this.max_depth])
-                .range([0, height]);
-
-            var gradient_scale = d3.scale.linear()
-                .domain([0, this.max_depth - 1])
-                .range([0, 1]);
-
-            var map = $('.cluster-map').css({'position': 'relative'});
-            this.svg = d3.select(map.get(0))
-                .classed('loading', false)
-                .append("svg")
-                .classed("cluster-area", true)
-                .style("width", (width) + "px")
-                .style("height", height + "px");
-
-            this.chart = this.svg
-                .append("g")
-                .attr("transform", "translate(" + left_padding + ",0)");
-
-            var divisions = this.chart.append("g");
-            var connections = this.chart.append("g");
-            this.connections = connections;
-
-            this.chart.selectAll(".cluster-row")
-                .data(computed)
-                .enter()
-                    .append("g")
-                    .classed("cluster-row", true)
-                    .attr("data-row", function(d, i) { return i; })
-                    .each(function(d, i) {
-                        divisions.append("rect")
-                                .attr('x', -1 * left_padding)
-                                .attr('y', height_scale(i))
-                                .attr('width', width)
-                                .attr('height', height_scale(1))
-                                .attr('fill', '#777777')
-                                .style('opacity', gradient_scale(i));
-                    })
-                    .selectAll(".cluster-cell")
-                    .data(function(d, i) { return computed[i]; })
-                    .enter()
-                        .append("rect")
-                        .attr("y", function(d) { return height_scale(d.row) + 4; })
-                        .attr("x", function(d) { return width_scale(d.start) + 2; })
-                        .attr("height", height_scale(1) - 9)
-                        .attr("width", function(d) { return width_scale(d.size) - 5; })
-                        .attr("rx", 5)
-                        .attr("ry", 5)
-                        .classed("cluster-cell", true)
-                        .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
-                        .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
-                        .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
-                        .attr("data-cluster-size", function(d) { return d.size; })
-                        .on('mouseover', function(d, i) {
-                            var tip = $("<div>");
-                            tip.addClass("cluster-tip")
-                            tip.css({
-                                "top": height_scale(d.row + 1) - 6 + "px",
-                                "left": width_scale(d.start) + left_padding + 6 + "px",
-                            });
-                            if (d.phrases) {
-                                tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
-                            } else {
-                                tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p>").addClass("loading")
-                            }
-                            var $this = $(this);
-                            $this.data('tooltip', tip);
-                            map.append(tip);
-                        })
-                        .on('mouseout', function() {
-                            $(this).data('tooltip').remove();
-                        })
-                        .each(function(d, i) {
-                            if (d.parent) {
-                                connections.append("line")
-                                    .attr('x1', width_scale(d.start + (d.size / 2)))
-                                    .attr('y1', height_scale(d.row + .5))
-                                    .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
-                                    .attr('y2', height_scale(d.row - .5))
-                                    .classed('cluster-connection', true)
-                                    .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
-                            }
-                        })
-
-            d3.select(map.get(0)).selectAll("div.cluster-row-label")
-                .data(computed)
-                .enter()
-                    .append("div")
-                    .classed("cluster-row-label", true)
-                    .text(function(d, i) { return (10 * i) + 50 + "%"; })
-                    .style("position", "absolute")
-                    .style("width", left_padding  - 1 + "px")
-                    .style("height", height_scale(1) + "px")
-                    .style("top", function(d, i) { return height_scale(i) + "px"; });
-
-
-
-            var prepopulate = this.model.get('prepopulate');
-            if (prepopulate) {
-                var $box = d3.select($(this.chart[0]).find('rect[data-cluster-id=' + Math.round(100*prepopulate.cutoff) + "-" + prepopulate.cluster + ']').get(0)).classed('cluster-cell-selected', true);
-                this.switchCluster(prepopulate.cluster, prepopulate.cutoff);
-                this.switchDoc(prepopulate.cluster, prepopulate.document);
+                console.log('DocketClusters.fetch() failed');
             }
+        });
 
-            var stats = this.model.get('stats');
-            this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket are represented above; the rest are unique")
-            
-            // re-fetch the data, this time with summaries
-            // when cluster cell's mouseover callback is next called, data will be there
-            this.model.set("require_summaries", true);
-            this.fetchData($.proxy(function(computed) {
-                d3.selectAll('.cluster-row')
-                    .selectAll('.cluster-cell')
-                    .data(function(d, i) { return computed[i];});
-            }, this));
-        }, this));
         return this;
     },
 
@@ -669,6 +687,7 @@ var AppRouter = Backbone.Router.extend({
             floatCutoff = parseFloat(cutoff) / 100;
         }
         var clusters = new DocketClusters({'id': id, 'cutoff': floatCutoff, 'docId': typeof docId === "undefined" ? null: docId});
+        window.clusters = clusters;
         var clusterView = new ClusterView({model: clusters});
         $('#main').html(clusterView.render().el);
     }
