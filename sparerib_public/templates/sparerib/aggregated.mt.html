@@ -1,85 +1,124 @@
 <div class="banner">
-    <% if (typeof agency !== "undefined") { %>
-    <div class="breadcrumbs">
-        <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
-    </div>
-    <% } %>
-    <div class="dates">
-        <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
-    </div>
-    <h2><%=(typeof title === "undefined" ? name : title)%></h2>
-</div>
-
-<div class="chart-row">
-    <div class="double-chart">
-        <div id="submission-timeline"></div>
+    <div class="banner-content">
+        <% if (typeof agency !== "undefined") { %>
+        <div class="breadcrumbs">
+            <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
+        </div>
+        <% } %>
+        <div class="dates">
+            <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
+        </div>
+        <h2><%=(typeof title === "undefined" ? name : title)%></h2>
     </div>
 </div>
 
-<div class="chart-row">
-    <% if (typeof stats.fr_docs !== "undefined") { %>
-    <div class="chart rules left">
-        <h4>Notices and Rules</h4>
-        <table>
-            <tr>
-                <th>Title</th><th>Date</th><th>Type</th>
-            </tr>
-            <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
-            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                <td><a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></td>
-                <td><%=formatDate(stats.fr_docs[i].date)%></td>
-                <td><span class="doc-type doc-<%=stats.fr_docs[i].type%>"><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%></span></td>
-            </tr>
-            <% } %>
-        </table>
+<div class="main-content with-right-column">
+    <div class="left-column">
+        <h3>Docket Overview</h3>
+        <div class="left-column-item">
+            <h4>Timeline</h4>
+            <img src="http://placehold.it/560x150" />
+        </div>
+        <div class="left-column-item">
+            <h4>Rule: <span class="document-title">Program Integrity; Gainful Employment</span></h4>
+            
+            <div class="document-summary">
+                <div class="summary-title">Summary:</div>
+                <div class="summary-contents">
+                    Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
+                </div>
+            </div>
+            
+            <div class="document-info-shadow"></div>
+            <div class="document-info">
+                <div class="document-date">Sep 30, 2012</div>
+                <div class="comment-info">
+                    <strong>Comments:</strong> <span class="comment-count">34</span>
+                    <div class="openness">Open for Comment</div>
+                </div>
+            </div>
+
+            <div class="clear"></div>
+        </div>
     </div>
+    <div class="right-column">
 
-    <div class="chart">
-    <% } else { %>
-    <div class="chart left">
-    <% } %>
-
-    
-        <h4>Type Breakdown</h4>
-        <div id="type-breakdown"></div>
     </div>
-</div>
-
-<div class="chart-row">
-    <h3>Entities</h3>
-    <% for (var j = 0; j < 2; j++) { 
-        var submission_type = (['top_submitter_entities', 'top_text_entities'])[j];
-    %>
-    <div class="chart entities <%=(j == 0 ? "left" : "")%>">
-        <h4><%=({'top_submitter_entities': 'Top Submitters', 'top_text_entities': 'Most Mentions'})[submission_type]%></h4>
-        <table>
-            <tr>
-                <th>Entity</th><th><%=({'top_submitter_entities': 'Submissions', 'top_text_entities': 'Mentions'})[submission_type]%></th>
-            </tr>
-            <% for (var i = 0; i < stats[submission_type].length; i++) { %>
-            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                <td>
-                    <% if (stats[submission_type][i].type == 'organization') { %>
-                        <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
-                    <% } else { %>
-                        <%=stats[submission_type][i].name%>
-                    <% } %>
-                </td>
-                <td>
-                    <%=stats[submission_type][i].count%>
-                    <a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>" class="view-link">view &raquo;</a>
-                </td>
-            </tr>
-            <% } %>
-        </table>
-    </div>
-    <% } %>
-</div>
-
-<div class="pagination">
-    <a href="/search-document/<%=encodeURIComponent(type + ":" + id)%>" class="prev">see documents &raquo;</a>
-    <% if (type == "docket") { %>
-    <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>" class="next">view on regulations.gov &raquo;</a>
-    <% } %>
     <div class="clear"></div>
+    <!--
+    <div class="chart-row">
+        <div class="double-chart">
+            <div id="submission-timeline"></div>
+        </div>
+    </div>
+
+    <div class="chart-row">
+        <% if (typeof stats.fr_docs !== "undefined") { %>
+        <div class="chart rules left">
+            <h4>Notices and Rules</h4>
+            <table>
+                <tr>
+                    <th>Title</th><th>Date</th><th>Type</th>
+                </tr>
+                <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
+                <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                    <td><a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></td>
+                    <td><%=formatDate(stats.fr_docs[i].date)%></td>
+                    <td><span class="doc-type doc-<%=stats.fr_docs[i].type%>"><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%></span></td>
+                </tr>
+                <% } %>
+            </table>
+        </div>
+
+        <div class="chart">
+        <% } else { %>
+        <div class="chart left">
+        <% } %>
+
+        
+            <h4>Type Breakdown</h4>
+            <div id="type-breakdown"></div>
+        </div>
+    </div>
+
+    <div class="chart-row">
+        <h3>Entities</h3>
+        <% for (var j = 0; j < 2; j++) { 
+            var submission_type = (['top_submitter_entities', 'top_text_entities'])[j];
+        %>
+        <div class="chart entities <%=(j == 0 ? "left" : "")%>">
+            <h4><%=({'top_submitter_entities': 'Top Submitters', 'top_text_entities': 'Most Mentions'})[submission_type]%></h4>
+            <table>
+                <tr>
+                    <th>Entity</th><th><%=({'top_submitter_entities': 'Submissions', 'top_text_entities': 'Mentions'})[submission_type]%></th>
+                </tr>
+                <% for (var i = 0; i < stats[submission_type].length; i++) { %>
+                <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
+                    <td>
+                        <% if (stats[submission_type][i].type == 'organization') { %>
+                            <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
+                        <% } else { %>
+                            <%=stats[submission_type][i].name%>
+                        <% } %>
+                    </td>
+                    <td>
+                        <%=stats[submission_type][i].count%>
+                        <a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>" class="view-link">view &raquo;</a>
+                    </td>
+                </tr>
+                <% } %>
+            </table>
+        </div>
+        <% } %>
+    </div>
+
+    <div class="pagination">
+        <a href="/search-document/<%=encodeURIComponent(type + ":" + id)%>" class="prev">see documents &raquo;</a>
+        <% if (type == "docket") { %>
+        <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>" class="next">view on regulations.gov &raquo;</a>
+        <% } %>
+        <div class="clear"></div>
+    </div>
+
+    -->
 </div>

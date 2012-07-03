@@ -20,13 +20,15 @@
 <body>
   <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
     <header>
-        <h1><a href="/">SpareRib</a></h1>
-        <div id="top-search"></div>
-        <ul id="top-menu">
-            <li class="about-link"><a href="#">About</a></li>
-            <li class="contact-link"><a href="#">Contact</a></li>
-            <li class="sf-link"><a href="#">Sunlight Foundation</a>
-        </ul>
+        <div class="header-content">
+            <h1><a href="/">SpareRib</a></h1>
+            <div id="top-search"></div>
+            <ul id="top-menu">
+                <li class="about-link"><a href="#">About</a></li>
+                <li class="contact-link"><a href="#">Contact</a></li>
+                <li class="sf-link"><a href="#">Sunlight Foundation</a>
+            </ul>
+        </div>
     </header>
     <div role="main" id="main">
         {% block "main" %}{% endblock %}

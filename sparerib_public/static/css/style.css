@@ -66,32 +66,34 @@ td { vertical-align: top; }
 
 /* author styles */
 
-a, a:visited { color: #0a6e92; text-decoration: none; }
-a:active, a:hover { color: #35a1ce; }
-h1, h2 { font-family: 'Share', sans-serif; font-weight: normal; }
+a, a:visited { color: #46535f; text-decoration: underline; }
+a:active, a:hover { color: #537b82; }
+h1, h2, h3 { font-family: 'Share', sans-serif; font-weight: normal; }
 h1 { color: #ffffff; font-size: 250%; }
 h1 a, h1 a:hover { color: #ffffff !important; }
 h2 { font-size: 210%; margin-bottom: 10px; margin-top: 0; padding-top: 0; line-height: 1;}
 h3, h4 { font-weight: bold; padding: 0; margin: 0; }
 h3 { font-size: 140%; }
 h4 { font-size: 115%; }
-body { background-color: #333333; }
+body { background-color: #333333; color: #473f3d; }
 .clear { clear: both; }
 
-header, footer, #main {
+.header-content, footer, .main-content {
   width: 960px;
   margin-left: auto;
   margin-right: auto;
 }
 header {
+  background: url("../img/bg/header_bg.png");  
+}
+.header-content {
   position: relative;
-  background: url("../img/bg/header_bg.png");
   height: 130px;
   border-bottom: 1px solid #b5b5b5;
 }
 header h1 {
-  left: 36px;
-  top: 48px;
+  left: 35px;
+  top: 45px;
   position: absolute;
   margin: 0;
 }
@@ -130,16 +132,86 @@ header .sf-link a {
 .banner {
   border-top: 1px solid #e7e7e7;
   background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
-  padding: 25px 40px 30px;
 }
 .banner h2 {
   margin-bottom: 0px;
-  margin-top: 12px;
+  margin-top: 8px;
   font-size: 180%;
+  color: #529594;
+}
+.banner-content {
+  width: 890px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 25px 35px 30px;
 }
 
 #main {
   background: url("../img/bg/body_bg.png");
+}
+.with-right-column {
+  background: url("../img/bg/twocol_bg.png") repeat-y top right;
+}
+
+.left-column {
+  width: 609px;
+  padding-left: 35px;
+  float: left;
+}
+.left-column-item {
+  padding: 30px 30px 30px 25px;
+  background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
+}
+.left-column h3 {
+  color: #529594;
+  margin-top: 20px;
+}
+
+.document-title {
+  color: #529594;;
+}
+.document-info-shadow {
+  float: left;
+  width: 150px;
+  height: 14px;
+  background: url("../img/bg/infobox_bg.png") repeat-x bottom left;
+  margin-top: 8px;
+}
+.document-info {
+  width: 110px;
+  clear: left;
+  float: left;
+  background: rgba(211,204,191,0.54) url("../img/bg/infobox_bg.png") repeat-x bottom left;
+  font-size: 80%;
+  padding: 15px 20px;
+}
+.document-summary {
+  width: 375px;
+  float: right;
+  margin-top: 16px;
+  font-size: 80%;
+}
+.summary-title {
+  font-weight: bold;
+  line-height: 180%;
+}
+.document-date {
+  border-bottom: 1px solid #a8a8a8;
+  text-transform: uppercase;
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+.comment-info {
+  padding-top: 6px;
+  border-top: 1px solid #ffffff;
+}
+.openness {
+  text-transform: lowercase;
+}
+.comment-count {
+  font-family: 'Share';
+  font-size: 180%;
+  color: #d59305;
 }
 
 .right {
