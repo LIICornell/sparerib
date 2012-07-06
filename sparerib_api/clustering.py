@@ -11,6 +11,7 @@ import psycopg2.extras
 import itertools
 import numpy
 
+
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
 CORPUS_PREFERENCE = {
     '4-gram':   1,
@@ -104,7 +105,7 @@ class DocketHierarchyView(CommonClusterView):
         db = get_db()
         docket = db.dockets.find({'_id': docket_id})[0]
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', False))
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', False)=="True")
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
