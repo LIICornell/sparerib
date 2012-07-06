@@ -1,5 +1,5 @@
 from djangorestframework.views import View as DRFView
-from analysis.corpus import get_corpora_by_metadata
+from analysis.corpus import get_dual_corpora_by_metadata
 from django.conf import settings
 
 from django.db import connection
@@ -38,11 +38,8 @@ class CommonClusterView(DRFView):
     @property
     def corpus(self):
         if self._corpus is None:
-            corpora = get_corpora_by_metadata('docket', self.kwargs['docket_id'])
-            if corpora:
-                sorted_corpora = sorted(corpora, key=lambda c: CORPUS_PREFERENCE.get(c.metadata.get('parser', 'other'), CORPUS_PREFERENCE['other']))
-                self._corpus = sorted_corpora[0]
-            else:
+            self._corpus = get_dual_corpora_by_metadata('docket', self.kwargs['docket_id'])
+            if not self._corpus:
                 # todo: better error handling
                 raise "Couldn't find analysis for docket %s" % self.kwargs['docket_id']
         return self._corpus
