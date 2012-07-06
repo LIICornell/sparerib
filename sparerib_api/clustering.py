@@ -36,11 +36,13 @@ class CommonClusterView(DRFView):
     @property
     def corpus(self):
         if self._corpus is None:
-            corpora = cached_get_corpora_by_metadata('docket', self.kwargs['docket_id'])
+            corpora = get_corpora_by_metadata('docket', self.kwargs['docket_id'])
             if corpora:
                 sorted_corpora = sorted(corpora, key=lambda c: CORPUS_PREFERENCE.get(c.metadata.get('parser', 'other'), CORPUS_PREFERENCE['other']))
                 self._corpus = corpora[0]
             else:
+                # todo: this looks fishy to me: -1 is a valid corpus ID...why open this one special corpus?
+                # shouldn't it throw an error instead?
                 self.corpus = CacheCorpus(-1)
         return self._corpus
 
@@ -198,32 +200,3 @@ class DocumentClusterChainView(CommonClusterView):
             } for entry in self.corpus.clusters_for_doc(document_id)]
         }
 
-
-### UTILITIES ####
-
-from cache import cache
-hour_cache = cache(seconds=3600)
-
-from django.db import connection
-class CacheCorpus(Corpus):
-    def __hash__(self):
-        return hash(self.id)
-
-    def __repr__(self):
-        return 'corpus_%s' % self.id
-
-    def __init__(self, id, metadata={}):
-        self.id = id
-        self.metadata = metadata
-        self.cursor = connection.cursor()
-
-    clusters = hour_cache(Corpus.clusters)
-    cluster = hour_cache(Corpus.cluster)
-    docs_by_centrality = hour_cache(Corpus.docs_by_centrality)
-
-@hour_cache
-def _cached_get_corpora_by_metadata(key, value):
-    return [(c.id, c.metadata) for c in get_corpora_by_metadata(key, value)]
-
-def cached_get_corpora_by_metadata(key, value):
-    return [CacheCorpus(n, m) for n, m in _cached_get_corpora_by_metadata(key, value)]
