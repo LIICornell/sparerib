@@ -13,7 +13,7 @@ from query_parse import parse_query
 
 from collections import defaultdict
 
-from util import get_db
+from util import mongo_connection
 
 ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned']
 
@@ -168,7 +168,7 @@ class AggregatedSearchResults(list):
     def __getslice__(self, start, end):
         s = super(AggregatedSearchResults, self).__getslice__(start, end)
 
-        db = get_db()
+        db = mongo_connection()
 
         ids = [match['term'] for match in s]
         agg_search = db[self.aggregation_collection].find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])

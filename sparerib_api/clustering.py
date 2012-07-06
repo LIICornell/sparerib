@@ -1,16 +1,18 @@
 from djangorestframework.views import View as DRFView
-from analysis.corpus import Corpus, get_corpora_by_metadata
+from analysis.corpus import get_corpora_by_metadata
 from django.conf import settings
-from django.http import Http404
-
-from util import *
 
 from django.db import connection
 import psycopg2.extras
 
 import itertools
+try:
+    import numpypy
+except:
+    pass
 import numpy
 
+from util import mongo_connection
 
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
 CORPUS_PREFERENCE = {
@@ -39,11 +41,10 @@ class CommonClusterView(DRFView):
             corpora = get_corpora_by_metadata('docket', self.kwargs['docket_id'])
             if corpora:
                 sorted_corpora = sorted(corpora, key=lambda c: CORPUS_PREFERENCE.get(c.metadata.get('parser', 'other'), CORPUS_PREFERENCE['other']))
-                self._corpus = corpora[0]
+                self._corpus = sorted_corpora[0]
             else:
-                # todo: this looks fishy to me: -1 is a valid corpus ID...why open this one special corpus?
-                # shouldn't it throw an error instead?
-                self.corpus = CacheCorpus(-1)
+                # todo: better error handling
+                raise "Couldn't find analysis for docket %s" % self.kwargs['docket_id']
         return self._corpus
 
     @property
@@ -64,7 +65,7 @@ class CommonClusterView(DRFView):
 
 class DocketClusterView(CommonClusterView):
     def get(self, request, docket_id):
-        db = get_db()
+        db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
 
         sorted_clusters = sorted(self.clusters, key=lambda c: len(c), reverse=True)
@@ -104,10 +105,10 @@ class DocketClusterView(CommonClusterView):
 
 class DocketHierarchyView(CommonClusterView):
     def get(self, request, docket_id):
-        db = get_db()
+        db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', False)=="True")
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
