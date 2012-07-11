@@ -1,5 +1,6 @@
 from djangorestframework.views import View as DRFView
 from analysis.corpus import get_dual_corpora_by_metadata
+from analysis.utils import profile
 from django.conf import settings
 
 from django.db import connection
@@ -61,6 +62,7 @@ class CommonClusterView(DRFView):
 
 
 class DocketClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id):
         db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
@@ -101,6 +103,7 @@ class DocketClusterView(CommonClusterView):
         return out
 
 class DocketHierarchyView(CommonClusterView):
+    @profile
     def get(self, request, docket_id):
         db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
@@ -140,6 +143,7 @@ class DocketHierarchyView(CommonClusterView):
         return out
 
 class SingleClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, cluster_id):
         cluster_id = int(cluster_id)
         
@@ -157,6 +161,7 @@ class SingleClusterView(CommonClusterView):
         }
 
 class DocumentClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, cluster_id, document_id):
         document_id = int(document_id)
         cluster_id = int(cluster_id)
@@ -187,6 +192,7 @@ class DocumentClusterView(CommonClusterView):
         }
 
 class DocumentClusterChainView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, document_id):
         document_id = int(document_id)
 
