@@ -103,6 +103,7 @@ header ul#top-menu {
   margin: 0;
   position: relative;
   left: 680px;
+  width: 280px;
 }
 header ul#top-menu li {
   list-style: none;
@@ -165,6 +166,59 @@ header .sf-link a {
 .left-column h3 {
   color: #529594;
   margin-top: 20px;
+}
+.left-column-split {
+  font-size: 80%;
+  padding: 30px 25px 40px 25px;
+}
+.left-column-split .left-column-left {
+  width: 260px;
+  float: left;
+  padding-right: 19px;
+  border-right: 1px solid #cbcbcb;
+}
+.left-column-split .left-column-right {
+  width: 260px;
+  float: right;
+  padding-left: 19px;
+}
+.left-column-split ul {
+  margin-left: 0;
+  padding-left: 0;
+}
+.left-column-split ul li {
+  padding: 15px 0px 15px 30px;
+  border-bottom: 1px solid #cbcbcb;
+  list-style: none;
+  margin-left: 0;
+}
+.left-column-split ul li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.right-column {
+  width: 295px;
+  float: right;
+  padding-right: 20px;
+}
+.right-column-item {
+  font-size: 80%;
+  background: url('../img/bg/right_sidebar_stripe.png') no-repeat bottom left;
+  padding: 25px 30px 35px 15px;
+}
+.similarity-description {
+  line-height: 1.6em;
+  margin: 12px 0px 12px 0px;
+}
+.similarity-description .group-count {
+  font-family: 'Share';
+  font-size: 160%;
+  color: #d59305;
+}
+.similarity-description .cutoff {
+  font-family: 'Share';
+  font-size: 160%;
+  color: #529594;
 }
 
 .document-title {
