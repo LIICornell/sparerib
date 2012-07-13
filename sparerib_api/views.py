@@ -29,7 +29,7 @@ class AggregatedView(ResponseMixin, View):
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov dockets."
 
-        db = get_db()
+        db = mongo_connection()
 
         results = list(db[self.aggregation_collection].find({'_id': kwargs[self.aggregation_field]}))
         if not results:
@@ -129,7 +129,7 @@ class DocumentView(ResponseMixin, View):
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
 
-        db = get_db()
+        db = mongo_connection()
 
         results = list(db.docs.find({'document_id': kwargs['document_id']}))
         if not results:
@@ -214,7 +214,7 @@ class EntityView(ResponseMixin, View):
     def get(self, request, *args, **kwargs):
         "Access aggregate information about entities as they occur in regulations.gov data."
 
-        db = get_db()
+        db = mongo_connection()
 
         results = list(db.entities.find({'_id': kwargs['entity_id']}))
         if not results:

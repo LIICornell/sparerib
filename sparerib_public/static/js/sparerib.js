@@ -7,14 +7,44 @@ var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/"
 var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
 
 // Cluster models
-var DocketClusters = Backbone.Model.extend({ url: function() {
-    var preselect = this.get('docId');
-    var cutoff = this.get('cutoff');
-    var qs = [];
-    if (cutoff) qs.push("cutoff=" + cutoff);
-    if (preselect) qs.push("prepopulate_document=" + preselect);
-    return "/api/1.0/docket/" + this.id + "/hierarchy?" + qs.join("&");
-} });
+var DocketClusters = Backbone.Model.extend({
+    max_depth: 5,
+    flatten: function() {
+        var data = this.toJSON()['cluster_hierarchy'];
+
+        var computed = [data];
+        _.each(computed[0], function(item) {
+            item.row = 0;
+            item.parent = null;
+        })
+
+        // do the rest of the rows
+        for (var depth = 0; depth < this.max_depth - 1; depth++) {
+            computed.push([]);
+            _.each(computed[depth], function(item) {
+                var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
+                _.each(children, function(child) {
+                    child.row = depth + 1;
+                    child.parent = item;
+                    computed[depth + 1].push(child);
+                })
+            })
+        }
+        
+        return computed;
+    },
+    
+    url: function() {
+        var preselect = this.get('docId');
+        var cutoff = this.get('cutoff');
+        var require_summaries = this.get('require_summaries')
+        var qs = [];
+        if (cutoff) qs.push("cutoff=" + cutoff);
+        if (preselect) qs.push("prepopulate_document=" + preselect);
+        if (require_summaries) qs.push("require_summaries=true");
+        return "/api/1.0/docket/" + this.id + "/hierarchy?" + qs.join("&");
+    }
+});
 var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.id + "?cutoff=" + this.get('cutoff'); } });
 var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.get('cluster_id') + "/document/" + this.id + "?cutoff=" + this.get('cutoff'); } });
 var ClusterChain = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/clusters_for_document/" + this.id; } });
@@ -252,7 +282,7 @@ var EntityDetailView = Backbone.View.extend({
 var ClusterView = Backbone.View.extend({
     tagName: 'div',
     id: 'cluster-view',
-
+    
     events: {
         'click .cluster-cell-alive': 'handleSwitchCluster',
         'click .cluster-doc-list li': 'handleSwitchDoc',
@@ -264,31 +294,22 @@ var ClusterView = Backbone.View.extend({
         this.renderMap();
         return this;
     },
+        
     renderMap: function() {
-        console.log('running');
         this.$el.find('.cluster-map').html("").addClass('loading');
 
         this.model.fetch({
             'success': $.proxy(function() {
-                var data = this.model.toJSON()['cluster_hierarchy'];
+                var computed = this.model.flatten();
 
-                // partition map for the top-level display
-                // precompute some stuff
-                // - special-case the first row
-                var max_depth = 5;
-
-                var computed = [data];
                 var start = 0;
                 _.each(computed[0], function(item) {
                     item.start = start;
-                    item.row = 0;
                     start += item.size;
-                    item.parent = null;
                 })
 
                 // do the rest of the rows
-                for (var depth = 0; depth < max_depth - 1; depth++) {
-                    computed.push([]);
+                for (var depth = 0; depth < this.model.max_depth - 1; depth++) {
                     _.each(computed[depth], function(item) {
                         var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
                         var child_total = d3.sum(_.map(children, function(d) { return d.size; }));
@@ -297,14 +318,11 @@ var ClusterView = Backbone.View.extend({
                         var start = item.start + ((item.size - child_total) / 2);
                         _.each(children, function(child) {
                             child.start = start;
-                            child.row = depth + 1;
                             start += child.size;
-                            child.parent = item;
-                            computed[depth + 1].push(child);
                         })
                     })
-                }
-
+                }           
+            
                 // do the drawing
                 var width = 960,
                     height = 250;
@@ -312,15 +330,15 @@ var ClusterView = Backbone.View.extend({
                 var left_padding = 60;
 
                 var width_scale = d3.scale.linear()
-                    .domain([0, d3.sum(_.map(data, function(d) { return d.size; }))])
+                    .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
                     .range([0, width - left_padding]);
 
                 var height_scale = d3.scale.linear()
-                    .domain([0, max_depth])
+                    .domain([0, this.model.max_depth])
                     .range([0, height]);
 
                 var gradient_scale = d3.scale.linear()
-                    .domain([0, max_depth - 1])
+                    .domain([0, this.model.max_depth - 1])
                     .range([0, 1]);
 
                 var map = $('.cluster-map').css({'position': 'relative'});
@@ -376,8 +394,11 @@ var ClusterView = Backbone.View.extend({
                                     "top": height_scale(d.row + 1) - 6 + "px",
                                     "left": width_scale(d.start) + left_padding + 6 + "px",
                                 });
-                                tip.html("<strong>" + d.size + " documents</strong> at <strong>" + (100*d.cutoff) + "% similarity</strong>");
-
+                                if (d.phrases) {
+                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
+                                } else {
+                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p>").addClass("loading")
+                                }
                                 var $this = $(this);
                                 $this.data('tooltip', tip);
                                 map.append(tip);
@@ -419,11 +440,31 @@ var ClusterView = Backbone.View.extend({
 
                 var stats = this.model.get('stats');
                 this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket are represented above; the rest are unique")
+            
+                // re-fetch the data, this time with summaries
+                // when cluster cell's mouseover callback is next called, data will be there
+                this.model.set("require_summaries", true);
+                if (! computed[0][0].phrases) {
+                    this.model.fetch({
+                        'success': $.proxy(function() {
+                            computed = this.model.flatten();
+                            d3.selectAll('.cluster-row')
+                                .each(function(row, i) {
+                                    d3.select(this).selectAll('.cluster-cell')
+                                        .each(function(cell, j) {
+                                            d3.select(this).datum().phrases = computed[i][j].phrases;
+                                        })
+                                });
+                        }, this)
+                    });
+                }
+            
             }, this),
             'error': function() {
-                console.log('failed');
+                console.log('DocketClusters.fetch() failed');
             }
         });
+
         return this;
     },
 
@@ -646,6 +687,7 @@ var AppRouter = Backbone.Router.extend({
             floatCutoff = parseFloat(cutoff) / 100;
         }
         var clusters = new DocketClusters({'id': id, 'cutoff': floatCutoff, 'docId': typeof docId === "undefined" ? null: docId});
+        window.clusters = clusters;
         var clusterView = new ClusterView({model: clusters});
         $('#main').html(clusterView.render().el);
     }
@@ -667,7 +709,6 @@ $(document).on("click", "a:not([data-bypass])", function(evt) {
         Backbone.history.navigate(href, true);
     }
 });
-
 
 
 })(jQuery);

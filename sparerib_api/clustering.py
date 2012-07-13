@@ -1,15 +1,19 @@
 from djangorestframework.views import View as DRFView
-from analysis.corpus import Corpus, get_corpora_by_metadata
+from analysis.corpus import get_dual_corpora_by_metadata
+from analysis.utils import profile
 from django.conf import settings
-from django.http import Http404
-
-from util import *
 
 from django.db import connection
 import psycopg2.extras
 
 import itertools
+try:
+    import numpypy
+except:
+    pass
 import numpy
+
+from util import mongo_connection
 
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
 CORPUS_PREFERENCE = {
@@ -35,12 +39,10 @@ class CommonClusterView(DRFView):
     @property
     def corpus(self):
         if self._corpus is None:
-            corpora = cached_get_corpora_by_metadata('docket', self.kwargs['docket_id'])
-            if corpora:
-                sorted_corpora = sorted(corpora, key=lambda c: CORPUS_PREFERENCE.get(c.metadata.get('parser', 'other'), CORPUS_PREFERENCE['other']))
-                self._corpus = corpora[0]
-            else:
-                self.corpus = CacheCorpus(-1)
+            self._corpus = get_dual_corpora_by_metadata('docket', self.kwargs['docket_id'])
+            if not self._corpus:
+                # todo: better error handling
+                raise "Couldn't find analysis for docket %s" % self.kwargs['docket_id']
         return self._corpus
 
     @property
@@ -60,8 +62,9 @@ class CommonClusterView(DRFView):
 
 
 class DocketClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id):
-        db = get_db()
+        db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
 
         sorted_clusters = sorted(self.clusters, key=lambda c: len(c), reverse=True)
@@ -100,11 +103,12 @@ class DocketClusterView(CommonClusterView):
         return out
 
 class DocketHierarchyView(CommonClusterView):
+    @profile
     def get(self, request, docket_id):
-        db = get_db()
+        db = mongo_connection()
         docket = db.dockets.find({'_id': docket_id})[0]
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005))
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket['stats']['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
@@ -139,6 +143,7 @@ class DocketHierarchyView(CommonClusterView):
         return out
 
 class SingleClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, cluster_id):
         cluster_id = int(cluster_id)
         
@@ -156,6 +161,7 @@ class SingleClusterView(CommonClusterView):
         }
 
 class DocumentClusterView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, cluster_id, document_id):
         document_id = int(document_id)
         cluster_id = int(cluster_id)
@@ -186,6 +192,7 @@ class DocumentClusterView(CommonClusterView):
         }
 
 class DocumentClusterChainView(CommonClusterView):
+    @profile
     def get(self, request, docket_id, document_id):
         document_id = int(document_id)
 
@@ -197,33 +204,3 @@ class DocumentClusterChainView(CommonClusterView):
             } for entry in self.corpus.clusters_for_doc(document_id)]
         }
 
-
-### UTILITIES ####
-
-from cache import cache
-hour_cache = cache(seconds=3600)
-
-from django.db import connection
-class CacheCorpus(Corpus):
-    def __hash__(self):
-        return hash(self.id)
-
-    def __repr__(self):
-        return 'corpus_%s' % self.id
-
-    def __init__(self, id, metadata={}):
-        self.id = id
-        self.metadata = metadata
-        self.cursor = connection.cursor()
-
-    clusters = hour_cache(Corpus.clusters)
-    cluster = hour_cache(Corpus.cluster)
-    hierarchy = hour_cache(Corpus.hierarchy)
-    docs_by_centrality = hour_cache(Corpus.docs_by_centrality)
-
-@hour_cache
-def _cached_get_corpora_by_metadata(key, value):
-    return [(c.id, c.metadata) for c in get_corpora_by_metadata(key, value)]
-
-def cached_get_corpora_by_metadata(key, value):
-    return [CacheCorpus(n, m) for n, m in _cached_get_corpora_by_metadata(key, value)]

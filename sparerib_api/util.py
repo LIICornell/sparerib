@@ -3,7 +3,7 @@ import pymongo
 
 import datetime, calendar
 
-def get_db():
+def mongo_connection():
     return pymongo.Connection(
         **(getattr(settings, 'DB_SETTINGS', {}))
     )[getattr(settings, 'DB_NAME', 'regulations')]
