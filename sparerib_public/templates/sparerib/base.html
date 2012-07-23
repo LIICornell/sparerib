@@ -34,7 +34,27 @@
         {% block "main" %}{% endblock %}
     </div>
     <footer>
-        SpareRib is a product of the <a href="http://www.sunlightfoundation.com">Sunlight Foundation</a>.
+        <div class="mail-stripe-wrapper">
+            <div class="mail-stripe">
+                <div class="mail-stripe-inner">
+                    <div class="call-to-action">
+                        <strong>Like this project and want to discover others like it?</strong>
+                        Join the Sunlight Foundation's open government community to learn more.
+                    </div>
+                    <div class="sign-up">
+                        <form name="list-sign-up">
+                            <input class="email-field" type="text" value="Email Address" />
+                            <input class="zip-field" type="text" value="Zip Code" />
+                            <input type="submit" value="Sign Up" />
+                        </form>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        </div>
+        <div class="sunlight-stripe">
+            Founded in 2006, the Sunlight Foundation is a non-partisan non-profit that uses cutting-edge technology and ideas to make government transparent and accountable.  Visit <a href="http://sunlightfoundation.com">SunlightFoundation.com</a> to learn more.
+        </div>
     </footer>
 
     {# Backbone template includes #}

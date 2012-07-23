@@ -75,10 +75,10 @@ h2 { font-size: 210%; margin-bottom: 10px; margin-top: 0; padding-top: 0; line-h
 h3, h4 { font-weight: bold; padding: 0; margin: 0; }
 h3 { font-size: 140%; }
 h4 { font-size: 115%; }
-body { background-color: #333333; color: #473f3d; }
+body { background: url("../img/bg/body_bg.png"); color: #473f3d; }
 .clear { clear: both; }
 
-.header-content, footer, .main-content {
+.header-content, .main-content, .mail-stripe-inner, .sunlight-stripe {
   width: 960px;
   margin-left: auto;
   margin-right: auto;
@@ -127,7 +127,7 @@ header .sf-link a {
   width: 105px;
   height: 40px;
   text-indent: -9999px;
-  background: url("../img/sf_logo.png") no-repeat top left;
+  background: url("../img/sf_logo_mini.png") no-repeat top left;
 }
 
 .banner {
@@ -147,8 +147,42 @@ header .sf-link a {
   padding: 25px 35px 30px;
 }
 
-#main {
-  background: url("../img/bg/body_bg.png");
+.mail-stripe-wrapper {
+  background: url("../img/bg/bottom_stripe_bg.png") repeat-x bottom left;
+  padding: 1px 0 3px 0;
+  border-top: 1px solid #bcbcbc;
+}
+.mail-stripe {
+  background: url("../img/bg/header_bg.png"); 
+}
+.mail-stripe-inner {
+  width: 880px;
+  padding: 25px 40px 25px 40px;
+}
+.call-to-action {
+  padding: 15px 0px 0px 90px;
+  background: url("../img/product_of_sunlight.png") no-repeat top left;
+  float: left;
+  width: 525px;
+  height: 60px;
+}
+.call-to-action strong {
+  display: block;
+  font-size: 145%;
+  line-height: 100%;
+  font-weight: normal;
+}
+.sign-up {
+  width: 250px;
+  float: right;
+}
+
+.sunlight-stripe {
+  width: 610px;
+  padding: 25px 120px 70px 230px;
+  background: url("../img/sf_logo.png") no-repeat 65px 20px;
+  font-size: 75%;
+  color: #475360;
 }
 .with-right-column {
   background: url("../img/bg/twocol_bg.png") repeat-y top right;
@@ -206,6 +240,9 @@ header .sf-link a {
   background: url('../img/bg/right_sidebar_stripe.png') no-repeat bottom left;
   padding: 25px 30px 35px 15px;
 }
+.right-column-item.last {
+  background: none;
+}
 .similarity-description {
   line-height: 1.6em;
   margin: 12px 0px 12px 0px;
@@ -219,6 +256,36 @@ header .sf-link a {
   font-family: 'Share';
   font-size: 160%;
   color: #529594;
+}
+.right-column ul.document-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.right-column ul.document-list li {
+  padding: 15px 0px 15px 0px;
+  border-bottom: 1px solid #CBCBCB;
+  list-style: none;
+  margin-left: 0;
+}
+.right-column ul.document-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.right-column .submitter-breakdown {
+  padding: 15px 0 15px 0;
+}
+.right-column .submitter-square {
+  height: 12px;
+  width: 12px;
+  float: left;
+  background: #d59305;
+  margin-top: 4px;
+}
+.right-column .submitter-name {
+  width: 230px;
+  float: right;
+  margin-bottom: 8px;
 }
 
 .document-title {
@@ -641,15 +708,6 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 #cluster-view .pseudo-loading {
   background: #eeeeee url("../img/loading.gif") no-repeat 97% 2%;
 }
-
-footer {
-  padding: 15px;
-  text-align: center;
-  font-family: georgia, serif;
-  font-style: italic;
-  color: #cccccc;
-}
-footer a, footer a:visited { color: #ddeeff; }
 
 /* end author styles */
 
