@@ -19,69 +19,29 @@
             <h4>Timeline</h4>
             <img src="http://placehold.it/560x150" />
         </div>
-        <div class="left-column-item">
-            <h4>Rule: <span class="document-title">Program Integrity; Gainful Employment</span></h4>
-            
-            <div class="document-summary">
-                <div class="summary-title">Summary:</div>
-                <div class="summary-contents">
-                    Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
+        <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
+            <div class="left-column-item">
+                <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%>: <a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></h4>
+                
+                <div class="document-summary">
+                    <div class="summary-title">Summary:</div>
+                    <div class="summary-contents">
+                        Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
+                    </div>
                 </div>
-            </div>
-            
-            <div class="document-info-shadow"></div>
-            <div class="document-info">
-                <div class="document-date">Sep 30, 2012</div>
-                <div class="comment-info">
-                    <strong>Comments:</strong> <span class="comment-count">34</span>
-                    <div class="openness">Open for Comment</div>
+                
+                <div class="document-info-shadow"></div>
+                <div class="document-info">
+                    <div class="document-date"><%=shortFormatDate(stats.fr_docs[i].date)%></div>
+                    <div class="comment-info">
+                        <strong>Comments:</strong> <span class="comment-count">34</span>
+                        <div class="openness">Open for Comment</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="clear"></div>
-        </div>
-        <div class="left-column-item">
-            <h4>Rule: <span class="document-title">Program Integrity; Gainful Employment</span></h4>
-            
-            <div class="document-summary">
-                <div class="summary-title">Summary:</div>
-                <div class="summary-contents">
-                    Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
-                </div>
+                <div class="clear"></div>
             </div>
-            
-            <div class="document-info-shadow"></div>
-            <div class="document-info">
-                <div class="document-date">Sep 30, 2012</div>
-                <div class="comment-info">
-                    <strong>Comments:</strong> <span class="comment-count">34</span>
-                    <div class="openness">Open for Comment</div>
-                </div>
-            </div>
-
-            <div class="clear"></div>
-        </div>
-        <div class="left-column-item">
-            <h4>Rule: <span class="document-title">Program Integrity; Gainful Employment</span></h4>
-            
-            <div class="document-summary">
-                <div class="summary-title">Summary:</div>
-                <div class="summary-contents">
-                    Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
-                </div>
-            </div>
-            
-            <div class="document-info-shadow"></div>
-            <div class="document-info">
-                <div class="document-date">Sep 30, 2012</div>
-                <div class="comment-info">
-                    <strong>Comments:</strong> <span class="comment-count">34</span>
-                    <div class="openness">Open for Comment</div>
-                </div>
-            </div>
-
-            <div class="clear"></div>
-        </div>
+        <% } %>
 
         <div class="left-column-split">
             <div class="left-column-left">
@@ -120,48 +80,29 @@
             <h4>Top Comment Submitters (<a href="#">232</a>)</h4>
             <img class="submitter-breakdown" src="http://placehold.it/240x35" />
             <div class="top-submitters">
-                <div class="submitter">
-                    <div class="submitter-square"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">University of Phoenix</a></strong><br />
-                        (<a href="#">View 132 comments</a>)
+                <%
+                    var submission_type = 'top_submitter_entities';
+                    var counted_comments = 0;
+                    for (var i = 0; i < Math.min(5, stats[submission_type].length); i++) {
+                        counted_comments += stats[submission_type][i].count;
+                %>
+                    <div class="submitter">
+                        <div class="submitter-square submitter-square-<%=i%>"></div>
+                        <div class="submitter-name">
+                            <strong>
+                                <% if (stats[submission_type][i].type == 'organization') { %>
+                                    <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
+                                <% } else { %>
+                                    <%=stats[submission_type][i].name%>
+                                <% } %>
+                            </strong><br />
+                            (<a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>">View <%=stats[submission_type][i].count%> comments</a>)
+                        </div>
+                        <div class="clear"></div>
                     </div>
-                    <div class="clear"></div>
-                </div>
+                <% } %>
                 <div class="submitter">
-                    <div class="submitter-square"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">Sierra Club</a></strong><br />
-                        (<a href="#">View 80 comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
-                <div class="submitter">
-                    <div class="submitter-square"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">Consumer Federation of America</a></strong><br />
-                        (<a href="#">View 73 comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
-                <div class="submitter">
-                    <div class="submitter-square"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">Pittsburgh Technical Institute</a></strong><br />
-                        (<a href="#">View 15 comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
-                <div class="submitter">
-                    <div class="submitter-square"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">Council for Exceptional Children</a></strong><br />
-                        (<a href="#">View 7 comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
-                <div class="submitter">
-                    <div class="submitter-square"></div>
+                    <div class="submitter-square submitter-square-other"></div>
                     <div class="submitter-name">
                         <strong><a href="#">All other comments</a></strong><br />
                         (<a href="#">View 125 comments</a>)

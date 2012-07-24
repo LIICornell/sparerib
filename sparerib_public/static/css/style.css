@@ -308,17 +308,26 @@ header .sf-link a {
   height: 12px;
   width: 12px;
   float: left;
-  background: #d59305;
   margin-top: 4px;
 }
+.right-column .submitter-square-0 { background: #47535f; }
+.right-column .submitter-square-1 { background: #537c82; }
+.right-column .submitter-square-2 { background: #539594; }
+.right-column .submitter-square-3 { background: #899553; }
+.right-column .submitter-square-4 { background: #ebb701; }
+.right-column .submitter-square-other { background: #ffffff; }
 .right-column .submitter-name {
   width: 230px;
   float: right;
   margin-bottom: 8px;
 }
 
-.document-title {
-  color: #529594;;
+.left-column-item h4 a, .document-title {
+  color: #529594;
+  text-decoration: none;
+}
+.left-column-item h4 a:hover {
+  text-decoration: underline;
 }
 .document-info-shadow {
   float: left;
