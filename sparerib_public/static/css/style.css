@@ -68,7 +68,7 @@ td { vertical-align: top; }
 
 a, a:visited { color: #46535f; text-decoration: underline; }
 a:active, a:hover { color: #537b82; }
-h1, h2, h3 { font-family: 'Share', sans-serif; font-weight: normal; }
+h1, h2, h3 { font-family: "gnuolane",sans-serif; font-weight: 700; }
 h1 { color: #ffffff; font-size: 250%; }
 h1 a, h1 a:hover { color: #ffffff !important; }
 h2 { font-size: 210%; margin-bottom: 10px; margin-top: 0; padding-top: 0; line-height: 1;}
@@ -199,8 +199,9 @@ header .sf-link a {
 }
 .sign-up input[type=submit] {
   color: #475360;
-  font-family: 'Share';
-  font-weight: normal;
+  font-family: "gnuolane",sans-serif;
+  font-style: normal;
+  font-weight: 700;
   background: none;
   border: none;
 }
@@ -277,12 +278,14 @@ header .sf-link a {
   margin: 12px 0px 12px 0px;
 }
 .similarity-description .group-count {
-  font-family: 'Share';
+  font-family: "gnuolane",sans-serif;
+  font-weight: 700;
   font-size: 160%;
   color: #d59305;
 }
 .similarity-description .cutoff {
-  font-family: 'Share';
+  font-family: "gnuolane",sans-serif;
+  font-weight: 700;
   font-size: 160%;
   color: #529594;
 }
@@ -371,7 +374,8 @@ header .sf-link a {
   text-transform: lowercase;
 }
 .comment-count {
-  font-family: 'Share';
+  font-family: "gnuolane",sans-serif;
+  font-weight: 700;
   font-size: 180%;
   color: #d59305;
 }
