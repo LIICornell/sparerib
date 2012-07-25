@@ -123,84 +123,8 @@
             </ul>
         </div>
         <div class="right-column-item last">
-            <a href="#">View this Docket on Regulations.gov &raquo;</a>
+            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this Docket on Regulations.gov &raquo;</a>
         </div>
     </div>
     <div class="clear"></div>
-    <!--
-    <div class="chart-row">
-        <div class="double-chart">
-            <div id="submission-timeline"></div>
-        </div>
-    </div>
-
-    <div class="chart-row">
-        <% if (typeof stats.fr_docs !== "undefined") { %>
-        <div class="chart rules left">
-            <h4>Notices and Rules</h4>
-            <table>
-                <tr>
-                    <th>Title</th><th>Date</th><th>Type</th>
-                </tr>
-                <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
-                <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                    <td><a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></td>
-                    <td><%=formatDate(stats.fr_docs[i].date)%></td>
-                    <td><span class="doc-type doc-<%=stats.fr_docs[i].type%>"><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%></span></td>
-                </tr>
-                <% } %>
-            </table>
-        </div>
-
-        <div class="chart">
-        <% } else { %>
-        <div class="chart left">
-        <% } %>
-
-        
-            <h4>Type Breakdown</h4>
-            <div id="type-breakdown"></div>
-        </div>
-    </div>
-
-    <div class="chart-row">
-        <h3>Entities</h3>
-        <% for (var j = 0; j < 2; j++) { 
-            var submission_type = (['top_submitter_entities', 'top_text_entities'])[j];
-        %>
-        <div class="chart entities <%=(j == 0 ? "left" : "")%>">
-            <h4><%=({'top_submitter_entities': 'Top Submitters', 'top_text_entities': 'Most Mentions'})[submission_type]%></h4>
-            <table>
-                <tr>
-                    <th>Entity</th><th><%=({'top_submitter_entities': 'Submissions', 'top_text_entities': 'Mentions'})[submission_type]%></th>
-                </tr>
-                <% for (var i = 0; i < stats[submission_type].length; i++) { %>
-                <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                    <td>
-                        <% if (stats[submission_type][i].type == 'organization') { %>
-                            <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
-                        <% } else { %>
-                            <%=stats[submission_type][i].name%>
-                        <% } %>
-                    </td>
-                    <td>
-                        <%=stats[submission_type][i].count%>
-                        <a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>" class="view-link">view &raquo;</a>
-                    </td>
-                </tr>
-                <% } %>
-            </table>
-        </div>
-        <% } %>
-    </div>
-
-    <div class="pagination">
-        <a href="/search-document/<%=encodeURIComponent(type + ":" + id)%>" class="prev">see documents &raquo;</a>
-        <% if (type == "docket") { %>
-        <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>" class="next">view on regulations.gov &raquo;</a>
-        <% } %>
-        <div class="clear"></div>
-    </div>
-
-    -->
 </div>
