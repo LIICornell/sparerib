@@ -17,7 +17,7 @@
         <h3>Docket Overview</h3>
         <div class="left-column-item">
             <h4>Timeline</h4>
-            <img src="http://placehold.it/560x150" />
+            <div id="submission-timeline"></div>
         </div>
         <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
             <div class="left-column-item">
@@ -77,16 +77,15 @@
             <a href="#">Explore the similarity of comments in this docket &raquo;</a>
         </div>
         <div class="right-column-item">
-            <h4>Top Comment Submitters (<a href="#">232</a>)</h4>
-            <img class="submitter-breakdown" src="http://placehold.it/240x35" />
+            <h4>Top Comment Submitters (<a href="#"><%=submission_count%></a>)</h4>
+            <div class="submitter-breakdown"></div>
             <div class="top-submitters">
                 <%
                     var submission_type = 'top_submitter_entities';
                     var counted_comments = 0;
                     for (var i = 0; i < Math.min(5, stats[submission_type].length); i++) {
-                        counted_comments += stats[submission_type][i].count;
                 %>
-                    <div class="submitter">
+                    <div class="submitter" data-previous-submissions="<%=counted_comments%>" data-submission-count="<%=stats[submission_type][i].count%>">
                         <div class="submitter-square submitter-square-<%=i%>"></div>
                         <div class="submitter-name">
                             <strong>
@@ -100,12 +99,16 @@
                         </div>
                         <div class="clear"></div>
                     </div>
-                <% } %>
-                <div class="submitter">
+                <%
+                        counted_comments += stats[submission_type][i].count;
+                    }
+                    var other_count = submission_count - counted_comments;
+                %>
+                <div class="submitter" data-previous-submissions="<%=counted_comments%>" data-submission-count="<%=other_count%>">
                     <div class="submitter-square submitter-square-other"></div>
                     <div class="submitter-name">
                         <strong><a href="#">All other comments</a></strong><br />
-                        (<a href="#">View 125 comments</a>)
+                        (<a href="#">View <%=other_count%> comments</a>)
                     </div>
                     <div class="clear"></div>
                 </div>

@@ -391,8 +391,7 @@ D3Charts = {
                 .attr('d', function(d, i) { return line(d.timeline); })
                 .style('stroke-width', '3')
                 .style('stroke', function(d, i) { return opts.colors[i]; })
-                .style('fill', function(d, i) { return opts.colors[i]; })
-                .style('fill-opacity', 0.1);
+                .style('fill-opacity', 0);
         
         // floating box
         var make_box = function(x, y, color, text, left) {
@@ -592,7 +591,7 @@ D3Charts = {
 }
 
 SpareribCharts = {
-    type_colors: {"public_submission": "#ddeeff", "proposed_rule": "#440000", "rule" : "#990000", 'supporting_material': '#cccccc', 'other': '#333333', 'notice': '#0a6e92'},
+    type_colors: {"public_submission": "#899553", "proposed_rule": "#EBB701", "rule" : "#539594", 'supporting_material': '#cccccc', 'other': '#333333', 'notice': '#47535F'},
     type_breakdown_piechart: function(div, data) { 
         var in_data = []
 
@@ -620,17 +619,17 @@ SpareribCharts = {
     },
     timeline_chart: function(div, data) {
         var opts = {
-            chart_height: 250,
-            chart_width: 900,
-            chart_x: 40,
-            chart_y: 10,
+            chart_height: 125,
+            chart_width: 520,
+            chart_x: 35,
+            chart_y: 5,
             right_gutter: 5,
             label_padding: 10,
             legend_padding: 15,
             legend_r: 5,
             dot_r: 5,
             row_height: 14,
-            colors : ["#0a6e92", "#e96d24", "#15576e", "#f2e388", "#f2f1e4", "#efcc01"],
+            colors : [SpareribCharts.type_colors.public_submission],
             axis_color: "#827d7d",
             tick_color: '#dcddde',
             text_color: "#666666",

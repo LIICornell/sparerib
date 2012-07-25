@@ -302,7 +302,10 @@ header .sf-link a {
   border-bottom: 0;
 }
 .right-column .submitter-breakdown {
-  padding: 15px 0 15px 0;
+  margin: 15px 0 15px 0;
+  position: relative;
+  width: 240px;
+  height: 35px;
 }
 .right-column .submitter-square {
   height: 12px;

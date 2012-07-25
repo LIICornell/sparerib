@@ -147,12 +147,14 @@ var AggregatedDetailView = Backbone.View.extend({
         this.model.fetch(
             {
                 'success': $.proxy(function() {
-                    var context = _.extend({}, helpers, this.model.toJSON());
+                    var jsonModel = this.model.toJSON();
+                    var ps_type = _.filter(jsonModel.stats.type_breakdown, function(t) { return t.type == "public_submission"; });
+                    var ps_count = ps_type.length > 0 ? ps_type[0].count : 0;
+
+                    var context = _.extend({'submission_count': ps_count}, helpers, jsonModel);
                     $(this.el).html(this.template(context));
 
-                    // charts
-                    SpareribCharts.type_breakdown_piechart('type-breakdown', context.stats.type_breakdown);
-                    
+                    // charts                    
                     var timeGranularity = this.model.get('type') == 'docket' ? 'weeks' : 'months';
                     var timeline_data = [{
                         'name': 'Submission Timline',
@@ -168,6 +170,18 @@ var AggregatedDetailView = Backbone.View.extend({
                         });
                     });
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
+
+                    var sb_scaler = d3.scale.linear()
+                        .domain([0, ps_count])
+                        .range([0, 240]);
+                    var sb_chart = this.$el.find('.submitter-breakdown');
+                    $('.top-submitters .submitter').each(function(idx, item) {
+                        var $item = $(item);
+                        var $square = $("<div>");
+                        $square.attr('class', $item.find('.submitter-square').attr('class').replace('submitter-square', ''));
+                        $square.css({position: 'absolute', top: 0, height: '35px', width: sb_scaler(parseInt($item.attr('data-submission-count'))) - 1 + 'px', left: sb_scaler(parseInt($item.attr('data-previous-submissions'))) + 'px'});
+                        sb_chart.append($square);
+                    });
                 }, this),
                 'error': function() {
                     console.log('failed');
