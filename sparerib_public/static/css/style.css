@@ -213,66 +213,96 @@ header .sf-link a {
   font-size: 75%;
   color: #475360;
 }
-.with-right-column {
-  background: url("../img/bg/twocol_bg.png") repeat-y top right;
+.with-right-sidebar {
+  background: url("../img/bg/main_bg_right_sidebar.png") repeat-y top right;
+}
+.with-left-sidebar {
+  background: url("../img/bg/main_bg_left_sidebar.png") repeat-y top left;
 }
 
-.left-column {
+.main-column {
   width: 609px;
+}
+.with-right-sidebar .main-column {
   padding-left: 35px;
   float: left;
 }
-.left-column-item {
-  padding: 30px 30px 30px 25px;
+.with-left-sidebar .main-column {
+  padding-right: 35px;
+  float: right;
+}
+
+.main-column-item {
   background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
-.left-column h3 {
+.with-right-sidebar .main-column-item {
+  padding: 30px 30px 30px 25px;
+}
+.with-left-sidebar .main-column-item {
+  padding: 30px 25px 30px 30px;
+}
+
+.main-column h3 {
   color: #529594;
   margin-top: 20px;
 }
-.left-column-split {
+.main-column-split {
   font-size: 80%;
   padding: 30px 25px 40px 25px;
 }
-.left-column-split .left-column-left {
+.main-column-split .main-column-left {
   width: 260px;
   float: left;
   padding-right: 19px;
   border-right: 1px solid #cbcbcb;
 }
-.left-column-split .left-column-right {
+.main-column-split .main-column-right {
   width: 260px;
   float: right;
   padding-left: 19px;
 }
-.left-column-split ul {
+.main-column-split ul {
   margin-left: 0;
   padding-left: 0;
 }
-.left-column-split ul li {
+.main-column-split ul li {
   padding: 15px 0px 15px 30px;
   border-bottom: 1px solid #cbcbcb;
   list-style: none;
   margin-left: 0;
   background: url('../img/icons/tiny/icon_generic.png') no-repeat 0 18px;
 }
-.left-column-split ul li:last-child {
+.main-column-split ul li:last-child {
   padding-bottom: 0;
   border-bottom: 0;
 }
-.right-column {
+
+.sidebar {
   width: 295px;
+}
+.with-right-sidebar .sidebar {
   float: right;
   padding-right: 20px;
 }
-.right-column-item {
-  font-size: 80%;
-  background: url('../img/bg/right_sidebar_stripe.png') no-repeat bottom left;
-  padding: 25px 30px 35px 15px;
+.with-left-sidebar .sidebar {
+  float: left;
+  padding-left: 20px;
 }
-.right-column-item.last {
+.sidebar-item {
+  font-size: 80%;
+}
+.with-right-sidebar .sidebar-item {
+  padding: 25px 30px 35px 15px;
+  background: url('../img/bg/right_sidebar_stripe.png') no-repeat bottom left;
+}
+.with-left-sidebar .sidebar-item {
+  padding: 25px 15px 35px 30px;
+  background: url('../img/bg/left_sidebar_stripe.png') no-repeat bottom right;
+}
+.sidebar-item.last {
   background: none;
 }
+
 .similarity-description {
   line-height: 1.6em;
   margin: 12px 0px 12px 0px;
@@ -289,50 +319,50 @@ header .sf-link a {
   font-size: 160%;
   color: #529594;
 }
-.right-column ul.document-list {
+.sidebar ul.document-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-.right-column ul.document-list li {
+.sidebar ul.document-list li {
   padding: 15px 0px 15px 0px;
   border-bottom: 1px solid #CBCBCB;
   list-style: none;
   margin-left: 0;
 }
-.right-column ul.document-list li:last-child {
+.sidebar ul.document-list li:last-child {
   padding-bottom: 0;
   border-bottom: 0;
 }
-.right-column .submitter-breakdown {
+.sidebar .submitter-breakdown {
   margin: 15px 0 15px 0;
   position: relative;
   width: 240px;
   height: 35px;
 }
-.right-column .submitter-square {
+.sidebar .submitter-square {
   height: 12px;
   width: 12px;
   float: left;
   margin-top: 4px;
 }
-.right-column .submitter-square-0 { background: #47535f; }
-.right-column .submitter-square-1 { background: #537c82; }
-.right-column .submitter-square-2 { background: #539594; }
-.right-column .submitter-square-3 { background: #899553; }
-.right-column .submitter-square-4 { background: #ebb701; }
-.right-column .submitter-square-other { background: #ffffff; }
-.right-column .submitter-name {
+.sidebar .submitter-square-0 { background: #47535f; }
+.sidebar .submitter-square-1 { background: #537c82; }
+.sidebar .submitter-square-2 { background: #539594; }
+.sidebar .submitter-square-3 { background: #899553; }
+.sidebar .submitter-square-4 { background: #ebb701; }
+.sidebar .submitter-square-other { background: #ffffff; }
+.sidebar .submitter-name {
   width: 230px;
   float: right;
   margin-bottom: 8px;
 }
 
-.left-column-item h4 a, .document-title {
+.main-column-item h4 a, .document-title {
   color: #529594;
   text-decoration: none;
 }
-.left-column-item h4 a:hover {
+.main-column-item h4 a:hover {
   text-decoration: underline;
 }
 .document-info-shadow {

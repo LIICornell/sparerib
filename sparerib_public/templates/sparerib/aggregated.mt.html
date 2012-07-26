@@ -12,15 +12,15 @@
     </div>
 </div>
 
-<div class="main-content with-right-column">
-    <div class="left-column">
+<div class="main-content with-right-sidebar">
+    <div class="main-column">
         <h3>Docket Overview</h3>
-        <div class="left-column-item">
+        <div class="main-column-item">
             <h4>Timeline</h4>
             <div id="submission-timeline"></div>
         </div>
         <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
-            <div class="left-column-item">
+            <div class="main-column-item">
                 <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%>: <a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></h4>
                 
                 <div class="document-summary">
@@ -43,8 +43,8 @@
             </div>
         <% } %>
 
-        <div class="left-column-split">
-            <div class="left-column-left">
+        <div class="main-column-split">
+            <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
                 (<a href="#">493 documents total</a>)
                 <ul class="document-list">
@@ -53,7 +53,7 @@
                     <li><a href="#">Safety and health in dock work. Access to the top of a container</a></li>
                 </ul>
             </div>
-            <div class="left-column-right">
+            <div class="main-column-right">
                 <h4>Other Material</h4>
                 (<a href="#">3 documents total</a>)
                 <ul class="document-list">
@@ -65,18 +65,18 @@
             <div class="clear"></div>
         </div>
     </div>
-    <div class="right-column">
-        <div class="right-column-item">
+    <div class="sidebar">
+        <div class="sidebar-item">
             <a href="#">Track this docket with Scout &raquo;</a>
         </div>
-        <div class="right-column-item">
+        <div class="sidebar-item">
             <h4>Comment Similarity</h4>
             <div class="similarity-description">
                 This docket contains <span class="group-count">26 groups</span> of comments at least <span class="cutoff">80% similar</span> to one another.
             </div>
             <a href="#">Explore the similarity of comments in this docket &raquo;</a>
         </div>
-        <div class="right-column-item">
+        <div class="sidebar-item">
             <h4>Top Comment Submitters (<a href="#"><%=submission_count%></a>)</h4>
             <div class="submitter-breakdown"></div>
             <div class="top-submitters">
@@ -114,7 +114,7 @@
                 </div>
             </div>
         </div>
-        <div class="right-column-item">
+        <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
                 <li><a href="#">Supporting Statement for the Information Collection Requirements of the Standards on Marine Terminals (26 CFR Part 1917)</a></li>
@@ -122,7 +122,7 @@
                 <li><a href="#">Occupational Injuries among Construction Workers Treated at the GWU Emergency Department</a></li>
             </ul>
         </div>
-        <div class="right-column-item last">
+        <div class="sidebar-item last">
             <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this Docket on Regulations.gov &raquo;</a>
         </div>
     </div>
