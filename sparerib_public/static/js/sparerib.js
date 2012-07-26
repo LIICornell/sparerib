@@ -197,7 +197,7 @@ var DocumentDetailView = Backbone.View.extend({
     id: 'document-view',
 
     events: {
-        'click .tab': 'switchTab',
+        'change .type-selection select': 'switchType',
         'click .attachment-name': 'toggleAttachment'
     },
 
@@ -226,31 +226,29 @@ var DocumentDetailView = Backbone.View.extend({
         return this;
     },
 
-    switchTab: function(evt) {
-        var $tab = $(evt.target).closest('.tab');
+    switchType: function(evt) {
+        var $type = $(evt.target);
         var $this = $(this.el);
-        var $area = $tab.closest('.tab-area');
-        if (!$tab.hasClass('active')) {
-            $area.find('.tab').removeClass('active');
-            $tab.addClass('active');
+        var $area = $type.closest('.type-area');
 
-            var view = $area.find('.tab-view').hide().filter('[data-tab-id=' + $tab.attr('data-tab-id') + ']').show();
-            var iframe = view.find('iframe');
-            if (!iframe.attr('src')) {
-                iframe.attr('src', iframe.attr('data-src'));
-            }
+        var view = $area.find('.type-view').hide().filter('[data-type-id=' + $type.val() + ']').show();
+        var iframe = view.find('iframe');
+        if (!iframe.attr('src')) {
+            iframe.attr('src', iframe.attr('data-src'));
         }
+        $area.find('.type-selection a').attr('href', view.attr('data-source-file'));
     },
 
     toggleAttachment: function(evt) {
         var $name = $(evt.target).closest('.attachment-name');
         var $attachment = $name.closest('.attachment');
-        var $area = $attachment.find('.tab-area');
+        var $area = $attachment.find('.type-area');
         if (!$name.hasClass('active')) {
             // first make sure something is visible in the hidden area
-            var tabs = $area.find('.tab');
-            if (tabs.filter('.active').length == 0) {
-                tabs.eq(0).click();
+            var types = $area.find('.type-selection select');
+            if ($area.find('.type-view:visible').length == 0) {
+                types.val(types.find('option').eq(0).attr('value'));
+                this.switchType({'target': types})
             }
 
             // then show the whole thing
