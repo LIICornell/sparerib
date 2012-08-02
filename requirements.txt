@@ -9,3 +9,4 @@ isoweek
 thrift
 -e git+https://github.com/aparo/pyes.git#egg=pyes
 pyparsing
+-e git+https://github.com/sunlightlabs/regs-models.git#egg=regs_models

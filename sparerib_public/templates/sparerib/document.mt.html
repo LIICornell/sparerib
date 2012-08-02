@@ -47,8 +47,8 @@
                     <div class="type-views">
                         <% var i = 0; _.each(attachment.views, function(view) { %>
                             <div class="type-view" data-type-id="<%=i%>" data-source-file="<%=view.url.replace('inline', 'attachment')%>">
-                                <% if (view.raw_text) { %>
-                                <iframe class="document-text" src="" data-src="<%=view.raw_text%>" />
+                                <% if (view.html) { %>
+                                <iframe class="document-text" src="" data-src="<%=view.html%>" />
                                 <% } else { %>
                                 <div class="iframe-placeholder">
                                     <div class="notice">We were unable to extract text from this document.</div>

@@ -8,16 +8,18 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
+import math
+
 import pyes
 from query_parse import parse_query
 
 from collections import defaultdict
 
-from util import mongo_connection
+from regs_models import *
 
 ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned']
 
-class SearchResultsView(PaginatorMixin, DRFView):
+class SearchResultsView(DRFView):
     aggregation_level = None
 
     def get(self, request, query):
@@ -30,22 +32,34 @@ class SearchResultsView(PaginatorMixin, DRFView):
         self.text_query = parsed['text']
         self.filters = parsed['filters']
 
-    def serialize_page_info(self, page):
-        # force recomputation of page numbers because of lazy loading
-        page.paginator._num_pages = None
-        page.paginator._count = int(page.paginator._count)
+    def url_with_page_number(self, page_number):
+        """ Constructs a url used for getting the next/previous urls """
+        url = "%s?page=%d" % (self.request.path, page_number)
 
-        # proceed as per usual
-        out = super(SearchResultsView, self).serialize_page_info(page)
-        out['search'] = {
-            'text_query': self.text_query,
-            'filters': [{
-                'category': f[0],
-                'id': f[1],
-                'name': f[2] if len(f) > 2 else f[1]
-            } for f in self.filters if f[0] in ALLOWED_FILTERS],
-            'raw_query': self.raw_query,
-            'aggregation_level': self.aggregation_level
+        limit = self.get_limit()
+        if limit != self.limit:
+            url = "%s&limit=%d" % (url, limit)
+
+    def serialize_page_info(self, page, count):
+        limit = self.get_limit()
+        page_count = int(math.ceil(count / limit))
+        out = {
+            'next': self.url_with_page_number(page + 1) if page < page_count else None,
+            'page': page,
+            'pages': page_count,
+            'per_page': limit,
+            'previous': self.url_with_page_number(page - 1) if page > 1 else None,
+            'total': count,
+            'search': {
+                'text_query': self.text_query,
+                'filters': [{
+                    'category': f[0],
+                    'id': f[1],
+                    'name': f[2] if len(f) > 2 else f[1]
+                } for f in self.filters if f[0] in ALLOWED_FILTERS],
+                'raw_query': self.raw_query,
+                'aggregation_level': self.aggregation_level
+            }
         }
 
         return out
@@ -87,35 +101,31 @@ class SearchResultsView(PaginatorMixin, DRFView):
         except ValueError:
             return self.limit
 
-class DeferredInt(int):
-    def __init__(self):
-        super(DeferredInt, self).__init__()
-        self._real = False
+    def filter_response(self, obj):
+        # We don't want to paginate responses for anything other than GET requests
+        if self.method.upper() != 'GET':
+            return self._resource.filter_response(obj)
 
-    def __int__(self):
-        return self._real if self._real else 0
+        page_num = int(self.request.GET.get('page', '1'))
 
-    def __str__(self):
-        if self._real is False:
-            return str(0)
-        else:
-            return str(self._real)
+        limit = self.get_limit()
 
-    def __cmp__(self, val):
-        if self._real is False:
-            return 1
-        else:
-            return self._real.__cmp__(val)
+        start = (page_num - 1) * self.get_limit()
+        end = start + self.get_limit()
 
-    def resolve(self, val):
-        self._real = val
+        results = list(obj[start:end])
+        serialized_page_info = self.serialize_page_info(page_num, len(obj))
+
+        serialized_page_info['results'] = results
+
+        return serialized_page_info
 
 class DocumentSearchResults(object):
     def __init__(self, query):
         self.query = query
         self._results = None
         # paginator wants the count before we know what slice we want, so add some indirection hackery to avoid having to do two queries
-        self._count = DeferredInt()
+        self._count = -1
 
     def __getslice__(self, start, end):
         if not self._results:
@@ -123,16 +133,17 @@ class DocumentSearchResults(object):
             self.query['size'] = end - start
             
             es = pyes.ES(settings.ES_SETTINGS)
+            print self.query
             self._results = es.search_raw(self.query)
-            self._count.resolve(self._results['hits']['total'])
+            self._count = self._results['hits']['total']
 
         def stitch_record(match):
-            match['url'] = reverse('document-view', kwargs={'document_id': match['fields']['document_id']})
+            match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
             return match
 
         return map(stitch_record, self._results['hits']['hits'])
 
-    def count(self):
+    def __len__(self):
         return self._count
 
 class DocumentSearchResultsView(SearchResultsView):
@@ -152,7 +163,7 @@ class DocumentSearchResultsView(SearchResultsView):
             if 'text' in text_query:
                 query['highlight'] = {'fields': dict([(key, {}) for key in text_query['text'].keys()])}
 
-        query['fields'] = ['document_id', 'document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
+        query['fields'] = ['document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
         print query
 
@@ -168,7 +179,7 @@ class AggregatedSearchResults(list):
     def __getslice__(self, start, end):
         s = super(AggregatedSearchResults, self).__getslice__(start, end)
 
-        db = mongo_connection()
+        db = Doc._get_db()
 
         ids = [match['term'] for match in s]
         agg_search = db[self.aggregation_collection].find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
@@ -251,28 +262,3 @@ class DefaultSearchResultsView(DRFView):
             new_url += "?" + request.META['QUERY_STRING']
 
         raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})
-
-# monkey-patch the DRF version of the paginator to make deferred counts work
-from djangorestframework import mixins as drf_mixins
-from django.core.paginator import EmptyPage, PageNotAnInteger
-_Paginator = drf_mixins.Paginator
-class ContainsEverything(list):
-    def __contains__(self, val):
-        return True
-
-class HackedPaginator(_Paginator):
-    def _get_page_range(self):
-        return ContainsEverything(super(HackedPaginator, self)._get_page_range())
-    page_range = property(_get_page_range)
-
-    def validate_number(self, number):
-        "Validates the given 1-based page number."
-        try:
-            number = int(number)
-        except (TypeError, ValueError):
-            raise PageNotAnInteger('That page number is not an integer')
-        if number < 1:
-            raise EmptyPage('That page number is less than 1')
-        return number
-
-drf_mixins.Paginator = HackedPaginator

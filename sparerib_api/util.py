@@ -3,11 +3,6 @@ import pymongo
 
 import datetime, calendar
 
-def mongo_connection():
-    return pymongo.Connection(
-        **(getattr(settings, 'DB_SETTINGS', {}))
-    )[getattr(settings, 'DB_NAME', 'regulations')]
-
 ISO_DATE = '%Y-%m-%d'
 
 def expand_weeks(weeks):

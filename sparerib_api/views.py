@@ -11,6 +11,8 @@ from django.core.urlresolvers import reverse
 
 from util import *
 
+from regs_models import Doc, Docket, Agency, Entity
+
 from collections import defaultdict
 import itertools, isoweek
 
@@ -29,9 +31,7 @@ class AggregatedView(ResponseMixin, View):
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov dockets."
 
-        db = mongo_connection()
-
-        results = list(db[self.aggregation_collection].find({'_id': kwargs[self.aggregation_field]}))
+        results = list(self.aggregation_class.objects(id=kwargs[self.aggregation_field]))
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, '%s not found.' % self.aggregation_level.title()))
 
@@ -40,17 +40,17 @@ class AggregatedView(ResponseMixin, View):
         # basic docket metadata
         out = {
             'url': reverse('%s-view' % self.aggregation_level, kwargs=kwargs),
-            'id': item['_id'],
+            'id': item.id,
             'type': self.aggregation_level
         }
         for label in ['name', 'title', 'year']:
-            if label in item:
-                out[label] = item[label]
-        rulemaking_field = item.get('details', {}).get('dk_type', None)
+            if hasattr(item, label):
+                out[label] = getattr(item, label)
+        rulemaking_field = getattr(item, 'details', {}).get('dk_type', None)
         if rulemaking_field:
             out['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
 
-        stats = item.get('stats', None)
+        stats = item.stats
         if stats:
             # cleanup, plus stitch on some additional data
             stats['type_breakdown'] = [{
@@ -75,17 +75,17 @@ class AggregatedView(ResponseMixin, View):
 
             # grab additional info about these ones from the database
             ids = list(set([record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']]))
-            entities_search = db.entities.find({'_id': {'$in': ids}}, ['_id', 'td_type', 'aliases'])
-            entities = dict([(entity['_id'], entity) for entity in entities_search])
+            entities_search = Entity.objects(id__in=ids).only('id', 'td_type', 'aliases')
+            entities = dict([(entity.id, entity) for entity in entities_search])
 
             # stitch this back onto the main records
             for label in ['top_text_entities', 'top_submitter_entities']:
                 for entity in stats[label]:
-                    if 'td_type' not in entities[entity['id']]:
+                    if not entities[entity['id']].td_type:
                         continue
                     
-                    entity['type'] = entities[entity['id']]['td_type']
-                    entity['name'] = entities[entity['id']]['aliases'][0]
+                    entity['type'] = entities[entity['id']].td_type
+                    entity['name'] = entities[entity['id']].aliases[0]
                     entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
 
             out['stats'] = stats
@@ -94,13 +94,13 @@ class AggregatedView(ResponseMixin, View):
 
         # do something with the agency if this is not, itself, an agency request
         if self.aggregation_level != 'agency':
-            agency = item.get('agency', None)
+            agency = item.agency
             if agency:
-                agency_meta = list(db.agencies.find({'_id': agency}))
+                agency_meta = list(Agency.objects(id=agency))
                 if agency_meta:
                     out['agency'] = {
                         'id': agency,
-                        'name': agency_meta[0]['name'],
+                        'name': agency_meta[0].name,
                         'url': '/agency/%s' % agency
                     }
                 else:
@@ -114,12 +114,12 @@ class AggregatedView(ResponseMixin, View):
 class DocketView(AggregatedView):
     aggregation_level = 'docket'
     aggregation_field = 'docket_id'
-    aggregation_collection = 'dockets'
+    aggregation_class = Docket
 
 class AgencyView(AggregatedView):
     aggregation_level = 'agency'
     aggregation_field = 'agency'
-    aggregation_collection = 'agencies'
+    aggregation_class = Agency
 
 class DocumentView(ResponseMixin, View):
     "Regulations.gov document view"
@@ -128,10 +128,7 @@ class DocumentView(ResponseMixin, View):
 
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
-
-        db = mongo_connection()
-
-        results = list(db.docs.find({'document_id': kwargs['document_id']}))
+        results = list(Doc.objects(id=kwargs['document_id']))
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, 'Document not found.'))
 
@@ -139,69 +136,69 @@ class DocumentView(ResponseMixin, View):
 
         # basic docket metadata
         out = {
-            'title': document['title'],
+            'title': document.title,
             'url': reverse('document-view', kwargs=kwargs),
-            'id': document['document_id'],
+            'id': document.id,
             'docket': {
-                'id': document['docket_id'],
-                'url': reverse('docket-view', kwargs={'docket_id': document['docket_id']})
+                'id': document.docket_id,
+                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id})
             },
 
-            'agency': document['agency'],
-            'date': document.get('details', {}).get('fr_publish_date', None),
-            'type': document.get('type', None),
+            'agency': document.agency,
+            'date': document.details.get('Date_Posted', None),
+            'type': document.type,
             'views': [],
             'attachments': [],
-            'details': document.get('details', {})
+            'details': document.details if document.details else {}
         }
 
         if out['date']:
             out['date'] = out['date'].isoformat()
 
         text_entities = set()
-        submitter_entities = set(document.get('submitter_entities', []))
+        submitter_entities = set(document.submitter_entities if document.submitter_entities else [])
 
-        for view in document.get('views', []):
+        for view in document.views:
             # hack to deal with documents whose scrapes failed but still got extracted
-            object_id = document['object_id'] if 'object_id' in document else view['file'].split('/')[-1].split('.')[0]
+            object_id = document.object_id if document.object_id else view.file_path.split('/')[-1].split('.')[0]
             out['views'].append({
                 'object_id': object_id,
-                'file_type': view['type'],
-                'extracted': view.get('extracted', False) is True,
-                'url': view['url'],
-                'raw_text': reverse('raw-text-view', kwargs=dict(zip(['es_id', 'object_id', 'file_type'], re.split('[./]', view['es_address'])))) if 'es_address' in view else None
+                'file_type': view.type,
+                'extracted': view.extracted == 'yes',
+                'url': view.url,
+                'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'view'}) if view.extracted == 'yes' else None
             })
 
-            for entity in view.get('entities', []):
+            for entity in view.entities:
                 text_entities.add(entity)
 
-        for attachment in document.get('attachments', []):
+        for attachment in document.attachments:
             a = {
-                'title': attachment['title'],
+                'title': attachment.title,
                 'views': []
             }
-            for view in attachment.get('views', []):
+            for view in attachment.views:
                 a['views'].append({
-                    'object_id': attachment['object_id'],
-                    'file_type': view['type'],
-                    'extracted': view.get('extracted', False) is True,
-                    'url': view['url'],
-                    'raw_text': reverse('raw-text-view', kwargs=dict(zip(['es_id', 'object_id', 'file_type'], re.split('[./]', view['es_address'])))) if 'es_address' in view else None
+                    'object_id': attachment.object_id,
+                    'file_type': view.type,
+                    'extracted': view.extracted == 'yes',
+                    'url': view.url,
+                    'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'object_id': attachment.object_id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'attachment'}) if view.extracted == 'yes' else None
                 })
 
-                for entity in view.get('entities', []):
+                for entity in view.entities:
                     text_entities.add(entity)
             out['attachments'].append(a)
 
-        entities_search = db.entities.find({'_id': {'$in': list(submitter_entities.union(text_entities))}})
-        entities = dict([(entity['_id'], entity) for entity in entities_search])
+        entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities)))
+        entities = dict([(entity.id, entity) for entity in entities_search])
 
         for label, items in [('submitter_entities', sorted(list(submitter_entities))), ('text_entities', sorted(list(text_entities)))]:
             out[label] = [{
                 'id': item,
-                'type': entities[item]['td_type'],
-                'name': entities[item]['aliases'][0],
-                'url': '/%s/%s/%s' % (entities[item]['td_type'], slugify(entities[item]['aliases'][0]), item)
+                'type': entities[item].td_type,
+                'name': entities[item].aliases[0],
+                'url': '/%s/%s/%s' % (entities[item].td_type, slugify(entities[item].aliases[0]), item)
             } for item in items]
 
         return self.render(Response(200, out))
@@ -213,10 +210,7 @@ class EntityView(ResponseMixin, View):
 
     def get(self, request, *args, **kwargs):
         "Access aggregate information about entities as they occur in regulations.gov data."
-
-        db = mongo_connection()
-
-        results = list(db.entities.find({'_id': kwargs['entity_id']}))
+        results = Entity.objects(id=kwargs['entity_id'])
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, 'Docket not found.'))
 
@@ -224,14 +218,14 @@ class EntityView(ResponseMixin, View):
 
         # basic docket metadata
         out = {
-            'name': entity['aliases'][0],
+            'name': entity.aliases[0],
             'url': reverse('entity-view', args=args, kwargs=kwargs),
-            'id': entity['_id'],
-            'type': entity['td_type'],
-            'stats': entity['stats']
+            'id': entity.id,
+            'type': entity.td_type,
+            'stats': entity.stats
         }
 
-        stats = entity.get('stats', None)
+        stats = entity.stats
         if stats:
             # cleanup, plus stitch on some additional data
             for mention_type in ["text_mentions", "submitter_mentions"]:
@@ -290,32 +284,18 @@ class EntityView(ResponseMixin, View):
         return self.render(Response(200, out))
 
 class RawTextView(View):
-    def get(self, request, es_id, object_id, file_type):
-        # use ES for text -- architecting it so we can ditch Mongo text if we want
-        # this is a query that finds our record and uses some MVEL nonsense to just
-        # pull our particular text entry; input has already been sanitized by the
-        # URL router
-        query = {
-            'filter': {
-                'term': {'_id': es_id}
-            },
-            'script_fields': {
-                'file': {
-                    'script': '($ in _source.files if $.object_id == "%s" && $.file_type == "%s")' % (object_id, file_type)
-                }
-            }
-        }
-        
-        es = pyes.ES(settings.ES_SETTINGS)
-        results = es.search_raw(query)
+    def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
+        doc = Doc.objects.get(id=document_id)
+        if view_type == 'view':
+            view = [view for view in doc.views if view.type == file_type][0]
+        else:
+            attachment = [attachment for attachment in doc.attachments if attachment.object_id == object_id][0]
+            view = [view for view in attachment.views if view.type == file_type][0]
 
-        if len(results['hits']['hits']) == 0:
-            raise Http404
-
-        if len(results['hits']['hits'][0]['fields']['file']) == 0:
-            raise Http404
-
-        return HttpResponse(results['hits']['hits'][0]['fields']['file'][0]['text'], content_type='text/plain')
+        if output_format == 'txt':
+            return HttpResponse(view.as_text(), content_type='text/plain')
+        else:
+            return HttpResponse(view.as_html(), content_type='text/html')
 
 class NotFoundView(DRFView):
     def get(self, request):
