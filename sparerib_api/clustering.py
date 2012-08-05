@@ -2,6 +2,7 @@ from djangorestframework.views import View as DRFView
 from analysis.corpus import get_dual_corpora_by_metadata
 from analysis.utils import profile
 from django.conf import settings
+from django.http import Http404
 
 from django.db import connection
 import psycopg2.extras
@@ -39,10 +40,10 @@ class CommonClusterView(DRFView):
     @property
     def corpus(self):
         if self._corpus is None:
-            self._corpus = get_dual_corpora_by_metadata('docket', self.kwargs['docket_id'])
+            self._corpus = get_dual_corpora_by_metadata('docket_id', self.kwargs['docket_id'])
             if not self._corpus:
                 # todo: better error handling
-                raise "Couldn't find analysis for docket %s" % self.kwargs['docket_id']
+                raise Http404("Couldn't find analysis for docket %s" % self.kwargs['docket_id'])
         return self._corpus
 
     @property
@@ -157,6 +158,7 @@ class SingleClusterView(CommonClusterView):
                 'submitter': ', '.join([doc[1][field] for field in ['submitter_name', 'submitter_organization'] if doc[1].get(field, False)])
             } for doc in docs]
         }
+
 
 class DocumentClusterView(CommonClusterView):
     @profile
