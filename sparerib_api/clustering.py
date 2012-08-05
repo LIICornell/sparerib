@@ -66,6 +66,7 @@ class DocketClusterView(CommonClusterView):
     @profile
     def get(self, request, docket_id):
         docket = Docket.objects.get(id=docket_id)
+        docket_count = Doc.objects(docket_id=docket_id).count()
 
         sorted_clusters = sorted(self.clusters, key=lambda c: len(c), reverse=True)
         sized_clusters = [{
@@ -78,7 +79,7 @@ class DocketClusterView(CommonClusterView):
             'clusters': sized_clusters,
             'stats': {
                 'clustered': total_clustered,
-                'unclustered': docket.stats['count'] - total_clustered
+                'unclustered': docket_count - total_clustered
             },
             'prepopulate': None
         }
@@ -106,15 +107,16 @@ class DocketHierarchyView(CommonClusterView):
     @profile
     def get(self, request, docket_id):
         docket = Docket.objects.get(id=docket_id)
+        docket_count = Doc.objects(docket_id=docket_id).count()
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket.stats['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
+        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket_count * .005), request.GET.get('require_summaries', "").lower()=="true")
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
             'cluster_hierarchy': sorted(hierarchy, key=lambda x: x['size'], reverse=True),
             'stats': {
                 'clustered': total_clustered,
-                'unclustered': docket.stats['count'] - total_clustered
+                'unclustered': docket_count - total_clustered
             },
             'prepopulate': None
         }
