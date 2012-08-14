@@ -53,10 +53,7 @@ class AggregatedView(ResponseMixin, View):
         stats = item.stats
         if stats:
             # cleanup, plus stitch on some additional data
-            stats['type_breakdown'] = [{
-                    'type': key,
-                    'count': value
-                } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)]
+            stats["type_breakdown"] = dict([(doc_type, stats["type_breakdown"].get(doc_type, 0)) for doc_type in Doc.type.choices])
 
             if 'weeks' in stats and len(stats['weeks']) != 0:
                 stats['weeks'] = expand_weeks(stats['weeks'])
@@ -65,12 +62,12 @@ class AggregatedView(ResponseMixin, View):
             if 'months' in stats and len(stats['months']) != 0:
                 stats['months'] = expand_months(stats['months'])
 
-            # limit ourselves to the top ten of each match type, and grab their extra metadata
+            # limit ourselves to the top five of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
                 stats[label] = [{
                     'id': i[0],
                     'count': i[1]
-                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:5]]
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
@@ -87,6 +84,24 @@ class AggregatedView(ResponseMixin, View):
                     entity['type'] = entities[entity['id']].td_type
                     entity['name'] = entities[entity['id']].aliases[0]
                     entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
+
+            # do a similar thing with FR documents
+            if stats.get('doc_info', {}).get('fr_docs', None):
+                fr_doc_ids = [doc['id'] for doc in stats['doc_info']['fr_docs']]
+                fr_search = Doc.objects(id__in=fr_doc_ids)
+                fr_docs = dict([(fr_doc.id, fr_doc) for fr_doc in fr_search])
+
+                for doc in stats['doc_info']['fr_docs']:
+                    if doc['id'] in fr_docs:
+                        fr_doc = fr_docs[doc['id']]
+                        doc['stats'] = {
+                            'date_range': fr_doc.stats['date_range'],
+                            'count': fr_doc.stats['count']
+                        } if fr_doc.stats else {'count': 0}
+                        doc['summary'] = fr_doc.get_summary()
+                    else:
+                        doc['stats'] = {'count': 0}
+                        doc['summary'] = None
 
             out['stats'] = stats
         else:

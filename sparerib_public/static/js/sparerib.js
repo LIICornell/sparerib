@@ -148,10 +148,8 @@ var AggregatedDetailView = Backbone.View.extend({
             {
                 'success': $.proxy(function() {
                     var jsonModel = this.model.toJSON();
-                    var ps_type = _.filter(jsonModel.stats.type_breakdown, function(t) { return t.type == "public_submission"; });
-                    var ps_count = ps_type.length > 0 ? ps_type[0].count : 0;
 
-                    var context = _.extend({'submission_count': ps_count}, helpers, jsonModel);
+                    var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
                     $(this.el).html(this.template(context));
 
                     // charts                    
@@ -162,7 +160,7 @@ var AggregatedDetailView = Backbone.View.extend({
                         'timeline': context.stats[timeGranularity],
                         'overlays': []
                     }];
-                    _.each(context.stats.fr_docs, function(doc) {
+                    _.each(context.stats.doc_info.fr_docs, function(doc) {
                         timeline_data[0].overlays.push({
                             'name': doc.title,
                             'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
@@ -172,7 +170,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
 
                     var sb_scaler = d3.scale.linear()
-                        .domain([0, ps_count])
+                        .domain([0, jsonModel.stats.type_breakdown.public_submission])
                         .range([0, 240]);
                     var sb_chart = this.$el.find('.submitter-breakdown');
                     $('.top-submitters .submitter').each(function(idx, item) {
