@@ -44,7 +44,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'djangorestframework',
     'sparerib_api',
-    'sparerib_public'
+    'sparerib_public',
+    'analysis'
 )
 
 # hacks to make everything work in pypy
