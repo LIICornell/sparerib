@@ -10,6 +10,10 @@ def expand_weeks(weeks):
         'date_range': [datetime.datetime.strptime(d, ISO_DATE).date() for d in key],
         'count': value
     } for key, value in weeks if key is not None]
+
+    if not ranged:
+        return []
+    
     out = []
     for i in xrange(len(ranged) - 1):
         week = ranged[i]['date_range']
@@ -31,6 +35,10 @@ def expand_months(months):
         'date_range': [datetime.datetime.strptime(key + "-01", ISO_DATE).date(), datetime.datetime.strptime(key + "-" + str(calendar.monthrange(*map(int, key.split("-")))[1]), ISO_DATE).date()],
         'count': value
     } for key, value in months if key is not None]
+
+    if not ranged:
+        return []
+
     out = []
     for i in xrange(len(ranged) - 1):
         month = ranged[i]['date_range']

@@ -19,47 +19,47 @@
             <h4>Timeline</h4>
             <div id="submission-timeline"></div>
         </div>
-        <% for (var i = 0; i < stats.fr_docs.length; i++) { %>
+        <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
             <div class="main-column-item">
-                <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[stats.fr_docs[i].type]%>: <a href="/document/<%=stats.fr_docs[i].id%>"><%=stats.fr_docs[i].title%></a></h4>
+                <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
                 
                 <div class="document-summary">
                     <div class="summary-title">Summary:</div>
                     <div class="summary-contents">
-                        Aesthetic stumptown whatever squid shoreditch, wayfarers ennui chillwave truffaut. Keytar etsy DIY helvetica, seitan occupy sartorial irony retro freegan organic cliche lo-fi squid williamsburg. Terry richardson carles stumptown, forage irony craft beer bespoke wayfarers narwhal. Locavore blog ennui squid marfa. Gentrify skateboard fanny pack leggings shoreditch. Letterpress banksy umami keytar ennui jean shorts etsy farm-to-table. Carles four loko beard, mlkshk skateboard hoodie seitan quinoa chambray letterpress.
+                        <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
                     </div>
                 </div>
                 
                 <div class="document-info-shadow"></div>
                 <div class="document-info">
-                    <div class="document-date"><%=shortFormatDate(stats.fr_docs[i].date)%></div>
+                    <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
                     <div class="comment-info">
-                        <strong>Comments:</strong> <span class="comment-count">34</span>
+                        <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
                         <div class="openness">Open for Comment</div>
                     </div>
                 </div>
 
                 <div class="clear"></div>
             </div>
-        <% } %>
+        <% }); %>
 
         <div class="main-column-split">
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
-                (<a href="#">493 documents total</a>)
+                (<a href="#"><%=stats.type_breakdown.supporting_material%> documents total</a>)
                 <ul class="document-list">
-                    <li><a href="#">Safety and health in dock work. Ch. 3. safe means of access. P. 16</a></li>
-                    <li><a href="#">Letter to Thomas L. Cairns, Staff Specialist, Brown and Root, INc., regarding standards for emergency access to exits</a></li>
-                    <li><a href="#">Safety and health in dock work. Access to the top of a container</a></li>
+                    <% _.each(stats.doc_info.supporting_material, function(doc) { %>
+                    <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
+                    <% }); %>
                 </ul>
             </div>
             <div class="main-column-right">
                 <h4>Other Material</h4>
-                (<a href="#">3 documents total</a>)
+                (<a href="#"><%=stats.type_breakdown.other%> documents total</a>)
                 <ul class="document-list">
-                    <li><a href="#">Exxon N-9639 Initial Development Operations Coordination Document</a></li>
-                    <li><a href="#">Memorandum to open docket for public access &mdash; extension</a></li>
-                    <li><a href="#">Memorandum to open docket for public access: Toxicological Review of Ammonia: In Support of Summary Information on the Integrated Risk Information System (IRIS)</a></li>
+                    <% _.each(stats.doc_info.other, function(doc) { %>
+                    <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
+                    <% }); %>
                 </ul>
             </div>
             <div class="clear"></div>
