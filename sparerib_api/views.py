@@ -46,7 +46,7 @@ class AggregatedView(ResponseMixin, View):
         for label in ['name', 'title', 'year']:
             if hasattr(item, label):
                 out[label] = getattr(item, label)
-        rulemaking_field = getattr(item, 'details', {}).get('dk_type', None)
+        rulemaking_field = getattr(item, 'details', {}).get('Type', None)
         if rulemaking_field:
             out['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
 
@@ -248,6 +248,9 @@ class EntityView(ResponseMixin, View):
                     'months': expand_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
                 })
 
+                for agency in stats[mention_type]['agencies_by_month'].keys():
+                    stats[mention_type]['agencies_by_month'][agency] = expand_months(stats[mention_type]['agencies_by_month'][agency]) if stats[mention_type]['agencies_by_month'][agency] else []
+
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
                 agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)
                 if len(agencies) > 10:
@@ -264,31 +267,31 @@ class EntityView(ResponseMixin, View):
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
-            dockets_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'title', 'year', 'details.dk_type'])
-            dockets = dict([(docket['_id'], docket) for docket in dockets_search])
+            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type')
+            dockets = dict([(docket.id, docket) for docket in dockets_search])
 
             # stitch this back onto the main records
             for mention_type in ['text_mentions', 'submitter_mentions']:
                 for docket in stats[mention_type]['top_dockets']:
                     rdocket = dockets[docket['id']]
                     docket.update({
-                        'title': rdocket['title'],
-                        'url': reverse('docket-view', kwargs={'docket_id': rdocket['_id']}),
-                        'year': rdocket['year'],
-                        'rulemaking': rdocket.get('details', {}).get('dk_type', 'Nonrulemaking').lower() == 'rulemaking'
+                        'title': rdocket.title,
+                        'url': reverse('docket-view', kwargs={'docket_id': rdocket.id}),
+                        'year': rdocket.year,
+                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking'
                     })
 
             # repeat for agencies
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_agencies']] + [record['id'] for record in stats['text_mentions']['top_agencies']]))
-            agencies_search = db.agencies.find({'_id': {'$in': ids}}, ['_id', 'name'])
-            agencies = dict([(agency['_id'], agency) for agency in agencies_search])
+            agencies_search = Agency.objects(id__in=ids).only('id', 'name')
+            agencies = dict([(agency.id, agency) for agency in agencies_search])
 
             # ...and stitch
             for mention_type in ['text_mentions', 'submitter_mentions']:
                 for agency in stats[mention_type]['top_agencies']:
                     ragency = agencies.get(agency['id'], None)
                     agency.update({
-                        'name': ragency['name'] if ragency else agency['id'],
+                        'name': ragency.name if ragency else agency['id'],
                         'url': '/agency/%s' % agency['id']
                     })
 
