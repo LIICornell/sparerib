@@ -622,6 +622,9 @@ table tr.even {
 .rank-table th, .rank-table td {
   padding: 10px;
 }
+.rank-table .date-field {
+  white-space: nowrap;
+}
 
 .summary-table td {
   padding: 4px;

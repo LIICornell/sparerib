@@ -111,7 +111,7 @@ class AggregatedView(ResponseMixin, View):
         if self.aggregation_level != 'agency':
             agency = item.agency
             if agency:
-                agency_meta = list(Agency.objects(id=agency))
+                agency_meta = list(Agency.objects(id=agency).only("name"))
                 if agency_meta:
                     out['agency'] = {
                         'id': agency,
@@ -156,10 +156,15 @@ class DocumentView(ResponseMixin, View):
             'id': document.id,
             'docket': {
                 'id': document.docket_id,
-                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id})
+                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id}),
+                'title': Docket.objects(id=document.docket_id).only("title")[0].title
             },
 
-            'agency': document.agency,
+            'agency': {
+                'id': document.agency,
+                'url': reverse('agency-view', kwargs={'agency': document.agency}),
+                'name': Agency.objects(id=document.agency).only("name")[0].name
+            },
             'date': document.details.get('Date_Posted', None),
             'type': document.type,
             'views': [],
@@ -205,7 +210,17 @@ class DocumentView(ResponseMixin, View):
                     text_entities.add(entity)
             out['attachments'].append(a)
 
-        entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities)))
+        stats = document.stats if document.stats else {'count': 0}
+        # limit ourselves to the top five of each match type, and grab their extra metadata
+        for label, items in [('top_text_entities', stats.get('text_entities', {}).items()), ('top_submitter_entities', stats.get('submitter_entities', {}).items())]:
+            stats[label] = [{
+                'id': i[0],
+                'count': i[1]
+            } for i in sorted(items, key=lambda x: x[1], reverse=True)[:5]]
+        del stats['text_entities'], stats['submitter_entities']
+        top_entities = set([record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']])
+
+        entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities, top_entities))).only('id', 'td_type', 'aliases')
         entities = dict([(entity.id, entity) for entity in entities_search])
 
         for label, items in [('submitter_entities', sorted(list(submitter_entities))), ('text_entities', sorted(list(text_entities)))]:
@@ -215,6 +230,36 @@ class DocumentView(ResponseMixin, View):
                 'name': entities[item].aliases[0],
                 'url': '/%s/%s/%s' % (entities[item].td_type, slugify(entities[item].aliases[0]), item)
             } for item in items]
+
+        for label in ['top_text_entities', 'top_submitter_entities']:
+            for entity in stats[label]:
+                if not entities[entity['id']].td_type:
+                    continue
+                
+                entity['type'] = entities[entity['id']].td_type
+                entity['name'] = entities[entity['id']].aliases[0]
+                entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
+
+        if 'weeks' in stats:
+            stats['weeks'] = expand_weeks(stats['weeks'])
+
+        recent_comments = []
+        if stats['count'] > 0:
+            recent_comments_search = Doc.objects(__raw__={"docket_id": document.docket_id, "comment_on.document_id": document.id, "deleted": False}).hint([('docket_id', 1)]).order_by('-details.Date_Posted').only('id', 'title', 'details').limit(5)
+            for comment in recent_comments_search:
+                comment_item = {
+                    'title': comment.title,
+                    'date': comment.details['Date_Posted'].date().isoformat() if 'Date_Posted' in comment.details else None,
+                    'author': " ".join([comment.details.get('First_Name', ''), comment.details.get('Last_Name', '')]).strip(),
+                    'organization': comment.details.get('Organization_Name', ''),
+                    'url': '/document/' + comment.id
+                }
+                comment_item['author'] = comment_item['author'] if comment_item['author'] else None
+                recent_comments.append(comment_item)
+
+        stats['recent_comments'] = recent_comments
+
+        out['comment_stats'] = stats
 
         return self.render(Response(200, out))
 
