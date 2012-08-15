@@ -1,7 +1,7 @@
 <div class="banner">
     <div class="banner-content">
         <div class="breadcrumbs">
-            <a href="/agency/<%=agency.id%>"><%=agency.name%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.title%></a>
+            <a href="/agency/<%=agency.id%>"><%=agency.name%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.title%></a> &raquo;
         </div>
         <div class="dates">
             <%=formatDate(date)%>
@@ -85,7 +85,7 @@
                 <% _.each(comment_stats.recent_comments, function(comment, idx) { %>
                 <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
                     <td class="date-field"><%=shortFormatDate(comment.date)%></td>
-                    <td><a href="#"><%=comment.title%></a></td>
+                    <td><a href="<%=comment.url%>"><%=comment.title%></a></td>
                     <td><%=(comment.author ? comment.author : "<em>none listed</em>")%></td>
                     <td><%=(comment.organization ? comment.organization : "<em>none listed</em>")%></td>
                 </tr>

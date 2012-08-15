@@ -212,12 +212,13 @@ class DocumentView(ResponseMixin, View):
 
         stats = document.stats if document.stats else {'count': 0}
         # limit ourselves to the top five of each match type, and grab their extra metadata
-        for label, items in [('top_text_entities', stats.get('text_entities', {}).items()), ('top_submitter_entities', stats.get('submitter_entities', {}).items())]:
-            stats[label] = [{
+        for label in ['text_entities', 'submitter_entities']:
+            stats['top_' + label] = [{
                 'id': i[0],
                 'count': i[1]
-            } for i in sorted(items, key=lambda x: x[1], reverse=True)[:5]]
-        del stats['text_entities'], stats['submitter_entities']
+            } for i in sorted(stats.get(label, {}).items(), key=lambda x: x[1], reverse=True)[:5]]
+            if label in stats:
+                del stats[label]
         top_entities = set([record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']])
 
         entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities, top_entities))).only('id', 'td_type', 'aliases')
