@@ -87,6 +87,65 @@ var helpers = {
         return '/static/img/icons/64x64/icon_' + (typeof icons[file_type] == "undefined" ? icons['?'] : icons[file_type]) + '.png';
     }
 }
+
+// Utility functions
+var expandWeeks = function(weeks) {
+    var out = [];
+    var current = null;
+    for (var i = 0; i < weeks.length - 1; i++) {
+        out.push(weeks[i]);
+        
+        current = new Date(weeks[i]['date_range'][1]);
+        current.setDate(current.getDate() + 1);
+
+        next = new Date(weeks[i + 1]['date_range'][0]);
+
+        while (current < next) {
+            var end = new Date(current);
+            end.setDate(end.getDate() + 6);
+            var new_week = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate() });
+            out.push({
+                'date_range': new_week,
+                'count': 0
+            });
+
+            current = end;
+            current.setDate(current.getDate() + 1);
+        }
+    }
+    out.push(weeks[weeks.length - 1]);
+
+    return out;
+}
+
+var expandMonths = function(months) {
+    var out = [];
+    var current = null;
+    for (var i = 0; i < months.length - 1; i++) {
+        out.push(months[i]);
+        
+        current = new Date(months[i]['date_range'][1]);
+        current.setDate(current.getDate() + 1);
+
+        next = new Date(months[i + 1]['date_range'][0]);
+
+        while (current < next) {
+            var end = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0);
+            var new_month = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate() });
+            out.push({
+                'date_range': new_month,
+                'count': 0
+            });
+
+            current = end;
+            current.setDate(current.getDate() + 1);
+        }
+    }
+    out.push(months[months.length - 1]);
+
+    return out;
+}
+
 // Views
 var SearchView = Backbone.View.extend({
     tagName: 'div',
@@ -157,7 +216,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': context.stats[timeGranularity],
+                        'timeline': timeGranularity == "weeks" ? expandWeeks(context.stats.weeks) : expandMonths(context.stats.months),
                         'overlays': []
                     }];
                     _.each(context.stats.doc_info.fr_docs, function(doc) {
@@ -281,7 +340,7 @@ var EntityDetailView = Backbone.View.extend({
                             return {
                                 'name': agency.name,
                                 'href': '',
-                                'timeline': agency.months
+                                'timeline': expandMonths(agency.months)
                             }
                         });
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);

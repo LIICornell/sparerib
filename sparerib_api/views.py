@@ -56,11 +56,11 @@ class AggregatedView(ResponseMixin, View):
             stats["type_breakdown"] = dict([(doc_type, stats["type_breakdown"].get(doc_type, 0)) for doc_type in Doc.type.choices])
 
             if 'weeks' in stats and len(stats['weeks']) != 0:
-                stats['weeks'] = expand_weeks(stats['weeks'])
+                stats['weeks'] = prettify_weeks(stats['weeks'])
 
 
             if 'months' in stats and len(stats['months']) != 0:
-                stats['months'] = expand_months(stats['months'])
+                stats['months'] = prettify_months(stats['months'])
 
             # limit ourselves to the top five of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
@@ -242,7 +242,7 @@ class DocumentView(ResponseMixin, View):
                 entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
 
         if 'weeks' in stats:
-            stats['weeks'] = expand_weeks(stats['weeks'])
+            stats['weeks'] = prettify_weeks(stats['weeks'])
 
         recent_comments = []
         if 'recent_comments' in stats:
@@ -291,7 +291,7 @@ class EntityView(ResponseMixin, View):
             # cleanup, plus stitch on some additional data
             for mention_type in ["text_mentions", "submitter_mentions"]:
                 stats[mention_type].update({
-                    'months': expand_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
+                    'months': prettify_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
                 })
 
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
@@ -300,7 +300,7 @@ class EntityView(ResponseMixin, View):
                 stats[mention_type]['top_agencies'] = [{
                     'id': item[0],
                     'count': item[1],
-                    'months': expand_months(stats[mention_type]['agencies_by_month'][item[0]])
+                    'months': prettify_months(stats[mention_type]['agencies_by_month'][item[0]])
                 } for item in agencies]
                 del stats[mention_type]['agencies'], stats[mention_type]['agencies_by_month']
 

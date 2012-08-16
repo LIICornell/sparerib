@@ -5,7 +5,7 @@ import datetime, calendar
 
 ISO_DATE = '%Y-%m-%d'
 
-def expand_weeks(weeks):
+def prettify_weeks(weeks, expand=False):
     ranged = [{
         'date_range': [datetime.datetime.strptime(d, ISO_DATE).date() for d in key],
         'count': value
@@ -13,6 +13,9 @@ def expand_weeks(weeks):
 
     if not ranged:
         return []
+
+    if not expand:
+        return ranged
 
     out = []
     for i in xrange(len(ranged) - 1):
@@ -30,7 +33,7 @@ def expand_weeks(weeks):
 
     return out
 
-def expand_months(months):
+def prettify_months(months, expand=False):
     ranged = [{
         'date_range': [datetime.datetime.strptime(key + "-01", ISO_DATE).date(), datetime.datetime.strptime(key + "-" + str(calendar.monthrange(*map(int, key.split("-")))[1]), ISO_DATE).date()],
         'count': value
@@ -38,6 +41,9 @@ def expand_months(months):
 
     if not ranged:
         return []
+
+    if not expand:
+        return ranged
 
     out = []
     for i in xrange(len(ranged) - 1):
