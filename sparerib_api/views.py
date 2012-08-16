@@ -294,22 +294,23 @@ class EntityView(ResponseMixin, View):
                     'months': expand_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
                 })
 
-                for agency in stats[mention_type]['agencies_by_month'].keys():
-                    stats[mention_type]['agencies_by_month'][agency] = expand_months(stats[mention_type]['agencies_by_month'][agency]) if stats[mention_type]['agencies_by_month'][agency] else []
-
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
-                agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)
-                if len(agencies) > 10:
-                    agencies = agencies[:9] + [('Other', sum([a[1] for a in agencies[9:]]))]
+                agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)[:10]
+
+                stats[mention_type]['top_agencies'] = [{
+                    'id': item[0],
+                    'count': item[1],
+                    'months': expand_months(stats[mention_type]['agencies_by_month'][item[0]])
+                } for item in agencies]
+                del stats[mention_type]['agencies'], stats[mention_type]['agencies_by_month']
 
                 dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
 
-                for label, items in [('top_dockets', dockets), ('top_agencies', agencies)]:
-                    stats[mention_type][label] = [{
-                        'id': item[0],
-                        'count': item[1]
-                    } for item in items]
-                del stats[mention_type]['dockets'], stats[mention_type]['agencies']
+                stats[mention_type]['top_dockets'] = [{
+                    'id': item[0],
+                    'count': item[1]
+                } for item in dockets]
+                del stats[mention_type]['dockets']
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))

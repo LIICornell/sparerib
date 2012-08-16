@@ -281,7 +281,7 @@ var EntityDetailView = Backbone.View.extend({
                             return {
                                 'name': agency.name,
                                 'href': '',
-                                'timeline': context.stats[submission_type].agencies_by_month[agency.id]
+                                'timeline': agency.months
                             }
                         });
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
