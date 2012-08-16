@@ -629,7 +629,7 @@ SpareribCharts = {
             legend_r: 5,
             dot_r: 5,
             row_height: 14,
-            colors : [SpareribCharts.type_colors.public_submission],
+            colors : [SpareribCharts.type_colors.public_submission, SpareribCharts.type_colors.notice, SpareribCharts.type_colors.rule],
             axis_color: "#827d7d",
             tick_color: '#dcddde',
             text_color: "#666666",

@@ -13,7 +13,7 @@ def expand_weeks(weeks):
 
     if not ranged:
         return []
-    
+
     out = []
     for i in xrange(len(ranged) - 1):
         week = ranged[i]['date_range']
@@ -46,7 +46,7 @@ def expand_months(months):
 
         out.append(ranged[i])
         for offset in range(1, int(round((next[0] - month[0]).days / 30.5))):
-            next_month_day = month[0] + datetime.timedelta(days=32)
+            next_month_day = month[0] + datetime.timedelta(days=(30.5 * offset) + 1)
             out.append({
                 'date_range': [datetime.date(year=next_month_day.year, month=next_month_day.month, day=1), datetime.date(year=next_month_day.year, month=next_month_day.month, day=calendar.monthrange(next_month_day.year, next_month_day.month)[1])],
                 'count': 0

@@ -235,6 +235,9 @@ header .sf-link a {
 .main-column-item {
   background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
+.main-column-item:last-child {
+  background-image: none;
+}
 .with-right-sidebar .main-column-item {
   padding: 30px 30px 30px 25px;
 }
@@ -482,6 +485,9 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   text-transform: uppercase;
   margin-top: 30px;
 }
+.main-column .dates {
+  margin-top: 0;
+}
 .pages {
   font-family: georgia, serif;
   font-style: italic;
@@ -512,6 +518,25 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-size: 80%;
   padding: 5px;
 }
+
+.main-column .agency-square {
+  height: 12px;
+  width: 12px;
+  float: left;
+  margin-top: 4px;
+}
+.main-column .agency-square-0 { background: #899553; }
+.main-column .agency-square-1 { background: #47535F; }
+.main-column .agency-square-2 { background: #539594; }
+.main-column .agency-name {
+  width: 534px;
+  float: right;
+  margin-bottom: 8px;
+}
+.main-column .agency-legend {
+  font-size: 80%;
+}
+
 table tr.even {
   background-color: rgba(211,204,191,0.54);
 }
@@ -615,7 +640,7 @@ table tr.even {
   font-size: 80%;
   width: 100%;
 }
-.rank-table th {
+.rank-table th, .summary-table th {
   font-weight: bold;
   text-align: left;
 }

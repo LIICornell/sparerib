@@ -245,8 +245,8 @@ class DocumentView(ResponseMixin, View):
             stats['weeks'] = expand_weeks(stats['weeks'])
 
         recent_comments = []
-        if stats['count'] > 0:
-            recent_comments_search = Doc.objects(__raw__={"docket_id": document.docket_id, "comment_on.document_id": document.id, "deleted": False}).hint([('docket_id', 1)]).order_by('-details.Date_Posted').only('id', 'title', 'details').limit(5)
+        if 'recent_comments' in stats:
+            recent_comments_search = Doc.objects(id__in=[doc['id'] for doc in stats['recent_comments']]).only('id', 'title', 'details')
             for comment in recent_comments_search:
                 comment_item = {
                     'title': comment.title,
@@ -340,6 +340,23 @@ class EntityView(ResponseMixin, View):
                         'name': ragency.name if ragency else agency['id'],
                         'url': '/agency/%s' % agency['id']
                     })
+
+            # and for comments
+            recent_comments = []
+            if 'recent_comments' in stats['submitter_mentions']:
+                recent_comments_search = Doc.objects(id__in=[doc['id'] for doc in stats['submitter_mentions']['recent_comments']]).only('id', 'title', 'details')
+                for comment in recent_comments_search:
+                    comment_item = {
+                        'title': comment.title,
+                        'date': comment.details['Date_Posted'].date().isoformat() if 'Date_Posted' in comment.details else None,
+                        'author': " ".join([comment.details.get('First_Name', ''), comment.details.get('Last_Name', '')]).strip(),
+                        'organization': comment.details.get('Organization_Name', ''),
+                        'url': '/document/' + comment.id
+                    }
+                    comment_item['author'] = comment_item['author'] if comment_item['author'] else None
+                    recent_comments.append(comment_item)
+
+            stats['submitter_mentions']['recent_comments'] = recent_comments
 
             out['stats'] = stats
         else:
