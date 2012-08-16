@@ -23,7 +23,7 @@ import pyes
 
 import re, datetime, calendar
 
-class AggregatedView(ResponseMixin, View):
+class AggregatedView(DRFView):
     "Regulations.gov docket view"
 
     renderers = DEFAULT_RENDERERS
@@ -35,7 +35,7 @@ class AggregatedView(ResponseMixin, View):
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, '%s not found.' % self.aggregation_level.title()))
 
-        item = results[0]
+        self.item = item = results[0]
 
         # basic docket metadata
         out = {
@@ -85,6 +85,22 @@ class AggregatedView(ResponseMixin, View):
                     entity['name'] = entities[entity['id']].aliases[0]
                     entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
 
+            out['stats'] = stats
+        else:
+            out['stats'] = {'count': 0}
+
+        return out
+
+class DocketView(AggregatedView):
+    aggregation_level = 'docket'
+    aggregation_field = 'docket_id'
+    aggregation_class = Docket
+
+    def get(self, request, *args, **kwargs):
+        out = super(DocketView, self).get(request, *args, **kwargs)
+
+        stats = out['stats']
+        if stats['count'] > 0:
             # do a similar thing with FR documents
             if stats.get('doc_info', {}).get('fr_docs', None):
                 fr_doc_ids = [doc['id'] for doc in stats['doc_info']['fr_docs']]
@@ -103,38 +119,32 @@ class AggregatedView(ResponseMixin, View):
                         doc['stats'] = {'count': 0}
                         doc['summary'] = None
 
-            out['stats'] = stats
-        else:
-            out['stats'] = {'count': 0}
+        agency = self.item.agency
+        if agency:
+            agency_meta = list(Agency.objects(id=agency).only("name"))
+            if agency_meta:
+                out['agency'] = {
+                    'id': agency,
+                    'name': agency_meta[0].name,
+                    'url': '/agency/%s' % agency
+                }
+            else:
+                agency = None
+        
+        if not agency:
+            out['agency'] = None
 
-        # do something with the agency if this is not, itself, an agency request
-        if self.aggregation_level != 'agency':
-            agency = item.agency
-            if agency:
-                agency_meta = list(Agency.objects(id=agency).only("name"))
-                if agency_meta:
-                    out['agency'] = {
-                        'id': agency,
-                        'name': agency_meta[0].name,
-                        'url': '/agency/%s' % agency
-                    }
-                else:
-                    agency = None
-            
-            if not agency:
-                out['agency'] = None
-
-        return self.render(Response(200, out))
-
-class DocketView(AggregatedView):
-    aggregation_level = 'docket'
-    aggregation_field = 'docket_id'
-    aggregation_class = Docket
+        return out
 
 class AgencyView(AggregatedView):
     aggregation_level = 'agency'
     aggregation_field = 'agency'
     aggregation_class = Agency
+
+    def get(self, request, *args, **kwargs):
+        out = super(AgencyView, self).get(request, *args, **kwargs)
+
+        return out
 
 class DocumentView(ResponseMixin, View):
     "Regulations.gov document view"
