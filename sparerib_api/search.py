@@ -40,6 +40,8 @@ class SearchResultsView(DRFView):
         if limit != self.limit:
             url = "%s&limit=%d" % (url, limit)
 
+        return url
+
     def serialize_page_info(self, page, count):
         limit = self.get_limit()
         page_count = int(math.ceil(count / limit))

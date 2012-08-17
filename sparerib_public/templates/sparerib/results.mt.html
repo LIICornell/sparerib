@@ -18,7 +18,7 @@
             <a href="/search-document/<%=encodeURIComponent(search.raw_query + " " + search.aggregation_level + ":" + results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]])%>" class="view-link">view &raquo;</a>
         </span>
         <% } %>
-        <a class="title" href="/<%=search.aggregation_level%>/<%=results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]]%>"><%=typeof results[i].fields.title === "undefined" ? results[i].fields.name : results[i].fields.title %></a>
+        <a class="title" href="/<%=search.aggregation_level%>/<%=(search.aggregation_level == 'document' ? results[i]._id : results[i].fields[({'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]])%>"><%=typeof results[i].fields.title === "undefined" ? results[i].fields.name : results[i].fields.title %></a>
         
         <% if (search.aggregation_level == "agency") { %>
         Federal agency
