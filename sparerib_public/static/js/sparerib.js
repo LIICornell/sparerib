@@ -211,21 +211,24 @@ var AggregatedDetailView = Backbone.View.extend({
                     var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
                     $(this.el).html(this.template(context));
 
-                    // charts                    
-                    var timeGranularity = this.model.get('type') == 'docket' ? 'weeks' : 'months';
+                    // charts
+                    var type = this.model.get('type');
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': timeGranularity == "weeks" ? expandWeeks(context.stats.weeks) : expandMonths(context.stats.months),
+                        'timeline': type == "docket" ? expandWeeks(context.stats.weeks) : expandMonths(context.stats.months),
                         'overlays': []
                     }];
-                    _.each(context.stats.doc_info.fr_docs, function(doc) {
-                        timeline_data[0].overlays.push({
-                            'name': doc.title,
-                            'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
-                            'type': doc.type
+
+                    if (type == "docket") {
+                        _.each(context.stats.doc_info.fr_docs, function(doc) {
+                            timeline_data[0].overlays.push({
+                                'name': doc.title,
+                                'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
+                                'type': doc.type
+                            });
                         });
-                    });
+                    }
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
 
                     var sb_scaler = d3.scale.linear()

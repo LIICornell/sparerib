@@ -14,33 +14,37 @@
 
 <div class="main-content with-right-sidebar">
     <div class="main-column">
-        <h3>Docket Overview</h3>
+        <h3><%=capitalize(type)%> Overview</h3>
         <div class="main-column-item">
             <h4>Timeline</h4>
             <div id="submission-timeline"></div>
         </div>
-        <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
-            <div class="main-column-item">
-                <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
-                
-                <div class="document-summary">
-                    <div class="summary-title">Summary:</div>
-                    <div class="summary-contents">
-                        <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
-                    </div>
-                </div>
-                
-                <div class="document-info-shadow"></div>
-                <div class="document-info">
-                    <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
-                    <div class="comment-info">
-                        <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
-                        <div class="openness">Open for Comment</div>
-                    </div>
-                </div>
 
-                <div class="clear"></div>
+        <% if (type === "docket") { %>
+        <!-- docket-specific displays -->
+        
+        <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
+        <div class="main-column-item">
+            <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
+            
+            <div class="document-summary">
+                <div class="summary-title">Summary:</div>
+                <div class="summary-contents">
+                    <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
+                </div>
             </div>
+            
+            <div class="document-info-shadow"></div>
+            <div class="document-info">
+                <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
+                <div class="comment-info">
+                    <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
+                    <div class="openness">Open for Comment</div>
+                </div>
+            </div>
+
+            <div class="clear"></div>
+        </div>
         <% }); %>
 
         <div class="main-column-split">
@@ -64,11 +68,38 @@
             </div>
             <div class="clear"></div>
         </div>
+
+        <% } else { %>
+        <!-- agency-specific displays -->
+        <% _.each([[recent_dockets, 'Most Recent Dockets'], [popular_dockets, 'Most Popular Dockets']], function(row) { %>
+        <div class="main-column-item">
+            <h4><%=row[1]%></h3>
+            <table class="rank-table">
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Total Comments</th>
+                </tr>
+                <% _.each(row[0], function(docket, idx) { %>
+                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                    <td class="date-field"><%=shortFormatDate(docket.date_range[0])%></td>
+                    <td><a href="/docket/<%=docket.id%>"><%=docket.title%></a></td>
+                    <td><%=docket.comment_count%></td>
+                </tr>
+                <% }); %>
+            </table>
+            <br /><a href="#" style="font-size: 80%">View more dockets &raquo;</a>
+        </div>
+        <% }); %>
+
+        <% } %>
     </div>
     <div class="sidebar">
         <div class="sidebar-item">
-            <a href="#">Track this docket with Scout &raquo;</a>
+            <a href="#">Track this <%=type%> with Scout &raquo;</a>
         </div>
+
+        <% if (type === "docket") { %>
         <div class="sidebar-item">
             <h4>Comment Similarity</h4>
             <div class="similarity-description">
@@ -76,7 +107,9 @@
             </div>
             <a href="#">Explore the similarity of comments in this docket &raquo;</a>
         </div>
-        <div class="sidebar-item">
+        <% } %>
+
+        <div class="sidebar-item <%=(type == 'agency' ? 'last' : '')%>">
             <h4>Top Comment Submitters (<a href="#"><%=submission_count%></a>)</h4>
             <div class="submitter-breakdown"></div>
             <div class="top-submitters">
@@ -114,6 +147,8 @@
                 </div>
             </div>
         </div>
+
+        <% if (type === "docket") { %>
         <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
@@ -122,9 +157,11 @@
                 <li><a href="#">Occupational Injuries among Construction Workers Treated at the GWU Emergency Department</a></li>
             </ul>
         </div>
+
         <div class="sidebar-item last">
-            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this Docket on Regulations.gov &raquo;</a>
+            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this docket on Regulations.gov &raquo;</a>
         </div>
+        <% } %>
     </div>
     <div class="clear"></div>
 </div>

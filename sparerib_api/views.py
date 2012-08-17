@@ -144,6 +144,18 @@ class AgencyView(AggregatedView):
     def get(self, request, *args, **kwargs):
         out = super(AgencyView, self).get(request, *args, **kwargs)
 
+        agency = self.item.id
+
+        for label, order in [('recent_dockets', '-stats.date_range.0'), ('popular_dockets', '-stats.count')]:
+            dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.count').limit(5)
+            out[label] = [{
+                'date_range': docket.stats['date_range'],
+                'count': docket.stats['count'],
+                'comment_count': docket.stats['type_breakdown'].get('public_submission', 0),
+                'title': docket.title,
+                'id': docket.id
+            } for docket in dockets]
+
         return out
 
 class DocumentView(ResponseMixin, View):
