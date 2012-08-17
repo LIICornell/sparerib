@@ -141,6 +141,37 @@ class DocketHierarchyView(CommonClusterView):
 
         return out
 
+class HierarchyTeaserView(CommonClusterView):
+    def get(self, request, item_id, item_type="docket"):
+        if item_type == "document":
+            doc = Doc.objects.only("docket_id").get(id=item_id)
+            self.kwargs['docket_id'] = doc.docket_id
+        else:
+            self.kwargs['docket_id'] = item_id
+        docket = Docket.objects.get(id=self.kwargs['docket_id'])
+
+        hierarchy = self.corpus.hierarchy([0.8, 0.5], round(docket.stats['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
+        h_children = list(itertools.chain.from_iterable([cluster['children'] for cluster in hierarchy]))
+
+        out = {
+            'docket_teaser': {
+                '0.5': {'count': len(hierarchy)},
+                '0.8': {'count': len(h_children)}
+            }
+        }
+
+        if item_type == 'document':
+            out['document_teaser'] = None
+            docs = self.corpus.docs_by_metadata('document_id', item_id)
+            if docs:
+                doc_id = docs[0]
+                out['document_teaser'] = {}
+                for level, groups in [('0.8', h_children), ('0.5', hierarchy)]:
+                    matches = [group for group in groups if doc_id in group['members']]
+                    out['document_teaser'][level] = {'count': len(matches[0]), 'id': doc_id} if matches else None
+        return out
+
+
 class SingleClusterView(CommonClusterView):
     @profile
     def get(self, request, docket_id, cluster_id):
