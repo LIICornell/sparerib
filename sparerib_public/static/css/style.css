@@ -597,12 +597,11 @@ table tr.even {
   margin-bottom: 12px;
 }
 .attachment .attachment-name {
-  background: #ddeeff;
   padding: 8px;
   cursor: pointer;
 }
 .attachment .attachment-name:hover {
-  background: #ebf5ff;
+  background: rgba(200, 200, 200, 0.3);
 }
 .attachment-name .toggle { background: url("../img/icons/small/toggle.png") bottom left no-repeat; float: left; width: 13px; height: 12px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-right: 6px; padding: 0; }
 .attachment-name.active .toggle { background: url("../img/icons/small/toggle.png") top left no-repeat; }

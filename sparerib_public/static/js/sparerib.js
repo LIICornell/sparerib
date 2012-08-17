@@ -273,7 +273,7 @@ var DocumentDetailView = Backbone.View.extend({
                     var context = _.extend({}, helpers, this.model.toJSON());
 
                     // tweak attachments a bit
-                    context['full_attachments'] = [{'title': 'Main Views', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {
+                    context['full_attachments'] = [{'title': 'Main Text', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {
                         attachment['attachment'] = true;
                         return attachment;
                     }));
