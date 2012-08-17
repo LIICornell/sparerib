@@ -89,6 +89,10 @@ var helpers = {
 }
 
 // Utility functions
+var pad2 = function(number) {
+   return (number < 10 ? '0' : '') + number;
+}
+
 var expandWeeks = function(weeks) {
     var out = [];
     var current = null;
@@ -103,7 +107,7 @@ var expandWeeks = function(weeks) {
         while (current < next) {
             var end = new Date(current);
             end.setDate(end.getDate() + 6);
-            var new_week = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate() });
+            var new_week = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate()) });
             out.push({
                 'date_range': new_week,
                 'count': 0
@@ -131,7 +135,7 @@ var expandMonths = function(months) {
 
         while (current < next) {
             var end = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0);
-            var new_month = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate() });
+            var new_month = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate()) });
             out.push({
                 'date_range': new_month,
                 'count': 0
