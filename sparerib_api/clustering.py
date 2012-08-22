@@ -115,24 +115,24 @@ class HierarchyTeaserView(CommonClusterView):
                 out['document_teaser'] = {}
                 doc_id = docs[0]
 
-                cluster05 = find_doc_in_hierarchy(doc_id, 0.5)
+                cluster05 = find_doc_in_hierarchy(hierarchy, doc_id, 0.5)
                 if cluster05:
                     out['document_teaser'] = {'0.5': {'count': cluster05['size'], 'id': doc_id}}
                     
-                    cluster08 = find_doc_in_hierarchy(doc_id, 0.8)
+                    cluster08 = find_doc_in_hierarchy(hierarchy, doc_id, 0.8)
                     if cluster08:
                         out['document_teaser']['0.8'] = {'count': cluster08['size'], 'id': doc_id}
 
         return out
 
-    def _count_clusters(hierarchy, cutoff):
+    def _count_clusters(self, hierarchy, cutoff):
         count = 0
 
         for cluster in hierarchy:
             if cluster['cutoff'] == cutoff:
                 count += 1
 
-            if cluster['cutoff'] < cutof:
+            if cluster['cutoff'] < cutoff:
                 count += self._count_clusters(cluster['children'], cutoff)
 
         return count
