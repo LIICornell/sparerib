@@ -1,0 +1,27 @@
+<% if (document_teaser && (document_teaser['0.8'] || document_teaser['0.5']) && (document_teaser['0.8'].count || document_teaser['0.5'].count)) { 
+    var cutoff = document_teaser['0.8'].count ? '0.8' : '0.5';
+    var count = document_teaser[cutoff].count - 1;
+    var pcutoff = parseFloat(cutoff) * 100;
+%>
+<div class="similarity-data">
+    <div class="similarity-description">
+        This document shows at least <span class="cutoff"><%=pcutoff%>% similarity</span> to <span class="group-count"><%=count + " other " + pluralize(count, "comment")%></span> in its docket.
+    </div>
+    <a href="/docket/<%=docket_id%>/similarity/cutoff-<%=pcutoff%>/document-<%=document_teaser[cutoff].id%>">Explore the connections between documents in this docket &raquo;</a>
+</div>
+<%
+} else if (docket_teaser['0.8'].count || docket_teaser['0.5'].count) {
+%>
+<div class="similarity-data">
+    <div class="similarity-description">
+        This document appears unique in its docket, but its docket does contain other comments that are similar to one another.
+    </div>
+    <a href="/docket/<%=docket_id%>/similarity">Explore the connections between documents in this docket &raquo;</a>
+</div>
+<% } else { %>
+<div class="similarity-data">
+    <div class="similarity-description">
+        This document appears unique, as do the other comments in its docket.
+    </div>
+</div>
+<% } %>

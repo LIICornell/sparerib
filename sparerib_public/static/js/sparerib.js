@@ -90,7 +90,7 @@ var helpers = {
         return '/static/img/icons/64x64/icon_' + (typeof icons[file_type] == "undefined" ? icons['?'] : icons[file_type]) + '.png';
     },
     'pluralize': function(count, singular, plural) {
-        if (typeof("plural") === "undefined") {
+        if (typeof plural === "undefined") {
             plural = singular + "s";
         }
         return count == 1 ? singular : plural;
@@ -304,8 +304,10 @@ var DocumentDetailView = Backbone.View.extend({
     },
 
     template: _.template($('#document-tpl').html()),
+    teaserTemplate: _.template($('#document-teaser-tpl').html()),
+
     render: function() {
-        this.model.fetch(
+        var mainFetch = this.model.fetch(
             {
                 'success': $.proxy(function() {
                     var context = _.extend({}, helpers, this.model.toJSON());
@@ -325,6 +327,38 @@ var DocumentDetailView = Backbone.View.extend({
                 }
             }
         );
+
+        this.teaserModel = new ClusterDocumentTeaser({id: this.model.id});
+        var teaserFetch = this.teaserModel.fetch();
+        mainFetch.done($.proxy(function() {
+            var div = null;
+            var model = this.teaserModel;
+            var mainModel = this.model;
+            var template = this.teaserTemplate;
+
+            var animateHeight = function() {
+                div.height(div.height());
+                div.removeClass('loading');
+
+                div.animate({'height': div.find('.similarity-data').outerHeight(true)}, 'fast', function() { div.css({'height': 'auto'}) });
+            }
+
+            teaserFetch.done(function() {
+                div = $('.similarity-teaser');
+                if (!div.length) return;
+
+                var teaser = template(_.extend({'docket_id': mainModel.get('docket').id}, helpers, model.toJSON()));
+                div.html(teaser);
+                animateHeight();
+            }).fail(function() {
+                div = $('.similarity-teaser');
+                if (!div.length) return;
+
+                div.html("<div class='similarity-data similarity-description'>Similarity data is not available for this document.</div>");
+                animateHeight();
+            })
+        }, this));
+
         return this;
     },
 

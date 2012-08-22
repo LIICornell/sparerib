@@ -15,6 +15,13 @@
         <div class="sidebar-item">
             <img src="http://placehold.it/240x70" />
         </div>
+        <% if (type == 'public_submission') { %>
+        <div class="sidebar-item">
+            <h4>Comment Similarity</h4>
+            <div class="similarity-teaser loading">
+            </div>
+        </div>
+        <% } %>
         <div class="sidebar-item">
             <h4>Details</h4>
             <table class="summary-table">
