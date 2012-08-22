@@ -282,7 +282,7 @@ header .sf-link a {
   padding-bottom: 2px;
   border-bottom: 0;
 }
-.main-column-split .notice {
+.main-column-split .notice, .sidebar-item .notice {
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -372,6 +372,9 @@ header .sf-link a {
   width: 230px;
   float: right;
   margin-bottom: 8px;
+}
+.sidebar .top-submitters .clear {
+  margin-top: 4px;
 }
 
 .main-column-item h4 a, .document-title {

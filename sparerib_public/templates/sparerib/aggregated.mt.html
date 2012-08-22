@@ -115,7 +115,7 @@
         <% } %>
 
         <div class="sidebar-item <%=(type == 'agency' ? 'last' : '')%>">
-            <h4>Top Comment Submitters (<a href="#"><%=submission_count%></a>)</h4>
+            <h4>Top Comment Submitters</h4>
             <div class="submitter-breakdown"></div>
             <div class="top-submitters">
                 <%
@@ -140,16 +140,9 @@
                 <%
                         counted_comments += stats[submission_type][i].count;
                     }
-                    var other_count = submission_count - counted_comments;
                 %>
-                <div class="submitter" data-previous-submissions="<%=counted_comments%>" data-submission-count="<%=other_count%>">
-                    <div class="submitter-square submitter-square-other"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">All other comments</a></strong><br />
-                        (<a href="#">View <%=other_count%> comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
+                <div class="clear"></div>
+                <a href="#">View all <%=submission_count%> comments &raquo;</a>
             </div>
         </div>
 
