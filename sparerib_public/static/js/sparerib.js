@@ -284,7 +284,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     div = $('.similarity-teaser').html(teaser);
                     animateHeight();
                 }).fail(function() {
-                    div = $('.similarity-teaser').html("<div class='similarity-data similarity-description'>Similarity data is not available for this docket.</div>");
+                    div = $('.similarity-teaser').html("<div class='similarity-data similarity-description'>Similarity data is not yet available for this docket.</div>");
                     animateHeight();
                 })
             }, this));
@@ -354,7 +354,7 @@ var DocumentDetailView = Backbone.View.extend({
                 div = $('.similarity-teaser');
                 if (!div.length) return;
 
-                div.html("<div class='similarity-data similarity-description'>Similarity data is not available for this document.</div>");
+                div.html("<div class='similarity-data similarity-description'>Similarity data is not yet available for this document.</div>");
                 animateHeight();
             })
         }, this));
