@@ -23,7 +23,7 @@ import pyes
 
 import re, datetime, calendar
 
-class AggregatedView(ResponseMixin, View):
+class AggregatedView(DRFView):
     "Regulations.gov docket view"
 
     renderers = DEFAULT_RENDERERS
@@ -35,7 +35,7 @@ class AggregatedView(ResponseMixin, View):
         if not results:
             return self.render(Response(status.HTTP_404_NOT_FOUND, '%s not found.' % self.aggregation_level.title()))
 
-        item = results[0]
+        self.item = item = results[0]
 
         # basic docket metadata
         out = {
@@ -46,31 +46,28 @@ class AggregatedView(ResponseMixin, View):
         for label in ['name', 'title', 'year']:
             if hasattr(item, label):
                 out[label] = getattr(item, label)
-        rulemaking_field = getattr(item, 'details', {}).get('dk_type', None)
+        rulemaking_field = getattr(item, 'details', {}).get('Type', None)
         if rulemaking_field:
             out['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
 
         stats = item.stats
         if stats:
             # cleanup, plus stitch on some additional data
-            stats['type_breakdown'] = [{
-                    'type': key,
-                    'count': value
-                } for key, value in sorted(stats['type_breakdown'].items(), key=lambda x: x[1], reverse=True)]
+            stats["type_breakdown"] = dict([(doc_type, stats["type_breakdown"].get(doc_type, 0)) for doc_type in Doc.type.choices])
 
             if 'weeks' in stats and len(stats['weeks']) != 0:
-                stats['weeks'] = expand_weeks(stats['weeks'])
+                stats['weeks'] = prettify_weeks(stats['weeks'])
 
 
             if 'months' in stats and len(stats['months']) != 0:
-                stats['months'] = expand_months(stats['months'])
+                stats['months'] = prettify_months(stats['months'])
 
-            # limit ourselves to the top ten of each match type, and grab their extra metadata
+            # limit ourselves to the top five of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
                 stats[label] = [{
                     'id': i[0],
                     'count': i[1]
-                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:5]]
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
@@ -92,34 +89,74 @@ class AggregatedView(ResponseMixin, View):
         else:
             out['stats'] = {'count': 0}
 
-        # do something with the agency if this is not, itself, an agency request
-        if self.aggregation_level != 'agency':
-            agency = item.agency
-            if agency:
-                agency_meta = list(Agency.objects(id=agency))
-                if agency_meta:
-                    out['agency'] = {
-                        'id': agency,
-                        'name': agency_meta[0].name,
-                        'url': '/agency/%s' % agency
-                    }
-                else:
-                    agency = None
-            
-            if not agency:
-                out['agency'] = None
-
-        return self.render(Response(200, out))
+        return out
 
 class DocketView(AggregatedView):
     aggregation_level = 'docket'
     aggregation_field = 'docket_id'
     aggregation_class = Docket
 
+    def get(self, request, *args, **kwargs):
+        out = super(DocketView, self).get(request, *args, **kwargs)
+
+        stats = out['stats']
+        if stats['count'] > 0:
+            # do a similar thing with FR documents
+            if stats.get('doc_info', {}).get('fr_docs', None):
+                fr_doc_ids = [doc['id'] for doc in stats['doc_info']['fr_docs']]
+                fr_search = Doc.objects(id__in=fr_doc_ids)
+                fr_docs = dict([(fr_doc.id, fr_doc) for fr_doc in fr_search])
+
+                for doc in stats['doc_info']['fr_docs']:
+                    if doc['id'] in fr_docs:
+                        fr_doc = fr_docs[doc['id']]
+                        doc['stats'] = {
+                            'date_range': fr_doc.stats['date_range'],
+                            'count': fr_doc.stats['count']
+                        } if fr_doc.stats else {'count': 0}
+                        doc['summary'] = fr_doc.get_summary()
+                    else:
+                        doc['stats'] = {'count': 0}
+                        doc['summary'] = None
+
+        agency = self.item.agency
+        if agency:
+            agency_meta = list(Agency.objects(id=agency).only("name"))
+            if agency_meta:
+                out['agency'] = {
+                    'id': agency,
+                    'name': agency_meta[0].name,
+                    'url': '/agency/%s' % agency
+                }
+            else:
+                agency = None
+        
+        if not agency:
+            out['agency'] = None
+
+        return out
+
 class AgencyView(AggregatedView):
     aggregation_level = 'agency'
     aggregation_field = 'agency'
     aggregation_class = Agency
+
+    def get(self, request, *args, **kwargs):
+        out = super(AgencyView, self).get(request, *args, **kwargs)
+
+        agency = self.item.id
+
+        for label, order in [('recent_dockets', '-stats.date_range.0'), ('popular_dockets', '-stats.count')]:
+            dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.count').limit(5)
+            out[label] = [{
+                'date_range': docket.stats['date_range'],
+                'count': docket.stats['count'],
+                'comment_count': docket.stats['type_breakdown'].get('public_submission', 0),
+                'title': docket.title,
+                'id': docket.id
+            } for docket in dockets]
+
+        return out
 
 class DocumentView(ResponseMixin, View):
     "Regulations.gov document view"
@@ -141,10 +178,15 @@ class DocumentView(ResponseMixin, View):
             'id': document.id,
             'docket': {
                 'id': document.docket_id,
-                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id})
+                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id}),
+                'title': Docket.objects(id=document.docket_id).only("title")[0].title
             },
 
-            'agency': document.agency,
+            'agency': {
+                'id': document.agency,
+                'url': reverse('agency-view', kwargs={'agency': document.agency}),
+                'name': Agency.objects(id=document.agency).only("name")[0].name
+            },
             'date': document.details.get('Date_Posted', None),
             'type': document.type,
             'views': [],
@@ -190,7 +232,18 @@ class DocumentView(ResponseMixin, View):
                     text_entities.add(entity)
             out['attachments'].append(a)
 
-        entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities)))
+        stats = document.stats if document.stats else {'count': 0}
+        # limit ourselves to the top five of each match type, and grab their extra metadata
+        for label in ['text_entities', 'submitter_entities']:
+            stats['top_' + label] = [{
+                'id': i[0],
+                'count': i[1]
+            } for i in sorted(stats.get(label, {}).items(), key=lambda x: x[1], reverse=True)[:5]]
+            if label in stats:
+                del stats[label]
+        top_entities = set([record['id'] for record in stats['top_text_entities']] + [record['id'] for record in stats['top_submitter_entities']])
+
+        entities_search = Entity.objects(id__in=list(submitter_entities.union(text_entities, top_entities))).only('id', 'td_type', 'aliases')
         entities = dict([(entity.id, entity) for entity in entities_search])
 
         for label, items in [('submitter_entities', sorted(list(submitter_entities))), ('text_entities', sorted(list(text_entities)))]:
@@ -200,6 +253,36 @@ class DocumentView(ResponseMixin, View):
                 'name': entities[item].aliases[0],
                 'url': '/%s/%s/%s' % (entities[item].td_type, slugify(entities[item].aliases[0]), item)
             } for item in items]
+
+        for label in ['top_text_entities', 'top_submitter_entities']:
+            for entity in stats[label]:
+                if not entities[entity['id']].td_type:
+                    continue
+                
+                entity['type'] = entities[entity['id']].td_type
+                entity['name'] = entities[entity['id']].aliases[0]
+                entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
+
+        if 'weeks' in stats:
+            stats['weeks'] = prettify_weeks(stats['weeks'])
+
+        recent_comments = []
+        if 'recent_comments' in stats:
+            recent_comments_search = Doc.objects(id__in=[doc['id'] for doc in stats['recent_comments']]).only('id', 'title', 'details')
+            for comment in recent_comments_search:
+                comment_item = {
+                    'title': comment.title,
+                    'date': comment.details['Date_Posted'].date().isoformat() if 'Date_Posted' in comment.details else None,
+                    'author': " ".join([comment.details.get('First_Name', ''), comment.details.get('Last_Name', '')]).strip(),
+                    'organization': comment.details.get('Organization_Name', ''),
+                    'url': '/document/' + comment.id
+                }
+                comment_item['author'] = comment_item['author'] if comment_item['author'] else None
+                recent_comments.append(comment_item)
+
+        stats['recent_comments'] = recent_comments
+
+        out['comment_stats'] = stats
 
         return self.render(Response(200, out))
 
@@ -230,52 +313,73 @@ class EntityView(ResponseMixin, View):
             # cleanup, plus stitch on some additional data
             for mention_type in ["text_mentions", "submitter_mentions"]:
                 stats[mention_type].update({
-                    'months': expand_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
+                    'months': prettify_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
                 })
 
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
-                agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)
-                if len(agencies) > 10:
-                    agencies = agencies[:9] + [('Other', sum([a[1] for a in agencies[9:]]))]
+                agencies = sorted(stats[mention_type]['agencies'].items(), key=lambda x: x[1], reverse=True)[:10]
+
+                stats[mention_type]['top_agencies'] = [{
+                    'id': item[0],
+                    'count': item[1],
+                    'months': prettify_months(stats[mention_type]['agencies_by_month'][item[0]])
+                } for item in agencies]
+                del stats[mention_type]['agencies'], stats[mention_type]['agencies_by_month']
 
                 dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
 
-                for label, items in [('top_dockets', dockets), ('top_agencies', agencies)]:
-                    stats[mention_type][label] = [{
-                        'id': item[0],
-                        'count': item[1]
-                    } for item in items]
-                del stats[mention_type]['dockets'], stats[mention_type]['agencies']
+                stats[mention_type]['top_dockets'] = [{
+                    'id': item[0],
+                    'count': item[1]
+                } for item in dockets]
+                del stats[mention_type]['dockets']
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
-            dockets_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'title', 'year', 'details.dk_type'])
-            dockets = dict([(docket['_id'], docket) for docket in dockets_search])
+            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type')
+            dockets = dict([(docket.id, docket) for docket in dockets_search])
 
             # stitch this back onto the main records
             for mention_type in ['text_mentions', 'submitter_mentions']:
                 for docket in stats[mention_type]['top_dockets']:
                     rdocket = dockets[docket['id']]
                     docket.update({
-                        'title': rdocket['title'],
-                        'url': reverse('docket-view', kwargs={'docket_id': rdocket['_id']}),
-                        'year': rdocket['year'],
-                        'rulemaking': rdocket.get('details', {}).get('dk_type', 'Nonrulemaking').lower() == 'rulemaking'
+                        'title': rdocket.title,
+                        'url': reverse('docket-view', kwargs={'docket_id': rdocket.id}),
+                        'year': rdocket.year,
+                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking'
                     })
 
             # repeat for agencies
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_agencies']] + [record['id'] for record in stats['text_mentions']['top_agencies']]))
-            agencies_search = db.agencies.find({'_id': {'$in': ids}}, ['_id', 'name'])
-            agencies = dict([(agency['_id'], agency) for agency in agencies_search])
+            agencies_search = Agency.objects(id__in=ids).only('id', 'name')
+            agencies = dict([(agency.id, agency) for agency in agencies_search])
 
             # ...and stitch
             for mention_type in ['text_mentions', 'submitter_mentions']:
                 for agency in stats[mention_type]['top_agencies']:
                     ragency = agencies.get(agency['id'], None)
                     agency.update({
-                        'name': ragency['name'] if ragency else agency['id'],
+                        'name': ragency.name if ragency else agency['id'],
                         'url': '/agency/%s' % agency['id']
                     })
+
+            # and for comments
+            recent_comments = []
+            if 'recent_comments' in stats['submitter_mentions']:
+                recent_comments_search = Doc.objects(id__in=[doc['id'] for doc in stats['submitter_mentions']['recent_comments']]).only('id', 'title', 'details')
+                for comment in recent_comments_search:
+                    comment_item = {
+                        'title': comment.title,
+                        'date': comment.details['Date_Posted'].date().isoformat() if 'Date_Posted' in comment.details else None,
+                        'author': " ".join([comment.details.get('First_Name', ''), comment.details.get('Last_Name', '')]).strip(),
+                        'organization': comment.details.get('Organization_Name', ''),
+                        'url': '/document/' + comment.id
+                    }
+                    comment_item['author'] = comment_item['author'] if comment_item['author'] else None
+                    recent_comments.append(comment_item)
+
+            stats['submitter_mentions']['recent_comments'] = recent_comments
 
             out['stats'] = stats
         else:

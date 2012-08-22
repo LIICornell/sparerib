@@ -235,6 +235,9 @@ header .sf-link a {
 .main-column-item {
   background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
+.main-column-item:last-child {
+  background-image: none;
+}
 .with-right-sidebar .main-column-item {
   padding: 30px 30px 30px 25px;
 }
@@ -482,6 +485,9 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   text-transform: uppercase;
   margin-top: 30px;
 }
+.main-column .dates {
+  margin-top: 0;
+}
 .pages {
   font-family: georgia, serif;
   font-style: italic;
@@ -512,6 +518,25 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
   font-size: 80%;
   padding: 5px;
 }
+
+.main-column .agency-square {
+  height: 12px;
+  width: 12px;
+  float: left;
+  margin-top: 4px;
+}
+.main-column .agency-square-0 { background: #899553; }
+.main-column .agency-square-1 { background: #47535F; }
+.main-column .agency-square-2 { background: #539594; }
+.main-column .agency-name {
+  width: 534px;
+  float: right;
+  margin-bottom: 8px;
+}
+.main-column .agency-legend {
+  font-size: 80%;
+}
+
 table tr.even {
   background-color: rgba(211,204,191,0.54);
 }
@@ -572,12 +597,11 @@ table tr.even {
   margin-bottom: 12px;
 }
 .attachment .attachment-name {
-  background: #ddeeff;
   padding: 8px;
   cursor: pointer;
 }
 .attachment .attachment-name:hover {
-  background: #ebf5ff;
+  background: rgba(200, 200, 200, 0.3);
 }
 .attachment-name .toggle { background: url("../img/icons/small/toggle.png") bottom left no-repeat; float: left; width: 13px; height: 12px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-right: 6px; padding: 0; }
 .attachment-name.active .toggle { background: url("../img/icons/small/toggle.png") top left no-repeat; }
@@ -615,12 +639,15 @@ table tr.even {
   font-size: 80%;
   width: 100%;
 }
-.rank-table th {
+.rank-table th, .summary-table th {
   font-weight: bold;
   text-align: left;
 }
 .rank-table th, .rank-table td {
   padding: 10px;
+}
+.rank-table .date-field {
+  white-space: nowrap;
 }
 
 .summary-table td {
@@ -808,6 +835,11 @@ table tr.even {
 }
 #cluster-view .pseudo-loading {
   background: #eeeeee url("../img/loading.gif") no-repeat 97% 2%;
+}
+
+/* style dummy links */
+a[href=\#] {
+  opacity: 0.5;
 }
 
 /* end author styles */

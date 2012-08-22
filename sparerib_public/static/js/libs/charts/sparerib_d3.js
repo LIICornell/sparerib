@@ -310,8 +310,8 @@ D3Charts = {
         var all_timelines = _.flatten(_.map(data, function(d) { return d.timeline; }));
         y = d3.scale.linear().domain([0, d3.max(_.map(all_timelines, function(d) { return d.count; }))]).range([opts.chart_height, 0]);
 
-        var all_dates = _.flatten(_.map(all_timelines, function(d) { return d.date_range; }));
-        x = d3.time.scale.utc().domain([new Date(d3.min(all_dates)), new Date(d3.max(all_dates))]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
+        var all_dates = _.flatten(_.map(all_timelines, function(d) { return [new Date(d.date_range[0]), new Date(d.date_range[1])]; }));
+        x = d3.time.scale.utc().domain([d3.min(all_dates), d3.max(all_dates)]).range([opts.chart_x, opts.chart_x + opts.chart_width]);
 
         // attach mean dates to all the data to make the rest of it easier, and tack zeros onto the beginning and end
         _.each(data, function(series) {
@@ -629,7 +629,7 @@ SpareribCharts = {
             legend_r: 5,
             dot_r: 5,
             row_height: 14,
-            colors : [SpareribCharts.type_colors.public_submission],
+            colors : [SpareribCharts.type_colors.public_submission, SpareribCharts.type_colors.notice, SpareribCharts.type_colors.rule],
             axis_color: "#827d7d",
             tick_color: '#dcddde',
             text_color: "#666666",

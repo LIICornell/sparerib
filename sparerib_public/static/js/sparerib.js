@@ -87,6 +87,69 @@ var helpers = {
         return '/static/img/icons/64x64/icon_' + (typeof icons[file_type] == "undefined" ? icons['?'] : icons[file_type]) + '.png';
     }
 }
+
+// Utility functions
+var pad2 = function(number) {
+   return (number < 10 ? '0' : '') + number;
+}
+
+var expandWeeks = function(weeks) {
+    var out = [];
+    var current = null;
+    for (var i = 0; i < weeks.length - 1; i++) {
+        out.push(weeks[i]);
+        
+        current = new Date(weeks[i]['date_range'][1]);
+        current.setDate(current.getDate() + 1);
+
+        next = new Date(weeks[i + 1]['date_range'][0]);
+
+        while (current < next) {
+            var end = new Date(current);
+            end.setDate(end.getDate() + 6);
+            var new_week = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate()) });
+            out.push({
+                'date_range': new_week,
+                'count': 0
+            });
+
+            current = end;
+            current.setDate(current.getDate() + 1);
+        }
+    }
+    out.push(weeks[weeks.length - 1]);
+
+    return out;
+}
+
+var expandMonths = function(months) {
+    var out = [];
+    var current = null;
+    for (var i = 0; i < months.length - 1; i++) {
+        out.push(months[i]);
+        
+        current = new Date(months[i]['date_range'][1]);
+        current.setDate(current.getDate() + 1);
+
+        next = new Date(months[i + 1]['date_range'][0]);
+
+        while (current < next) {
+            var end = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0);
+            var new_month = _.map([current, end], function(d) { return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate()) });
+            out.push({
+                'date_range': new_month,
+                'count': 0
+            });
+
+            current = end;
+            current.setDate(current.getDate() + 1);
+        }
+    }
+    out.push(months[months.length - 1]);
+
+    return out;
+}
+
 // Views
 var SearchView = Backbone.View.extend({
     tagName: 'div',
@@ -148,31 +211,32 @@ var AggregatedDetailView = Backbone.View.extend({
             {
                 'success': $.proxy(function() {
                     var jsonModel = this.model.toJSON();
-                    var ps_type = _.filter(jsonModel.stats.type_breakdown, function(t) { return t.type == "public_submission"; });
-                    var ps_count = ps_type.length > 0 ? ps_type[0].count : 0;
 
-                    var context = _.extend({'submission_count': ps_count}, helpers, jsonModel);
+                    var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
                     $(this.el).html(this.template(context));
 
-                    // charts                    
-                    var timeGranularity = this.model.get('type') == 'docket' ? 'weeks' : 'months';
+                    // charts
+                    var type = this.model.get('type');
                     var timeline_data = [{
                         'name': 'Submission Timline',
                         'href': '',
-                        'timeline': context.stats[timeGranularity],
+                        'timeline': type == "docket" ? expandWeeks(context.stats.weeks) : expandMonths(context.stats.months),
                         'overlays': []
                     }];
-                    _.each(context.stats.fr_docs, function(doc) {
-                        timeline_data[0].overlays.push({
-                            'name': doc.title,
-                            'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
-                            'type': doc.type
+
+                    if (type == "docket") {
+                        _.each(context.stats.doc_info.fr_docs, function(doc) {
+                            timeline_data[0].overlays.push({
+                                'name': doc.title,
+                                'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
+                                'type': doc.type
+                            });
                         });
-                    });
+                    }
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
 
                     var sb_scaler = d3.scale.linear()
-                        .domain([0, ps_count])
+                        .domain([0, jsonModel.stats.type_breakdown.public_submission])
                         .range([0, 240]);
                     var sb_chart = this.$el.find('.submitter-breakdown');
                     $('.top-submitters .submitter').each(function(idx, item) {
@@ -209,7 +273,7 @@ var DocumentDetailView = Backbone.View.extend({
                     var context = _.extend({}, helpers, this.model.toJSON());
 
                     // tweak attachments a bit
-                    context['full_attachments'] = [{'title': 'Main Views', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {
+                    context['full_attachments'] = [{'title': 'Main Text', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {
                         attachment['attachment'] = true;
                         return attachment;
                     }));
@@ -279,11 +343,13 @@ var EntityDetailView = Backbone.View.extend({
                             return;
                         }
 
-                        var timeline_data = [{
-                            'name': 'Submission Timline',
-                            'href': '',
-                            'timeline': context.stats[submission_type].months
-                        }];
+                        var timeline_data = _.map(context.stats[submission_type].top_agencies.slice(0, 3), function(agency) {
+                            return {
+                                'name': agency.name,
+                                'href': '',
+                                'timeline': expandMonths(agency.months)
+                            }
+                        });
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
                     });
                 }, this),

@@ -1,7 +1,7 @@
 <div class="banner">
     <div class="banner-content">
         <div class="breadcrumbs">
-            <a href="/agency/<%=agency%>"><%=agency%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.id%></a>
+            <a href="/agency/<%=agency.id%>"><%=agency.name%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.title%></a> &raquo;
         </div>
         <div class="dates">
             <%=formatDate(date)%>
@@ -80,32 +80,16 @@
                     <th>Date</th>
                     <th>Title</th>
                     <th>Author</th>
+                    <th>Organization</th>
                 </tr>
-                <tr class="even">
-                    <td>12/30/12</td>
-                    <td><a href="#">Comment on FR Doc # 2010-17845</a></td>
-                    <td>Angela Poppe</td>
+                <% _.each(comment_stats.recent_comments, function(comment, idx) { %>
+                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                    <td class="date-field"><%=shortFormatDate(comment.date)%></td>
+                    <td><a href="<%=comment.url%>"><%=comment.title%></a></td>
+                    <td><%=(comment.author ? comment.author : "<em>none listed</em>")%></td>
+                    <td><%=(comment.organization ? comment.organization : "<em>none listed</em>")%></td>
                 </tr>
-                <tr class="odd">
-                    <td>12/30/12</td>
-                    <td><a href="#">Comment on FR Doc # 2010-17845</a></td>
-                    <td>Angela Poppe</td>
-                </tr>
-                <tr class="even">
-                    <td>12/30/12</td>
-                    <td><a href="#">Comment on FR Doc # 2010-17845</a></td>
-                    <td>Angela Poppe</td>
-                </tr>
-                <tr class="odd">
-                    <td>12/30/12</td>
-                    <td><a href="#">Comment on FR Doc # 2010-17845</a></td>
-                    <td>Angela Poppe</td>
-                </tr>
-                <tr class="even">
-                    <td>12/30/12</td>
-                    <td><a href="#">Comment on FR Doc # 2010-17845</a></td>
-                    <td>Angela Poppe</td>
-                </tr>
+                <% }); %>
             </table>
             <br /><a href="#" style="font-size: 80%">View more comments &raquo;</a>
         </div>
@@ -117,26 +101,12 @@
                     <th>Comment Submitter</th>
                     <th>Total Comments</th>
                 </tr>
-                <tr class="even">
-                    <td><a href="#">University of Phoenix</a></td>
-                    <td>200</td>
+                <% _.each(comment_stats.top_submitter_entities, function(entity, idx) { %>
+                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                    <td><a href="<%=entity.url%>"><%=entity.name%></a></td>
+                    <td><%=entity.count%></td>
                 </tr>
-                <tr class="odd">
-                    <td><a href="#">Sierra Club</a></td>
-                    <td>163</td>
-                </tr>
-                <tr class="even">
-                    <td><a href="#">Consumer Federation of America</a></td>
-                    <td>34</td>
-                </tr>
-                <tr class="odd">
-                    <td><a href="#">Pittsburgh Technical Institute</a></td>
-                    <td>21</td>
-                </tr>
-                <tr class="even">
-                    <td><a href="#">Council for Exceptional Children</a></td>
-                    <td>10</td>
-                </tr>
+                <% }); %>
             </table>
         </div>
         <% } %>
