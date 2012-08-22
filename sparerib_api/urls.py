@@ -1,9 +1,9 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import patterns, url
 from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView, NotFoundView
 
 from search import DocumentSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
-from clustering import DocketHierarchyView, DocketClusterView, SingleClusterView, DocumentClusterView, DocumentClusterChainView, HierarchyTeaserView
+from clustering import DocketHierarchyView, SingleClusterView, DocumentClusterView, DocumentClusterChainView, HierarchyTeaserView
 
 urlpatterns = patterns('',
     # resource pages
@@ -23,7 +23,6 @@ urlpatterns = patterns('',
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[0-9a-z]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'attachment'}),
 
     # clusters
-    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/clusters$', DocketClusterView.as_view(), name='docket-clusters'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/hierarchy$', DocketHierarchyView.as_view(), name='docket-hierarchy'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)$', SingleClusterView.as_view(), name='single-cluster'),
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/cluster/(?P<cluster_id>\d+)/document/(?P<document_id>\d+)$', DocumentClusterView.as_view(), name='document-cluster'),
