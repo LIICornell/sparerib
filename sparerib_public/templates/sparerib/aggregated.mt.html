@@ -51,7 +51,7 @@
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
                 <% if (stats.type_breakdown.supporting_material) { %>
-                (<a href="#"><%=stats.type_breakdown.supporting_material%> documents total</a>)
+                (<a href="#"><%=stats.type_breakdown.supporting_material + " " + pluralize(stats.type_breakdown.supporting_material, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.supporting_material, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
@@ -63,7 +63,7 @@
             <div class="main-column-right">
                 <h4>Other Material</h4>
                 <% if (stats.type_breakdown.other) { %>
-                (<a href="#"><%=stats.type_breakdown.other%> documents total</a>)
+                (<a href="#"><%=stats.type_breakdown.other + " " + pluralize(stats.type_breakdown.other, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.other, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
