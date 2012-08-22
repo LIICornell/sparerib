@@ -246,17 +246,26 @@ var AggregatedDetailView = Backbone.View.extend({
                     }
                     SpareribCharts.timeline_chart('submission-timeline', timeline_data);
 
-                    var sb_scaler = d3.scale.linear()
-                        .domain([0, jsonModel.stats.type_breakdown.public_submission])
-                        .range([0, 240]);
                     var sb_chart = this.$el.find('.submitter-breakdown');
-                    $('.top-submitters .submitter').each(function(idx, item) {
-                        var $item = $(item);
-                        var $square = $("<div>");
-                        $square.attr('class', $item.find('.submitter-square').attr('class').replace('submitter-square', ''));
-                        $square.css({position: 'absolute', top: 0, height: '35px', width: sb_scaler(parseInt($item.attr('data-submission-count'))) - 1 + 'px', left: sb_scaler(parseInt($item.attr('data-previous-submissions'))) + 'px'});
-                        sb_chart.append($square);
-                    });
+                    var tagged_total = 0;
+                    var top_submitters = $('.top-submitters .submitter');
+                    if (top_submitters.length == 0) {
+                        sb_chart.replaceWith("<div class='notice'>This docket doesn't include any comments from recognized submitters.</div>")
+                    } else {
+                        top_submitters.each(function(idx, item) {
+                            tagged_total += parseInt($(item).attr('data-submission-count'));
+                        })
+                        var sb_scaler = d3.scale.linear()
+                            .domain([0, tagged_total])
+                            .range([0, 240]);
+                        top_submitters.each(function(idx, item) {
+                            var $item = $(item);
+                            var $square = $("<div>");
+                            $square.attr('class', $item.find('.submitter-square').attr('class').replace('submitter-square', ''));
+                            $square.css({position: 'absolute', top: 0, height: '35px', width: sb_scaler(parseInt($item.attr('data-submission-count'))) - 1 + 'px', left: sb_scaler(parseInt($item.attr('data-previous-submissions'))) + 'px'});
+                            sb_chart.append($square);
+                        });
+                    }
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -284,7 +293,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     div = $('.similarity-teaser').html(teaser);
                     animateHeight();
                 }).fail(function() {
-                    div = $('.similarity-teaser').html("<div class='similarity-data similarity-description'>Similarity data is not available for this docket.</div>");
+                    div = $('.similarity-teaser').html("<div class='similarity-data similarity-description'>Similarity data is not yet available for this docket.</div>");
                     animateHeight();
                 })
             }, this));
@@ -354,7 +363,7 @@ var DocumentDetailView = Backbone.View.extend({
                 div = $('.similarity-teaser');
                 if (!div.length) return;
 
-                div.html("<div class='similarity-data similarity-description'>Similarity data is not available for this document.</div>");
+                div.html("<div class='similarity-data similarity-description'>Similarity data is not yet available for this document.</div>");
                 animateHeight();
             })
         }, this));
