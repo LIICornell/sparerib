@@ -1,5 +1,5 @@
-<% if (document_teaser && (document_teaser['0.8'] || document_teaser['0.5']) && (document_teaser['0.8'].count || document_teaser['0.5'].count)) { 
-    var cutoff = document_teaser['0.8'].count ? '0.8' : '0.5';
+<% if (document_teaser && (document_teaser['0.8'] || document_teaser['0.5']) && ((document_teaser['0.8'] && document_teaser['0.8'].count) || document_teaser['0.5'].count)) { 
+    var cutoff = (document_teaser['0.8'] && document_teaser['0.8'].count) ? '0.8' : '0.5';
     var count = document_teaser[cutoff].count - 1;
     var pcutoff = parseFloat(cutoff) * 100;
 %>
