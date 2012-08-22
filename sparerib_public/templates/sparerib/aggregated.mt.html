@@ -39,7 +39,7 @@
                 <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
                 <div class="comment-info">
                     <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
-                    <div class="openness">Open for Comment</div>
+                    <div class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></div>
                 </div>
             </div>
 

@@ -320,13 +320,13 @@ header .sf-link a {
 .similarity-description .group-count {
   font-family: "gnuolane",sans-serif;
   font-weight: 700;
-  font-size: 160%;
+  font-size: 145%;
   color: #d59305;
 }
 .similarity-description .cutoff {
   font-family: "gnuolane",sans-serif;
   font-weight: 700;
-  font-size: 160%;
+  font-size: 145%;
   color: #529594;
 }
 .similarity-teaser {
@@ -418,11 +418,12 @@ header .sf-link a {
 }
 .openness {
   text-transform: lowercase;
+  font-size: 95%;
 }
 .comment-count {
   font-family: "gnuolane",sans-serif;
   font-weight: 700;
-  font-size: 180%;
+  font-size: 145%;
   color: #d59305;
 }
 
