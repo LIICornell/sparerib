@@ -80,42 +80,48 @@
         </div>
 
         <% if (_.contains(['rule', 'proposed_rule', 'notice'], type)) { %>
-        <div class="main-column-item">
-            <h4>Most Recent Comments</h3>
-            <table class="rank-table">
-                <tr>
-                    <th>Date</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Organization</th>
-                </tr>
-                <% _.each(comment_stats.recent_comments, function(comment, idx) { %>
-                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
-                    <td class="date-field"><%=shortFormatDate(comment.date)%></td>
-                    <td><a href="<%=comment.url%>"><%=comment.title%></a></td>
-                    <td><%=(comment.author ? comment.author : "<em>none listed</em>")%></td>
-                    <td><%=(comment.organization ? comment.organization : "<em>none listed</em>")%></td>
-                </tr>
-                <% }); %>
-            </table>
-            <br /><a href="#" style="font-size: 80%">View more comments &raquo;</a>
-        </div>
 
-        <div class="main-column-item">
-            <h4>Top Comment Submitters</h3>
-            <table class="rank-table">
-                <tr>
-                    <th>Comment Submitter</th>
-                    <th>Total Comments</th>
-                </tr>
-                <% _.each(comment_stats.top_submitter_entities, function(entity, idx) { %>
-                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
-                    <td><a href="<%=entity.url%>"><%=entity.name%></a></td>
-                    <td><%=entity.count%></td>
-                </tr>
-                <% }); %>
-            </table>
-        </div>
+            <% if (comment_stats.recent_comments.length) { %>
+            <div class="main-column-item">
+                <h4>Most Recent Comments</h3>
+                <table class="rank-table">
+                    <tr>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Organization</th>
+                    </tr>
+                    <% _.each(comment_stats.recent_comments, function(comment, idx) { %>
+                    <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                        <td class="date-field"><%=shortFormatDate(comment.date)%></td>
+                        <td><a href="<%=comment.url%>"><%=comment.title%></a></td>
+                        <td><%=(comment.author ? comment.author : "<em>none listed</em>")%></td>
+                        <td><%=(comment.organization ? comment.organization : "<em>none listed</em>")%></td>
+                    </tr>
+                    <% }); %>
+                </table>
+                <br /><a href="#" style="font-size: 80%">View more comments &raquo;</a>
+            </div>
+            <% } %>
+
+            <% if (comment_stats.top_submitter_entities.length) { %>
+            <div class="main-column-item">
+                <h4>Top Comment Submitters</h3>
+                <table class="rank-table">
+                    <tr>
+                        <th>Comment Submitter</th>
+                        <th>Total Comments</th>
+                    </tr>
+                    <% _.each(comment_stats.top_submitter_entities, function(entity, idx) { %>
+                    <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                        <td><a href="<%=entity.url%>"><%=entity.name%></a></td>
+                        <td><%=entity.count%></td>
+                    </tr>
+                    <% }); %>
+                </table>
+            </div>
+            <% } %>
+        
         <% } %>
     </div>
     <div class="clear"></div>
