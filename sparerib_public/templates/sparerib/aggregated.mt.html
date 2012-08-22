@@ -50,21 +50,28 @@
         <div class="main-column-split">
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
+                <% if (stats.type_breakdown.supporting_material) { %>
                 (<a href="#"><%=stats.type_breakdown.supporting_material%> documents total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.supporting_material, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
                     <% }); %>
                 </ul>
-            </div>
+                <% } else { %>
+                <div class="notice">This docket doesn't contain any supporting or related materials.</div>
+                <% } %>            </div>
             <div class="main-column-right">
                 <h4>Other Material</h4>
+                <% if (stats.type_breakdown.other) { %>
                 (<a href="#"><%=stats.type_breakdown.other%> documents total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.other, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
                     <% }); %>
                 </ul>
+                <% } else { %>
+                <div class="notice">This docket doesn't contain any materials of type &ldquo;other.&rdquo;</div>
+                <% } %>
             </div>
             <div class="clear"></div>
         </div>
