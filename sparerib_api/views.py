@@ -160,7 +160,7 @@ class AgencyView(AggregatedView):
 
         return out
 
-class DocumentView(ResponseMixin, View):
+class DocumentView(DRFView):
     "Regulations.gov document view"
 
     renderers = DEFAULT_RENDERERS
@@ -234,6 +234,7 @@ class DocumentView(ResponseMixin, View):
                     text_entities.add(entity)
             out['attachments'].append(a)
 
+        # stats for FR docs
         stats = document.stats if document.stats else {'count': 0}
         # limit ourselves to the top five of each match type, and grab their extra metadata
         for label in ['text_entities', 'submitter_entities']:
@@ -286,7 +287,57 @@ class DocumentView(ResponseMixin, View):
 
         out['comment_stats'] = stats
 
-        return self.render(Response(200, out))
+        # cleaned-up details
+        details = out['details'].copy()
+        dp = lambda key, default=None: details.pop(key, default)
+        out['clean_details'] = dtls(
+            ('Submitter Information', dtls(
+                ('Name', combine(dp('First_Name'), dp('Middle_Name'), dp('Last_Name'))),
+                ('Organization', dp('Organization_Name')),
+                ('Location', combine(dp('Mailing_Address'), dp('Mailing_Address_'), dp('City'), expand_state(dp('State_or_Province')), dp('Postal_Code'), dp('Country'), sep=", ")),
+                ('Email Address', dp('Email_Address')),
+                ('Phone_Number', dp('Phone_Number')),
+                ('Fax Number', dp('Fax_Number')),
+                ("Submitter's Representative", dp('Submitter_s_Representative'))
+            )),
+
+            ('Dates and Times', dtls(
+                ('Document Date', dp('Document_Date')), # rarely-used
+                ('Date Received', dp('Received_Date')),
+                ('Postmark_Date', dp('Postmark_Date', dp('Post_Mark_Date'))),
+                ('Date Posted', dp('Date_Posted')),
+                (None, dp('Date')), # Swallow this one, since it's always the same as Date_Posted,
+                ('Comment Period', combine(
+                    short_date(dp('Comment_Start_Date')),
+                    short_date(dp('Comment_Due_Date')),
+                    sep="&ndash;"
+                )),
+
+                # all the other dates -- don't even know what most of these are
+                ("File Date", dp("File_Date")),
+                ("Answer Date", dp("Answer_Date")),
+                ("Author Date", dp("Author_Date")),
+                ("Author Document Date", dp("Author_Document_Date")),
+                ("Effective Date", dp("Effective_Date")),
+                ("Implementation Date", dp("Implementation_Date")),
+                ("Implementation Service Date", dp("Implementation_Service_Date"))
+            )),
+            
+            ('Citations and References', dtls(
+                ("RIN", document.rin if document.rin else None),
+                ("Federal Register No.", dp("Federal_Register_Number")),
+                ("Federal Register Pages", dp("Start_End_Page", "").replace(" - ", "&ndash;")),
+                (None, dp("Page_Count")), # who cares?
+                (None, dp("Page_Start")), # who cares?
+                ("Federal Register Citation", dp("Federal_Register_Citation")),
+                ("CFR Section(s)", dp("CFR")),
+                ("Related RINs", dp("Related_RIN_s_")),
+            )),
+            
+            ('Additional Details', dtls(*details.items()))
+        )
+
+        return out
 
 class EntityView(ResponseMixin, View):
     "TD entity view"

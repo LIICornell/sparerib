@@ -330,6 +330,10 @@ var DocumentDetailView = Backbone.View.extend({
 
                     // make the first attachment visible
                     $(this.el).find('.attachment-name').eq(0).click()
+
+                    $('.sidebar-item.collapsible h4').click(function() {
+                        $(this).parents(".sidebar-item").toggleClass("active").find(".summary-table-wrapper").slideToggle('fast');
+                    }).prepend("<a class='toggle'>Toggle</a>");
                 }, this),
                 'error': function() {
                     console.log('failed');

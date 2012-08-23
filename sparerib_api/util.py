@@ -60,3 +60,27 @@ def prettify_months(months, expand=False):
     out.append(ranged[-1])
 
     return out
+
+DETAILS_OVERRIDES = {}
+def dtls(*args):
+    out = []
+    for key, value in args:
+        if key and value:
+            key = DETAILS_OVERRIDES.get(key, key.replace('_', ' '))
+            if type(value) == datetime.datetime:
+                value = short_date(value)
+            out.append((key, value))
+    return out
+
+def combine(*args, **kwargs):
+    sep = kwargs.get('sep', ' ')
+    vals = [val for val in args if val]
+    return sep.join(vals)
+
+def short_date(d):
+    return d.strftime("%b %d, %Y") if d else None
+
+from django.contrib.localflavor.us.us_states import US_STATES
+STATES = dict(US_STATES)
+def expand_state(state):
+    return STATES.get(state, state)

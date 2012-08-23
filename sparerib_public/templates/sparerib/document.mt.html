@@ -22,17 +22,21 @@
             </div>
         </div>
         <% } %>
-        <div class="sidebar-item">
-            <h4>Details</h4>
-            <table class="summary-table">
-                <% var i = 0; _.each(details, function(item, name) { %>
-                <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                    <td><strong><%=prettifyLabel(name)%></strong></td>
-                    <td><%=item%></td>
-                </tr>
-                <% i = !i + 0; }); %>
-            </table>
+        <% _.each(clean_details, function(category) { %>
+        <div class="sidebar-item<%=(category[0]=='Additional Details' ? ' collapsible': '')%>">
+            <h4><%=category[0]%></h4>
+            <div class="summary-table-wrapper">
+                <table class="summary-table">
+                    <% _.each(category[1], function(item) { %>
+                    <tr>
+                        <td class="item-label"><%=item[0]%></td>
+                        <td><%=item[1]%></td>
+                    </tr>
+                    <% }); %>
+                </table>
+            </div>
         </div>
+        <% }); %>
         <div class="sidebar-item last">
             <a href="http://www.regulations.gov/#!documentDetail;D=<%=id%>" class="next">View on Regulations.gov &raquo;</a>
         </div>
@@ -121,7 +125,7 @@
                 </table>
             </div>
             <% } %>
-        
+
         <% } %>
     </div>
     <div class="clear"></div>

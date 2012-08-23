@@ -312,6 +312,13 @@ header .sf-link a {
 .sidebar-item.last {
   background: none;
 }
+.sidebar-item .toggle {
+  margin: 2px 6px 0 0;
+}
+.sidebar-item.collapsible h4:hover {
+  background: rgba(200,200,200, 0.3);
+  cursor: pointer;
+}
 
 .similarity-description {
   line-height: 1.6em;
@@ -618,8 +625,8 @@ table tr.even {
 .attachment .attachment-name:hover {
   background: rgba(200, 200, 200, 0.3);
 }
-.attachment-name .toggle { background: url("../img/icons/small/toggle.png") bottom left no-repeat; float: left; width: 13px; height: 12px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-right: 6px; padding: 0; }
-.attachment-name.active .toggle { background: url("../img/icons/small/toggle.png") top left no-repeat; }
+.toggle { background: url("../img/icons/small/toggle.png") bottom left no-repeat; float: left; width: 13px; height: 12px; display: block; text-indent: -9999em; margin: 0px; margin-top: 4px; margin-right: 6px; padding: 0; }
+.active .toggle { background: url("../img/icons/small/toggle.png") top left no-repeat; }
 
 .attachment .type-area {
   display: none;
@@ -667,6 +674,22 @@ table tr.even {
 
 .summary-table td {
   padding: 4px;
+}
+.summary-table {
+  width: 100%;
+  margin-top: 8px;
+}
+.summary-table .item-label {
+  color: #77716f;
+}
+.summary-table tr {
+  border-bottom: 1px solid #cbcbcb;
+}
+.summary-table tr:last-child {
+  border-bottom: none;
+}
+.collapsible .summary-table-wrapper {
+  display: none;
 }
 
 #top-search {
