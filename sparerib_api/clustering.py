@@ -1,5 +1,5 @@
 from djangorestframework.views import View as DRFView
-from analysis.corpus import get_dual_corpora_by_metadata
+from analysis.corpus import get_dual_corpora_by_metadata, find_doc_in_hierarchy, trace_doc_in_hierarchy
 from analysis.utils import profile
 from django.conf import settings
 from django.http import Http404
@@ -17,11 +17,7 @@ import numpy
 from regs_models import *
 
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
-CORPUS_PREFERENCE = {
-    '4-gram':   1,
-    'sentence': 2,
-    'other':    3
-}
+
 
 class CommonClusterView(DRFView):
     _cutoff = None
@@ -46,12 +42,6 @@ class CommonClusterView(DRFView):
                 raise Http404("Couldn't find analysis for docket %s" % self.kwargs['docket_id'])
         return self._corpus
 
-    @property
-    def clusters(self):
-        if self._clusters is None:
-            self._clusters = self.corpus.clusters(self.cutoff)
-        return self._clusters
-
     def dispatch(self, *args, **kwargs):
         # make sure the fancy postgres stuff works right
         connection.cursor()
@@ -62,59 +52,20 @@ class CommonClusterView(DRFView):
 
 
 
-class DocketClusterView(CommonClusterView):
-    @profile
-    def get(self, request, docket_id):
-        docket = Docket.objects.get(id=docket_id)
-
-        sorted_clusters = sorted(self.clusters, key=lambda c: len(c), reverse=True)
-        sized_clusters = [{
-            'id': min(cluster),
-            'size': len(cluster)
-        } for cluster in sorted_clusters]
-
-        total_clustered = sum([cluster['size'] for cluster in sized_clusters])
-        out = {
-            'clusters': sized_clusters,
-            'stats': {
-                'clustered': total_clustered,
-                'unclustered': docket.stats['count'] - total_clustered
-            },
-            'prepopulate': None
-        }
-
-        # choose a cluster and document to prepopulate if one hasn't been requested
-        prepop = int(request.GET.get('prepopulate_document', 0))
-        if prepop:
-            pp_cluster = [cluster for cluster in self.clusters if prepop in cluster]
-            if pp_cluster:
-                out['prepopulate'] = {
-                    'document': prepop,
-                    'cluster': min(pp_cluster[0])
-                }
-        if not out['prepopulate'] and out['stats']['clustered'] > 0:
-            pp_docs = self.corpus.docs_by_centrality(sorted_clusters[0])
-            pp_doc = pp_docs[0]
-            out['prepopulate'] = {
-                'document': pp_doc[0],
-                'cluster': sized_clusters[0]['id']
-            }
-
-        return out
 
 class DocketHierarchyView(CommonClusterView):
     @profile
     def get(self, request, docket_id):
         docket = Docket.objects.get(id=docket_id)
 
-        hierarchy = self.corpus.hierarchy([0.9, 0.8, 0.7, 0.6, 0.5], round(docket.stats['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
+        hierarchy = self.corpus.hierarchy(request.GET.get('require_summaries', "").lower()=="true")
         total_clustered = sum([cluster['size'] for cluster in hierarchy])
         
         out = {
             'cluster_hierarchy': sorted(hierarchy, key=lambda x: x['size'], reverse=True),
             'stats': {
                 'clustered': total_clustered,
-                'unclustered': docket.stats['count'] - total_clustered
+                'unclustered': docket.stats['count'] - total_clustered if 'count' in docket.stats else None
             },
             'prepopulate': None
         }
@@ -122,41 +73,38 @@ class DocketHierarchyView(CommonClusterView):
         # choose a cluster and document to prepopulate if one hasn't been requested
         prepop = int(request.GET.get('prepopulate_document', 0))
         if prepop:
-            pp_cluster = self.corpus.cluster(prepop, self.cutoff)
+            pp_cluster = find_doc_in_hierarchy(hierarchy, prepop, self.cutoff)
             if pp_cluster:
                 out['prepopulate'] = {
                     'document': prepop,
-                    'cluster': pp_cluster[0],
+                    'cluster': pp_cluster['name'],
                     'cutoff': self.cutoff
                 }
         if not out['prepopulate'] and out['stats']['clustered'] > 0:
-            pp_cluster = self.corpus.cluster(out['cluster_hierarchy'][0]['name'], out['cluster_hierarchy'][0]['cutoff'])
-            pp_docs = self.corpus.docs_by_centrality(pp_cluster[1])
-            pp_doc = pp_docs[0]
+            pp_cluster = find_doc_in_hierarchy(hierarchy, out['cluster_hierarchy'][0]['name'], out['cluster_hierarchy'][0]['cutoff'])
             out['prepopulate'] = {
-                'document': pp_doc[0],
-                'cluster': pp_cluster[0],
+                'document': pp_cluster['members'][0],
+                'cluster': pp_cluster['name'],
                 'cutoff': out['cluster_hierarchy'][0]['cutoff']
             }
 
         return out
 
 class HierarchyTeaserView(CommonClusterView):
+    @profile
     def get(self, request, item_id, item_type="docket"):
         if item_type == "document":
             doc = Doc.objects.only("docket_id").get(id=item_id)
             self.kwargs['docket_id'] = doc.docket_id
         else:
             self.kwargs['docket_id'] = item_id
-        docket = Docket.objects.get(id=self.kwargs['docket_id'])
 
-        hierarchy = self.corpus.hierarchy([0.8, 0.5], round(docket.stats['count'] * .005), request.GET.get('require_summaries', "").lower()=="true")
-        h_children = list(itertools.chain.from_iterable([cluster['children'] for cluster in hierarchy]))
+        hierarchy = self.corpus.hierarchy()
 
         out = {
             'docket_teaser': {
-                '0.5': {'count': len(hierarchy)},
-                '0.8': {'count': len(h_children)}
+                '0.5': {'count': self._count_clusters(hierarchy, 0.5)},
+                '0.8': {'count': self._count_clusters(hierarchy, 0.8)}
             }
         }
 
@@ -164,12 +112,30 @@ class HierarchyTeaserView(CommonClusterView):
             out['document_teaser'] = None
             docs = self.corpus.docs_by_metadata('document_id', item_id)
             if docs:
-                doc_id = docs[0]
                 out['document_teaser'] = {}
-                for level, groups in [('0.8', h_children), ('0.5', hierarchy)]:
-                    matches = [group for group in groups if doc_id in group['members']]
-                    out['document_teaser'][level] = {'count': len(matches[0]), 'id': doc_id} if matches else None
+                doc_id = docs[0]
+
+                cluster05 = find_doc_in_hierarchy(hierarchy, doc_id, 0.5)
+                if cluster05:
+                    out['document_teaser'] = {'0.5': {'count': cluster05['size'], 'id': doc_id}}
+                    
+                    cluster08 = find_doc_in_hierarchy(hierarchy, doc_id, 0.8)
+                    if cluster08:
+                        out['document_teaser']['0.8'] = {'count': cluster08['size'], 'id': doc_id}
+
         return out
+
+    def _count_clusters(self, hierarchy, cutoff):
+        count = 0
+
+        for cluster in hierarchy:
+            if cluster['cutoff'] == cutoff:
+                count += 1
+
+            if cluster['cutoff'] < cutoff:
+                count += self._count_clusters(cluster['children'], cutoff)
+
+        return count
 
 
 class SingleClusterView(CommonClusterView):
@@ -177,12 +143,13 @@ class SingleClusterView(CommonClusterView):
     def get(self, request, docket_id, cluster_id):
         cluster_id = int(cluster_id)
         
-        cluster = self.corpus.cluster(cluster_id, self.cutoff)
+        h = self.corpus.hierarchy()
+        cluster = find_doc_in_hierarchy(h, cluster_id, self.cutoff)
 
-        docs = self.corpus.docs_by_centrality(cluster[1])
+        docs = self.corpus.doc_metadatas(cluster['members'])
 
         return {
-            'id': cluster[0],
+            'id': cluster['name'],
             'documents': [{
                 'id': doc[0],
                 'title': doc[1]['title'],
@@ -197,7 +164,8 @@ class DocumentClusterView(CommonClusterView):
         document_id = int(document_id)
         cluster_id = int(cluster_id)
 
-        cluster = self.corpus.cluster(cluster_id, self.cutoff)[1]
+        h = self.corpus.hierarchy()
+        cluster = find_doc_in_hierarchy(h, cluster_id, self.cutoff)['members']
 
         doc = self.corpus.doc(document_id)
         text = doc['text']
@@ -227,11 +195,13 @@ class DocumentClusterChainView(CommonClusterView):
     def get(self, request, docket_id, document_id):
         document_id = int(document_id)
 
+        h = self.corpus.hierarchy()
+
         return {
             'clusters': [{
                 'cutoff': round(entry[0], 2),
                 'id': entry[1],
                 'size': entry[2]
-            } for entry in self.corpus.clusters_for_doc(document_id)]
+            } for entry in trace_doc_in_hierarchy(h, document_id)]
         }
 
