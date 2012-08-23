@@ -315,6 +315,10 @@ header .sf-link a {
 .sidebar-item .toggle {
   margin: 2px 6px 0 0;
 }
+.sidebar-item.collapsible h4 {
+  margin: -4px;
+  padding: 4px;
+}
 .sidebar-item.collapsible h4:hover {
   background: rgba(200,200,200, 0.3);
   cursor: pointer;
