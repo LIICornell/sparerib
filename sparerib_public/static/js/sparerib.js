@@ -170,7 +170,18 @@ var SearchView = Backbone.View.extend({
 
     template: _.template($('#search-tpl').html()),
     render: function() {
-        $(this.el).html(this.template(this));
+        this.$el.html(this.template(this));
+        this.$el.find("input[type=text]").intertag({
+            source: function(request, response) {
+                if (request.term.length == 0) {
+                    response([]);
+                } else {
+                    $.getJSON(AC_URL + request.term, function(data) {
+                        response(data.matches);
+                    });
+                }
+            }
+        });
         return this;
     },
 
@@ -792,7 +803,8 @@ var AppRouter = Backbone.Router.extend({
             if ($('#main .search-view').length != 0) {
                 $('#top-search').hide();
             } else {
-                $('#top-search').show().find('input[type=text]').val('');
+                $('#top-search').show().find('input[type=text]').val('')
+                    .end().find('.ui-intertag').trigger('tagschanged');
             }
         });
     },

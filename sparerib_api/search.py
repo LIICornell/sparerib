@@ -55,9 +55,9 @@ class SearchResultsView(DRFView):
             'search': {
                 'text_query': self.text_query,
                 'filters': [{
-                    'category': f[0],
-                    'id': f[1],
-                    'name': f[2] if len(f) > 2 else f[1]
+                    'type': f[0],
+                    'value': f[1],
+                    'label': f[2] if len(f) > 2 else f[1]
                 } for f in self.filters if f[0] in ALLOWED_FILTERS],
                 'raw_query': self.raw_query,
                 'aggregation_level': self.aggregation_level

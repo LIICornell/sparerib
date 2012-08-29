@@ -94,6 +94,12 @@
     <script src="{% static "js/libs/charts/d3.v2.min.js" %}"></script>
     <script src="{% static "js/libs/charts/sparerib_d3.js" %}"></script>
 
+    <link rel="stylesheet" href="{% static "css/jquery.ui.minimal.css" %}">
+    <link rel="stylesheet" href="{% static "css/jquery.pretag.css" %}" type="text/css" />
+    <script src="{% static "js/libs/jquery.caret.js" %}"></script>
+    <script src="{% static "js/libs/jquery.ui.combined.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/libs/jquery.pretag.js" %}"></script>
+
     <script src="{% static "js/plugins.js" %}"></script>
     <script src="{% static "js/sparerib.js" %}"></script>
 
@@ -102,6 +108,9 @@
         (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
         g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
         s.parentNode.insertBefore(g,s)}(document,'script'));
+    </script>
+    <script>
+    AC_URL = "{{ AC_URL|safe }}";
     </script>
 </body>
 </html>
