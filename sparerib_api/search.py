@@ -44,7 +44,7 @@ class SearchResultsView(DRFView):
 
     def serialize_page_info(self, page, count):
         limit = self.get_limit()
-        page_count = int(math.ceil(count / limit))
+        page_count = int(math.ceil(float(count) / limit))
         out = {
             'next': self.url_with_page_number(page + 1) if page < page_count else None,
             'page': page,

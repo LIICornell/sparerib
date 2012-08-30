@@ -187,8 +187,21 @@ var SearchView = Backbone.View.extend({
 
     search: function(evt) {
         evt.preventDefault();
-        app.navigate('/search/' + encodeURIComponent($(this.el).find('.search-query').val()), {trigger: true});
+        this.$el.find('input[type=text]').blur();
+        app.navigate('/search/' + encodeURIComponent(this.get_encoded_search()), {trigger: true});
         return false;
+    },
+
+    get_encoded_search: function() {
+        var val = this.$el.find('.ui-intertag').val();
+        var terms = [];
+
+        _.each(val.tags, function(tag) {
+            terms.push([tag.type, tag.value, JSON.stringify(tag.label)].join(":"));
+        })
+        terms.push(val.text);
+
+        return terms.join(" ");
     }
 })
 
@@ -210,7 +223,7 @@ var ResultsView = Backbone.View.extend({
                     }
 
                     // populate the search input
-                    this.$el.closest('.search-view').find('form input.search-query').val(context.search.raw_query);
+                    this.$el.closest('.search-view').find('form .ui-intertag').val({'tags': context.search.filters, 'text': context.search.text_query});
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -812,6 +825,7 @@ var AppRouter = Backbone.Router.extend({
     searchLanding: function() {
         var searchView = new SearchView({'id': 'main-search-form'});
         $('#main').html(searchView.render().el);
+        $('.main-content .search .ui-intertag').trigger('tagschanged');
     },
 
     defaultSearchResults: function(query, page) {

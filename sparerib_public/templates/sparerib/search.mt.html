@@ -4,14 +4,20 @@
         <h2>Search</h2>
     </div>
 </div>
-<% } %>
-
-<div class="main-content">
+<div class="main-content no-sidebar">
     <div class="search">
         <form>
             <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+            <div class="clear"></div>
         </form>
     </div>
     <div class="result-set">
     </div>
 </div>
+<% } else { %>
+<div class="search">
+    <form>
+        <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+    </form>
+</div>
+<% } %>
