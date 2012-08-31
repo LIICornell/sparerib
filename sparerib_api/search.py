@@ -60,14 +60,17 @@ class SearchResultsView(DRFView):
                     'label': f[2] if len(f) > 2 else f[1]
                 } for f in self.filters if f[0] in ALLOWED_FILTERS],
                 'raw_query': self.raw_query,
-                'aggregation_level': self.aggregation_level
+                'aggregation_level': self.aggregation_level,
+                'search_type': getattr(self, 'search_type', self.aggregation_level)
             }
         }
 
         return out
 
-    def get_es_filters(self):
+    def get_es_filters(self, extra_terms={}):
         terms = defaultdict(list)
+        terms.update(extra_terms)
+
         for f in self.filters:
             if f[0] == 'agency':
                 terms['agency'] += [f[1]]
@@ -135,7 +138,6 @@ class DocumentSearchResults(object):
             self.query['size'] = end - start
             
             es = pyes.ES(settings.ES_SETTINGS)
-            print self.query
             self._results = es.search_raw(self.query)
             self._count = self._results['hits']['total']
 
@@ -170,6 +172,22 @@ class DocumentSearchResultsView(SearchResultsView):
         print query
 
         return DocumentSearchResults(query)
+
+class FRSearchResultsView(DocumentSearchResultsView):
+    search_type = 'document-fr'
+    def get_es_filters(self, extra_terms={}):
+        terms = extra_terms.copy()
+        terms['document_type'] = ['rule', 'proposed_rule', 'notice']
+
+        return super(FRSearchResultsView, self).get_es_filters(terms)
+
+class NonFRSearchResultsView(DocumentSearchResultsView):
+    search_type = 'document-non-fr'
+    def get_es_filters(self, extra_terms={}):
+        terms = extra_terms.copy()
+        terms['document_type'] = ['comment', 'public_submission', 'other']
+
+        return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
 class AggregatedSearchResults(list):
     def __init__(self, items, aggregation_level, aggregation_field, aggregation_collection):

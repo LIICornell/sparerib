@@ -450,10 +450,6 @@ header .sf-link a {
   text-align: right;
 }
 
-#main .search {
-  text-align: center;
-  margin: 15px 0;
-}
 ul.results, ul.results li {
   list-style: none;
   padding: 0;
@@ -723,6 +719,9 @@ table tr.even {
   -webkit-box-shadow: 2px 2px 4px #999;
   box-shadow: 2px 2px 4px #999;
 }
+.main-content .search input[type=submit] {
+  margin-top: 5px;
+}
 #top-search .ui-intertag, .main-content .search .ui-intertag {
   width: 250px;
 
@@ -747,10 +746,13 @@ table tr.even {
   width: 250px;
 }
 .main-content .search .ui-intertag {
-  width: 400px;
+  width: 440px;
 }
 .main-content .search .ui-intertag .ui-intertag-tags, .main-content .search .ui-intertag input[type=text] {
   font-size: 160%;
+}
+.main-content .search .ui-intertag .ui-intertag-tags {
+  margin-top: 2px;
 }
 .ui-intertag .ui-tag {
   font-size: 75%;
@@ -765,14 +767,66 @@ table tr.even {
 }
 .main-content .search {
   position: relative;
+  margin: 0 auto 20px auto;
+  background: rgba(211, 204, 191, 0.34) url("../img/bg/infobox_bg.png") repeat-x bottom left;
+  width: 515px;
+}
+.no-sidebar .search {
+  padding: 40px 90px;
+}
+.with-left-sidebar .search {
+  padding: 40px 47px;
 }
 .main-content .ui-menu-area {
   position: absolute;
-  top: 40px;
-  left: 4px;
+  top: 80px;
+  left: 92px;
 }
 .main-content .search .ui-icon {
   top: 6px;
+}
+
+#results-view h3 {
+  margin-left: 25px;
+}
+.search-view .main-content {
+  padding-top: 0px !important;
+}
+.search-results-loading.loading {
+  border: 1px solid #999999;
+  min-height: 150px;
+  margin: 0px 25px 25px 25px;
+}
+.search-results-wrapper {
+  font-size: 80%;
+  margin-bottom: 20px;
+  background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
+  padding: 0px 0px 35px 0px;
+}
+.search-results-loaded {
+  display: none;
+  padding: 0px 25px 0px 25px;
+}
+.search-results-loaded table.results {
+  width: 100%;
+}
+.results th {
+  text-align: left;
+}
+.results td, .results th {
+  padding: 6px;
+}
+.results .title {
+  font-weight: bold;
+  max-width: 400px;
+}
+.results .snippet {
+  padding: 12px;
+  font-style: italic;
+  background: rgba(238,238,238,0.5);
+}
+.results .snippet em {
+  background: #ffff00;
 }
 
 .cluster-map {

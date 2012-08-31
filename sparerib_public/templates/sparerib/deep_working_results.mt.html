@@ -1,0 +1,25 @@
+<div class="banner">
+    <div class="banner-content">
+        <h2>Search</h2>
+    </div>
+</div>
+<div class="main-content with-left-sidebar">
+    <div class="sidebar"></div>
+    <div class="main-column">
+        <div class="search">
+            <form>
+                <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+                <div class="clear"></div>
+            </form>
+        </div>
+        <div class="result-set">
+            <h3><%=capitalize(({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
+
+            <div class="search-results-wrapper">
+                <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
+                <div class="search-results-loaded search-results-shallow search-results-<%=level%>"></div>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>

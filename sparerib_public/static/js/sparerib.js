@@ -4,7 +4,13 @@ var Document = Backbone.Model.extend({ url: function() { return "/api/1.0/docume
 var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
 var Agency = Backbone.Model.extend({ url: function() { return "/api/1.0/agency/" + this.id; } });
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
-var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() {
+    var qs = _.filter([
+        (this.get('in_page') ? "page=" + this.get('in_page') : null),
+        (this.get('limit') ? "limit=" + this.get('limit') : null)
+    ], function(x) { return x; }).join("&");
+    return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (qs ? "?" + qs : '');
+} });
 
 // Cluster models
 var DocketClusters = Backbone.Model.extend({
@@ -171,6 +177,10 @@ var SearchView = Backbone.View.extend({
     template: _.template($('#search-tpl').html()),
     render: function() {
         this.$el.html(this.template(this));
+        this.intertag();
+        return this;
+    },
+    intertag: function() {
         this.$el.find("input[type=text]").intertag({
             source: function(request, response) {
                 if (request.term.length == 0) {
@@ -209,27 +219,35 @@ var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
 
-    template: _.template($('#results-tpl').html()),
+    templates: {
+        'shallow': _.template($('#shallow-working-results-tpl').html()),
+        'deep': _.template($('#deep-working-results-tpl').html()),
+        'complete': _.template($('#results-tpl').html())
+    },
     render: function() {
-        this.model.fetch(
-            {
-                'success': $.proxy(function() {
-                    var context = _.extend({}, helpers, this.model.toJSON());
-                    $(this.el).html(this.template(context));
+        var $el = this.$el.html(this.templates[this.options.depth](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
+        var search_populated = false;
+        _.each(this.options.models, $.proxy(function(_model) {
+            var model = _model.model;
+            model.fetch(
+                {
+                    'success': $.proxy(function() {
+                        var context = _.extend({'depth': this.options.depth}, helpers, model.toJSON());
+                        $el.find('.search-results-' + model.get('level')).html(this.templates.complete(context)).slideDown("fast");
+                        $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
-                    // update the URL for the right type
-                    if (!this.model.get('level')) {
-                        app.navigate('/search-' + this.model.attributes.search.aggregation_level + '/' + encodeURIComponent(this.model.attributes.search.raw_query) + (this.model.get('in_page') ? '/' + this.model.get('in_page') : ''), {trigger: false, replace: true});
+                        // populate the search input if necessary
+                        if (!search_populated) {
+                            $('.main-content .search form .ui-intertag').val({'tags': context.search.filters, 'text': context.search.text_query});
+                            search_populated = true;
+                        }
+                    }, this),
+                    'error': function() {
+                        console.log('failed');
                     }
-
-                    // populate the search input
-                    this.$el.closest('.search-view').find('form .ui-intertag').val({'tags': context.search.filters, 'text': context.search.text_query});
-                }, this),
-                'error': function() {
-                    console.log('failed');
                 }
-            }
-        );
+            );
+        }, this));
         return this;
     }
 })
@@ -808,12 +826,12 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id/similarity/cutoff-:cutoff/document-:docId", "docketClusters");
 
         // load the upper search box at the beginning
-        var topSearchView = new SearchView({'id': 'top-search-form'});
-        $('#top-search').html(topSearchView.render().el);
+        var topSearchView = new SearchView({'el': $('#top-search .search').get(0)});
+        topSearchView.intertag();
 
         // on all navigation, check to show/hide the search box
         this.on('all', function () {
-            if ($('#main .search-view').length != 0) {
+            if ($('#main .search').length != 0) {
                 $('#top-search').hide();
             } else {
                 $('#top-search').show().find('input[type=text]').val('')
@@ -832,21 +850,38 @@ var AppRouter = Backbone.Router.extend({
         this.searchResults(null, query, page);
     },
     searchResults: function(type, query, page) {
-        // are we on a search page?
-        var resultSet = $('#main .result-set');
-        if (resultSet.length == 0) {
-            this.searchLanding();
-            resultSet = $('#main .result-set');
-        }
-
         if (typeof page == "undefined") {
             page = null;
         }
 
-        var results = new SearchResults({'query': query, 'in_page': page, 'level': type});
-        var resultsView = new ResultsView({model: results});
+        // the query will have been encoded, so decode it
+        query = decodeURIComponent(query);
 
-        resultSet.html(resultsView.render().el);
+        if (type == null) {
+            // are we on a search page?
+            var container = $('.no-sidebar .result-set');
+            if (container.length == 0) {
+                this.searchLanding();
+                container = $('.no-sidebar .result-set');
+            }
+
+            var models = _.map(['docket', 'document-fr', 'document-non-fr'], function(type) {
+                return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
+            });
+            var depth = 'shallow';
+            var resultsView = new ResultsView({'models': models, 'depth': depth});
+
+            container.html(resultsView.render().el);
+        } else {
+            var models = [{'type': type, 'model': new SearchResults({'query': query, 'in_page': page, 'level': type})}];
+            var depth = 'deep';
+            var container = $('#main');
+            var resultsView = new ResultsView({'models': models, 'depth': depth});
+            container.html(resultsView.render().el);
+
+            var sv = new SearchView({'el': resultsView.$el.find('.search').get(0)});
+            sv.intertag();
+        }
     },
  
     documentDetail: function(id) {
