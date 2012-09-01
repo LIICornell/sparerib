@@ -146,15 +146,15 @@ class SingleClusterView(CommonClusterView):
         h = self.corpus.hierarchy()
         cluster = find_doc_in_hierarchy(h, cluster_id, self.cutoff)
 
-        docs = self.corpus.doc_metadatas(cluster['members'])
+        metadatas = dict(self.corpus.doc_metadatas(cluster['members']))
 
         return {
             'id': cluster['name'],
             'documents': [{
-                'id': doc[0],
-                'title': doc[1]['title'],
-                'submitter': ', '.join([doc[1][field] for field in ['submitter_name', 'submitter_organization'] if doc[1].get(field, False)])
-            } for doc in docs]
+                'id': doc_id,
+                'title': metadatas[doc_id]['title'],
+                'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id]])
+            } for doc_id in cluster['members']]
         }
 
 
