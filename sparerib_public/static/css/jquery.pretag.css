@@ -1,1 +1,52 @@
-/Users/andrew/Work/jquery-intertag/jquery.pretag.css
+.ui-intertag-subinput {
+    width: 5px;
+    border: 0;
+    outline: none;
+    margin: 0px;
+    padding: 0px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    padding-left: 4px;
+    float: left;
+}
+.ui-tag {
+    padding: 4px;
+    padding-right: 20px;
+    margin-left: 4px;
+    background: #eeeeee;
+    border: 1px solid #333333;
+    color: #333333;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    float: left;
+    cursor: default;
+    position: relative;
+}
+.ui-tag .ui-label {
+    display: inline-block;
+    vertical-align: top;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.ui-intertag-tags {
+    float: left;
+}
+.ui-tag .ui-icon-close {
+    display: block;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    height: 11px;
+    background-position: -80px -130px;
+    cursor: pointer;
+}
+.ui-intertag {
+    width: 300px;
+    border: 1px solid blue;
+    display: block;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+    position: relative;
+}
