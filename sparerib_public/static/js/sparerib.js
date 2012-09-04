@@ -181,7 +181,7 @@ var SearchView = Backbone.View.extend({
         return this;
     },
     intertag: function() {
-        this.$el.find("input[type=text]").intertag({
+        var options = {
             source: function(request, response) {
                 if (request.term.length == 0) {
                     response([]);
@@ -191,14 +191,40 @@ var SearchView = Backbone.View.extend({
                     });
                 }
             }
-        });
+        }
+
+        if (this.options.type) {
+            $.extend(options, {
+                'addTag': function(item) {
+                    var new_tag = $('<span class="search-tag"><span class="ui-label"></span><span class="ui-icon ui-icon-close"></span></span>');
+                    new_tag.find('.ui-label').html(item.label);
+                    new_tag.data('value', item.value);
+                    new_tag.addClass('ui-tag-type-' + item.type);
+
+                    var area = $('.sidebar .search-type-' + item.type);
+                    new_tag.appendTo(area);
+
+                    var box = area.closest('.sidebar-item');
+                    if (box.is(":hidden")) {
+                        box.slideDown("fast");
+                    }
+                },
+                'getTags': function() {
+                    return $('.sidebar .search-type').find('.search-tag');
+                },
+                'clearTags': function() {
+                    $('.sidebar .search-type').find('.search-tag').remove();
+                }
+            });
+        }
+        this.$el.find("input[type=text]").intertag(options);
         return this;
     },
 
     search: function(evt) {
         evt.preventDefault();
         this.$el.find('input[type=text]').blur();
-        app.navigate('/search/' + encodeURIComponent(this.get_encoded_search()), {trigger: true});
+        app.navigate('/search' + (this.options.type ? "-" + this.options.type : "") + '/' + encodeURIComponent(this.get_encoded_search()), {trigger: true});
         return false;
     },
 
@@ -218,6 +244,10 @@ var SearchView = Backbone.View.extend({
 var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
+
+    events: {
+        'click .sidebar .search-tag .ui-icon-close': 'removeTag'
+    },
 
     templates: {
         'shallow': _.template($('#shallow-working-results-tpl').html()),
@@ -249,6 +279,16 @@ var ResultsView = Backbone.View.extend({
             );
         }, this));
         return this;
+    },
+
+    removeTag: function(evt) {
+        var tag = $(evt.target).closest('.search-tag');
+        var container = tag.closest('.search-tags');
+        tag.remove();
+        console.log(container.children().length);
+        if (container.children().length == 0) {
+            container.closest('.sidebar-item').slideUp("fast");
+        }
     }
 })
 
@@ -826,7 +866,7 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id/similarity/cutoff-:cutoff/document-:docId", "docketClusters");
 
         // load the upper search box at the beginning
-        var topSearchView = new SearchView({'el': $('#top-search .search').get(0)});
+        var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
         topSearchView.intertag();
 
         // on all navigation, check to show/hide the search box
@@ -841,7 +881,7 @@ var AppRouter = Backbone.Router.extend({
     },
 
     searchLanding: function() {
-        var searchView = new SearchView({'id': 'main-search-form'});
+        var searchView = new SearchView({'id': 'main-search-form', 'type': null});
         $('#main').html(searchView.render().el);
         $('.main-content .search .ui-intertag').trigger('tagschanged');
     },
@@ -879,7 +919,7 @@ var AppRouter = Backbone.Router.extend({
             var resultsView = new ResultsView({'models': models, 'depth': depth});
             container.html(resultsView.render().el);
 
-            var sv = new SearchView({'el': resultsView.$el.find('.search').get(0)});
+            var sv = new SearchView({'el': resultsView.$el.find('.search').get(0), 'type': type});
             sv.intertag();
         }
     },

@@ -4,7 +4,20 @@
     </div>
 </div>
 <div class="main-content with-left-sidebar">
-    <div class="sidebar"></div>
+    <div class="sidebar">
+        <div class="sidebar-item search-filter">
+            <h4>Agencies</h4>
+            <div class="search-tags search-type search-type-agency"></div>
+        </div>
+        <div class="sidebar-item search-filter">
+            <h4>Submitters</h4>
+            <div class="search-tags search-type search-type-submitter"></div>
+        </div>
+        <div class="sidebar-item search-filter">
+            <h4>Dates and Times<h4>
+            <div class="search-tags search-type search-type-date"></div>
+        </div>
+    </div>
     <div class="main-column">
         <div class="search">
             <form>
@@ -12,7 +25,7 @@
                 <div class="clear"></div>
             </form>
         </div>
-        <div class="result-set">
+        <div class="result-set result-set-deep">
             <h3><%=capitalize(({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
 
             <div class="search-results-wrapper">

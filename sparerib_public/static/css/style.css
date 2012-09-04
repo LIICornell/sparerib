@@ -486,8 +486,6 @@ a.view-link { background: url("../img/icons/small/magnifier.png") top left no-re
 }
 .pagination a {
   display: block;
-  font-family: georgia, sans-serif;
-  font-style: italic;
 }
 .pagination a.prev {
   float: left;
@@ -777,10 +775,15 @@ table tr.even {
 .with-left-sidebar .search {
   padding: 40px 47px;
 }
-.main-content .ui-menu-area {
+.no-sidebar .ui-menu-area {
   position: absolute;
   top: 80px;
   left: 92px;
+}
+.with-left-sidebar .ui-menu-area {
+  position: absolute;
+  top: 80px;
+  left: 51px;
 }
 .main-content .search .ui-icon {
   top: 6px;
@@ -799,9 +802,11 @@ table tr.even {
 }
 .search-results-wrapper {
   font-size: 80%;
+  padding: 0px 0px 35px 0px;
+}
+.result-set-shallow .search-results-wrapper {
   margin-bottom: 20px;
   background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
-  padding: 0px 0px 35px 0px;
 }
 .search-results-loaded {
   display: none;
@@ -969,7 +974,7 @@ table tr.even {
 .ui-tag {
   text-align: left;
 }
-.ui-tag-type-agency {
+.ui-intertag .ui-tag-type-agency, .ui-menu .ui-tag-type-agency {
   background: #eaff8e;
   color: #899553;
   border: 1px solid #899553;
@@ -981,7 +986,7 @@ table tr.even {
   font-size: 80%;
   text-transform: uppercase;
 }
-.ui-tag-type-submitter {
+.ui-intertag .ui-tag-type-submitter, .ui-menu .ui-tag-type-submitter {
   background: #a3f3ff;
   color: #537C82;
   border: 1px solid #537C82;
@@ -1002,6 +1007,24 @@ table tr.even {
   margin-bottom: 1px !important;
   font-size: 80%;
   text-align: left;
+}
+
+.search-tag .ui-icon {
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  cursor: pointer;
+}
+.search-tag {
+  display: block;
+  border-bottom: 1px solid #CBCBCB;
+  padding: 3px;
+}
+.search-tag:last-child {
+  border: 0;
+}
+.search-filter {
+  display: none;
 }
 
 /* style dummy links */
