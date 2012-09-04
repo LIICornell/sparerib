@@ -160,15 +160,16 @@ header .sf-link a {
   padding: 25px 40px 25px 40px;
 }
 .call-to-action {
-  padding: 15px 0px 0px 90px;
+  padding: 20px 0px 0px 90px;
   background: url("../img/product_of_sunlight.png") no-repeat top left;
   float: left;
   width: 525px;
   height: 60px;
+  font-size: 90%;
 }
 .call-to-action strong {
   display: block;
-  font-size: 145%;
+  font-size: 135%;
   line-height: 100%;
   font-weight: normal;
 }
