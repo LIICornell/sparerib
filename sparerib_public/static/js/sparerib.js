@@ -969,6 +969,10 @@ Backbone.history.start({pushState: true});
 
 /* assume backbone link handling, from Tim Branyen */
 $(document).on("click", "a:not([data-bypass])", function(evt) {
+    if (evt.isDefaultPrevented() || evt.metaKey || evt.ctrlKey) {
+        return;
+    }
+
     var href = $(this).attr("href");
     var protocol = this.protocol + "//";
 
