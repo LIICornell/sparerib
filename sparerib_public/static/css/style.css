@@ -838,6 +838,7 @@ table tr.even {
 .cluster-map {
   height: 250px;
   width: 960px;
+  position: relative;
 }
 .cluster-area {
   background-color: #222222;
@@ -882,6 +883,7 @@ table tr.even {
   position: relative;
   overflow: auto;
   border: 1px solid #999999;
+  background: #ffffff;
 }
 .cluster-doc-graph {
   position: absolute;
@@ -903,6 +905,7 @@ table tr.even {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  background: #ffffff;
 }
 .cluster-cell-alive {
   fill: #74aec9;
@@ -1027,6 +1030,28 @@ table tr.even {
 .search-filter {
   display: none;
 }
+
+/* fluid layout overrides */
+body.fluid #top-search .search { display: none; }
+body.fluid .banner-content { width: auto; }
+body.fluid .banner-content .breadcrumbs { display: none; }
+body.fluid .banner-content .dates { display: none; }
+body.fluid .banner-content { padding: 5px 35px 15px; }
+body.fluid .header-content h1 { top: 0; }
+body.fluid .header-content { height: 60px; width: auto; }
+body.fluid header ul#top-menu { left: auto; right: 20px; position: absolute; }
+body.fluid .mail-stripe-wrapper { display: none; }
+/* body.fluid footer { position: absolute; bottom: 10px; width: 100%; } */
+body.fluid footer { display: none; }
+body.fluid .sunlight-stripe { padding-bottom: 15px; }
+
+body.fluid .cluster-map { position: absolute; left:20px; top: 130px; width: 250px; height: 80%; overflow-y: auto; overflow-x: hidden; }
+body.fluid .cluster-docs { margin: 0; height: auto; }
+body.fluid .cluster-doc-list { position: absolute; left: 290px; top: 130px; height: 80%; }
+body.fluid .cluster-doc { position: absolute; left: 572px; right: 20px; top: 130px; height: 80%; width: auto; }
+body.fluid .cluster-similarity { display: none; }
+body.fluid .overview { display: none; }
+body.fluid .cluster-label { display: none; }
 
 /* style dummy links */
 a[href=\#] {

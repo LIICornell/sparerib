@@ -574,7 +574,7 @@ var ClusterView = Backbone.View.extend({
                 }           
                 
                 // set up orientation
-                var orientation = 'horizontal';
+                var orientation = 'vertical';
                 if (orientation == 'horizontal') {
                     var bubble_axis = 'x',
                         level_axis = 'y',
@@ -606,7 +606,7 @@ var ClusterView = Backbone.View.extend({
                     .domain([0, this.model.max_depth - 1])
                     .range([0, 1]);
 
-                var map = $('.cluster-map').css({'position': 'relative'});
+                var map = $('.cluster-map');
                 this.svg = d3.select(map.get(0))
                     .classed('loading', false)
                     .append("svg")
@@ -887,13 +887,19 @@ var AppRouter = Backbone.Router.extend({
         var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
         topSearchView.intertag();
 
-        // on all navigation, check to show/hide the search box
+        // on all navigation, check to show/hide the search box and toggle/untoggle the compact view
+        var body = $("body");
         this.on('all', function () {
-            if ($('#main .search').length != 0) {
-                $('#top-search').hide();
+            if ($('.cluster-map').length != 0) {
+                body.addClass("fluid");
             } else {
-                $('#top-search').show().find('input[type=text]').val('')
-                    .end().find('.ui-intertag').trigger('tagschanged');
+                body.removeClass("fluid");
+                if ($('#main .search').length != 0) {
+                    $('#top-search').hide();
+                } else {
+                    $('#top-search').show().find('input[type=text]').val('')
+                        .end().find('.ui-intertag').trigger('tagschanged');
+                }
             }
         });
     },
