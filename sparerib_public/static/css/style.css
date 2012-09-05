@@ -892,9 +892,9 @@ table tr.even {
   border: 1px solid #cccccc;
 }
 
-.cluster-doc pre {
-  white-space: pre;
+.cluster-doc-contents {
   font-size: 85%;
+  padding: 10px;
 }
 .cluster-doc-list {
   float: left;
@@ -909,7 +909,7 @@ table tr.even {
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
-  fill: #e5e5e5;
+  fill: #dddddd;
 }
 .cluster-cell-dead {
   fill: #666666;
