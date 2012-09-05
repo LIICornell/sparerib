@@ -908,29 +908,29 @@ table tr.even {
   background: #ffffff;
 }
 .cluster-cell-alive {
-  fill: #74aec9;
+  fill: #569594;
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
-  fill: #ddeeff;
+  fill: #e5e5e5;
 }
 .cluster-cell-dead {
   fill: #666666;
 }
 .cluster-cell-chain {
-  stroke: #ff3333;
+  stroke: #ffffff;
   stroke-width: 2px;
 }
 .cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
   stroke-width: 0;
-  fill: #cc0000;
+  fill: #ffffff;
 }
 .cluster-connection {
   stroke-width: 2px;
-  stroke: #eeeeee;
+  stroke: #71c4c3;
 }
 .cluster-connection-chain {
-  stroke: #ff3333;
+  stroke: #ffffff;
 }
 
 .cluster-doc-list ul {
@@ -944,7 +944,7 @@ table tr.even {
   padding: 6px;
 }
 .cluster-doc-list ul li:hover {
-  background-color: #ddeeff;
+  background-color: #eac563;
   cursor: pointer;
 }
 .cluster-doc-list ul li span {
@@ -954,8 +954,7 @@ table tr.even {
   font-weight: bold;
 }
 .cluster-doc-selected {
-  background-color: #aa0000;
-  color: #ffffff;
+  background-color: #e9b627;
 }
 
 .cluster-cutoff {
