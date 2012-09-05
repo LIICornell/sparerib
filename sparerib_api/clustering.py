@@ -153,7 +153,7 @@ class SingleClusterView(CommonClusterView):
             'documents': [{
                 'id': doc_id,
                 'title': metadatas[doc_id]['title'],
-                'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id]])
+                'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id] and metadatas[doc_id][field]])
             } for doc_id in cluster['members']]
         }
 
