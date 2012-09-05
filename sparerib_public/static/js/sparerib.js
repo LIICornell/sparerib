@@ -572,20 +572,35 @@ var ClusterView = Backbone.View.extend({
                         })
                     })
                 }           
-            
+                
+                // set up orientation
+                var orientation = 'horizontal';
+                if (orientation == 'horizontal') {
+                    var bubble_axis = 'x',
+                        level_axis = 'y',
+                        bubble_dimension = 'width',
+                        level_dimension = 'height';
+
+                } else if (orientation == 'vertical') {
+                    var bubble_axis = 'y',
+                        level_axis = 'x',
+                        bubble_dimension = 'height',
+                        level_dimension = 'width';
+                }
+
                 // do the drawing
-                var width = 960,
-                    height = 250;
+                var bubble_length = 960,
+                    level_length = 250;
 
-                var left_padding = 60;
+                var legend_padding = 60;
 
-                var width_scale = d3.scale.linear()
+                var bubble_scale = d3.scale.linear()
                     .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
-                    .range([0, width - left_padding]);
+                    .range([0, bubble_length - legend_padding]);
 
-                var height_scale = d3.scale.linear()
+                var level_scale = d3.scale.linear()
                     .domain([0, this.model.max_depth])
-                    .range([0, height]);
+                    .range([0, level_length]);
 
                 var gradient_scale = d3.scale.linear()
                     .domain([0, this.model.max_depth - 1])
@@ -596,12 +611,12 @@ var ClusterView = Backbone.View.extend({
                     .classed('loading', false)
                     .append("svg")
                     .classed("cluster-area", true)
-                    .style("width", (width) + "px")
-                    .style("height", height + "px");
+                    .style(bubble_dimension, bubble_length + "px")
+                    .style(level_dimension, level_length + "px");
 
                 this.chart = this.svg
                     .append("g")
-                    .attr("transform", "translate(" + left_padding + ",0)");
+                    .attr("transform", "translate(" + (orientation == 'horizontal' ? legend_padding + ",0" : "0," + legend_padding) + ")");
 
                 var divisions = this.chart.append("g");
                 var connections = this.chart.append("g");
@@ -615,10 +630,10 @@ var ClusterView = Backbone.View.extend({
                         .attr("data-row", function(d, i) { return i; })
                         .each(function(d, i) {
                             divisions.append("rect")
-                                    .attr('x', -1 * left_padding)
-                                    .attr('y', height_scale(i))
-                                    .attr('width', width)
-                                    .attr('height', height_scale(1))
+                                    .attr(bubble_axis, -1 * legend_padding)
+                                    .attr(level_axis, level_scale(i))
+                                    .attr(bubble_dimension, bubble_length)
+                                    .attr(level_dimension, level_scale(1))
                                     .attr('fill', '#777777')
                                     .style('opacity', gradient_scale(i));
                         })
@@ -626,10 +641,10 @@ var ClusterView = Backbone.View.extend({
                         .data(function(d, i) { return computed[i]; })
                         .enter()
                             .append("rect")
-                            .attr("y", function(d) { return height_scale(d.row) + 4; })
-                            .attr("x", function(d) { return width_scale(d.start) + 2; })
-                            .attr("height", height_scale(1) - 9)
-                            .attr("width", function(d) { return width_scale(d.size) - 5; })
+                            .attr(level_axis, function(d) { return level_scale(d.row) + 4; })
+                            .attr(bubble_axis, function(d) { return bubble_scale(d.start) + 2; })
+                            .attr(level_dimension, level_scale(1) - 9)
+                            .attr(bubble_dimension, function(d) { return bubble_scale(d.size) - 5; })
                             .attr("rx", 5)
                             .attr("ry", 5)
                             .classed("cluster-cell", true)
@@ -640,10 +655,12 @@ var ClusterView = Backbone.View.extend({
                             .on('mouseover', function(d, i) {
                                 var tip = $("<div>");
                                 tip.addClass("cluster-tip")
-                                tip.css({
-                                    "top": height_scale(d.row + 1) - 6 + "px",
-                                    "left": width_scale(d.start) + left_padding + 6 + "px",
-                                });
+
+                                var tipPos = {};
+                                tipPos[orientation == 'horizontal' ? "top" : "left"] = level_scale(d.row + 1) - 6 + "px";
+                                tipPos[orientation == 'horizontal' ? "left": "top"] = bubble_scale(d.start) + legend_padding + 6 + "px";
+                                tip.css(tipPos);
+
                                 if (d.phrases) {
                                     tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
                                 } else {
@@ -659,10 +676,10 @@ var ClusterView = Backbone.View.extend({
                             .each(function(d, i) {
                                 if (d.parent) {
                                     connections.append("line")
-                                        .attr('x1', width_scale(d.start + (d.size / 2)))
-                                        .attr('y1', height_scale(d.row + .5))
-                                        .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
-                                        .attr('y2', height_scale(d.row - .5))
+                                        .attr(bubble_axis + '1', bubble_scale(d.start + (d.size / 2)))
+                                        .attr(level_axis + '1', level_scale(d.row + .5))
+                                        .attr(bubble_axis + '2', bubble_scale(d.parent.start + (d.parent.size / 2)))
+                                        .attr(level_axis + '2', level_scale(d.row - .5))
                                         .classed('cluster-connection', true)
                                         .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
                                 }
@@ -675,9 +692,10 @@ var ClusterView = Backbone.View.extend({
                         .classed("cluster-row-label", true)
                         .text(function(d, i) { return (10 * i) + 50 + "%"; })
                         .style("position", "absolute")
-                        .style("width", left_padding  - 1 + "px")
-                        .style("height", height_scale(1) + "px")
-                        .style("top", function(d, i) { return height_scale(i) + "px"; });
+                        .style(bubble_dimension, legend_padding  - 1 + "px")
+                        .style(level_dimension, level_scale(1) + "px")
+                        .style(orientation == 'horizontal' ? "top" : "left", function(d, i) { return level_scale(i) + "px"; })
+                        .style(orientation == 'horizontal' ? "left" : "top", "0px");
 
 
 
