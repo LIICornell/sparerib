@@ -823,7 +823,7 @@ var ClusterView = Backbone.View.extend({
         this.documentModel.fetch({
             'success': $.proxy(function() {
                 var contents = $("<div class='cluster-doc-contents'>");
-                var pre = $("<pre>");
+                var pre = $("<div>");
                 contents.append(pre);
                 var children = docArea.children();
                 docArea.removeClass("loading").removeClass("pseudo-loading").append(contents);

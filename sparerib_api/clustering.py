@@ -186,6 +186,7 @@ class DocumentClusterView(CommonClusterView):
             cursor += fr[1]
 
         html = ''.join(['<span style="background-color:rgba(233,182,39,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
+        html = html.replace("\n", "<br />")
         return {
             'frequency_html': html
         }
