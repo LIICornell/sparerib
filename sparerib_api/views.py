@@ -10,6 +10,7 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 
 from util import *
+from search import get_similar_dockets
 
 from regs_models import Doc, Docket, Agency, Entity
 
@@ -100,6 +101,9 @@ class DocketView(AggregatedView):
         out = super(DocketView, self).get(request, *args, **kwargs)
 
         stats = out['stats']
+        stats['similar_dockets'] = []
+        summaries = []
+
         if stats['count'] > 0:
             # do a similar thing with FR documents
             if stats.get('doc_info', {}).get('fr_docs', None):
@@ -116,10 +120,20 @@ class DocketView(AggregatedView):
                         } if fr_doc.stats else {'count': 0}
                         doc['summary'] = fr_doc.get_summary()
                         doc['comments_open'] = 'Comment_Due_Date' in fr_doc.details and fr_doc.details['Comment_Due_Date'] > datetime.datetime.now()
-                        print fr_doc.details.get('Comment_Due_Date', 'none')
+
+                        summaries.append(doc['summary'])
                     else:
                         doc['stats'] = {'count': 0, 'comments_open': False}
                         doc['summary'] = None
+            summary_text = "\n".join(summaries)
+            if summary_text:
+                similar_dockets = get_similar_dockets(summary_text, kwargs[self.aggregation_field])[:3]
+                if similar_dockets:
+                    sd = dict([(docket.id, docket.title) for docket in Docket.objects(id__in=similar_dockets).only('id', 'title')])
+                    stats['similar_dockets'] = [{
+                        'id': docket,
+                        'title': sd[docket]
+                    } for docket in similar_dockets]
 
         agency = self.item.agency
         if agency:

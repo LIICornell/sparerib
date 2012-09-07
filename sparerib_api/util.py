@@ -61,6 +61,11 @@ def prettify_months(months, expand=False):
 
     return out
 
+def uniq(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if x not in seen and not seen_add(x)]
+
 DETAILS_OVERRIDES = {}
 def dtls(*args):
     out = []

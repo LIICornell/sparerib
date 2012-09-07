@@ -146,13 +146,13 @@
             </div>
         </div>
 
-        <% if (type === "docket") { %>
+        <% if (type === "docket" && stats.similar_dockets.length) { %>
         <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
-                <li><a href="#">Supporting Statement for the Information Collection Requirements of the Standards on Marine Terminals (26 CFR Part 1917)</a></li>
-                <li><a href="#">Petition Requesting Non-See-Through Packaging for Torch Fuel and Lamp Oil</a></li>
-                <li><a href="#">Occupational Injuries among Construction Workers Treated at the GWU Emergency Department</a></li>
+                <% _.each(stats.similar_dockets, function(docket) { %>
+                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a></li>
+                <% }); %>
             </ul>
         </div>
 

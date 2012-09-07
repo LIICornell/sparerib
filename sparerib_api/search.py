@@ -8,6 +8,8 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
+from util import *
+
 import math
 
 import pyes
@@ -282,3 +284,31 @@ class DefaultSearchResultsView(DRFView):
             new_url += "?" + request.META['QUERY_STRING']
 
         raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})
+
+def get_similar_dockets(text, exclude_docket):
+    es = pyes.ES(settings.ES_SETTINGS)
+
+    results = es.search_raw({
+        'query': {
+            'more_like_this': {
+                'fields': ['files.text'],
+                'like_text': text
+            }
+        },
+        'filter': {
+            'and': [
+                {
+                    'terms': {'document_type': ['rule', 'proposed_rule', 'notice']}
+                },
+                {
+                    'not': {
+                        'term': {'docket_id': exclude_docket}
+                    }
+                }
+            ]
+        },
+        'fields': ['docket_id']
+    })
+
+    docket_ids = [hit['fields']['docket_id'] for hit in results.hits.hits]
+    return uniq(docket_ids)
