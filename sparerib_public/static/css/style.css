@@ -873,6 +873,7 @@ table tr.even {
 }
 .cluster-docs {
   margin-top: 10px;
+  margin-bottom: 30px;
   height: 600px;
 }
 .cluster-doc {
@@ -882,6 +883,7 @@ table tr.even {
   position: relative;
   overflow: auto;
   border: 1px solid #999999;
+  background: #ffffff;
 }
 .cluster-doc-graph {
   position: absolute;
@@ -903,6 +905,7 @@ table tr.even {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  background: #ffffff;
 }
 .cluster-cell-alive {
   fill: #569594;
