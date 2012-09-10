@@ -10,7 +10,7 @@ from django.conf import settings
 
 from util import *
 
-import math
+import math, json
 
 import pyes
 from query_parse import parse_query
@@ -19,7 +19,7 @@ from collections import defaultdict
 
 from regs_models import *
 
-ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned']
+ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
 class SearchResultsView(DRFView):
     aggregation_level = None
@@ -82,6 +82,14 @@ class SearchResultsView(DRFView):
                 terms['submitter_entities'] += [f[1]]
             elif f[0] == 'mentioned':
                 terms['files.entities'] += [f[1]]
+            elif f[0] == 'type':
+                # we might need to be more restrictive than extra_terms, and we need to validate that this filter makes sense
+                if 'document_type' in extra_terms:
+                    if extra_terms['document_type'] == terms['document_type']:
+                        terms['document_type'] = []
+                    if f[1] not in extra_terms['document_type']:
+                        continue
+                terms['document_type'] += [f[1]]
         count = len(terms.values())
         if count == 0:
             return None
@@ -171,8 +179,6 @@ class DocumentSearchResultsView(SearchResultsView):
 
         query['fields'] = ['document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
-        print query
-
         return DocumentSearchResults(query)
 
 class FRSearchResultsView(DocumentSearchResultsView):
@@ -187,7 +193,7 @@ class NonFRSearchResultsView(DocumentSearchResultsView):
     search_type = 'document-non-fr'
     def get_es_filters(self, extra_terms={}):
         terms = extra_terms.copy()
-        terms['document_type'] = ['comment', 'public_submission', 'other']
+        terms['document_type'] = ['supporting_material', 'public_submission', 'other']
 
         return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
