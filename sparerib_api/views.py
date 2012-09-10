@@ -121,7 +121,8 @@ class DocketView(AggregatedView):
                         doc['summary'] = fr_doc.get_summary()
                         doc['comments_open'] = 'Comment_Due_Date' in fr_doc.details and fr_doc.details['Comment_Due_Date'] > datetime.datetime.now()
 
-                        summaries.append(doc['summary'])
+                        if doc['summary']:
+                            summaries.append(doc['summary'])
                     else:
                         doc['stats'] = {'count': 0, 'comments_open': False}
                         doc['summary'] = None
