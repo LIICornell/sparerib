@@ -300,13 +300,14 @@ var AggregatedDetailView = Backbone.View.extend({
     teaserTemplate: _.template($('#docket-teaser-tpl').html()),
 
     render: function() {
+        $(".main-loading").slideDown('fast');
         var mainFetch = this.model.fetch(
             {
                 'success': $.proxy(function() {
                     var jsonModel = this.model.toJSON();
 
                     var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // charts
                     var type = this.model.get('type');
@@ -348,6 +349,9 @@ var AggregatedDetailView = Backbone.View.extend({
                             sb_chart.append($square);
                         });
                     }
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -398,6 +402,7 @@ var DocumentDetailView = Backbone.View.extend({
     teaserTemplate: _.template($('#document-teaser-tpl').html()),
 
     render: function() {
+        $(".main-loading").slideDown('fast');
         var mainFetch = this.model.fetch(
             {
                 'success': $.proxy(function() {
@@ -408,7 +413,7 @@ var DocumentDetailView = Backbone.View.extend({
                         attachment['attachment'] = true;
                         return attachment;
                     }));
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // make the first attachment visible
                     $(this.el).find('.attachment-name').eq(0).click()
@@ -416,6 +421,9 @@ var DocumentDetailView = Backbone.View.extend({
                     $('.sidebar-item.collapsible h4').click(function() {
                         $(this).parents(".sidebar-item").toggleClass("active").find(".summary-table-wrapper").slideToggle('fast');
                     }).prepend("<a class='toggle'>Toggle</a>");
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -498,11 +506,12 @@ var EntityDetailView = Backbone.View.extend({
 
     template: _.template($('#entity-tpl').html()),
     render: function() {
+        $(".main-loading").slideDown('fast');
         this.model.fetch(
             {
                 'success': $.proxy(function() {
                     var context = _.extend({}, helpers, this.model.toJSON());
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // charts
                     _.each(['submitter_mentions', 'text_mentions'], function(submission_type) {
@@ -519,6 +528,9 @@ var EntityDetailView = Backbone.View.extend({
                         });
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
                     });
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
