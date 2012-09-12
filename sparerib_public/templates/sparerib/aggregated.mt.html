@@ -12,6 +12,9 @@
     </div>
 </div>
 
+<%
+    var agg_filter = (typeof title === "undefined" ? 'agency:' + id + ':' + JSON.stringify(name) : 'docket:' + id + ':' + JSON.stringify(title));
+%>
 <div class="main-content with-right-sidebar">
     <div class="main-column">
         <h3><%=capitalize(type)%> Overview</h3>
@@ -51,7 +54,7 @@
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
                 <% if (stats.type_breakdown.supporting_material) { %>
-                (<a href="#"><%=stats.type_breakdown.supporting_material + " " + pluralize(stats.type_breakdown.supporting_material, "document")%> total</a>)
+                (<a href="/search-document-non-fr/<%=encodeURIComponent('type:supporting_material:"Supporting Material" ' + agg_filter)%>"><%=stats.type_breakdown.supporting_material + " " + pluralize(stats.type_breakdown.supporting_material, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.supporting_material, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
@@ -63,7 +66,7 @@
             <div class="main-column-right">
                 <h4>Other Material</h4>
                 <% if (stats.type_breakdown.other) { %>
-                (<a href="#"><%=stats.type_breakdown.other + " " + pluralize(stats.type_breakdown.other, "document")%> total</a>)
+                (<a href="/search-document-non-fr/<%=encodeURIComponent('type:other:"Other" ' + agg_filter)%>"><%=stats.type_breakdown.other + " " + pluralize(stats.type_breakdown.other, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.other, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
@@ -95,7 +98,7 @@
                 </tr>
                 <% }); %>
             </table>
-            <br /><a href="#" style="font-size: 80%">View more dockets &raquo;</a>
+            <br /><a href="/search-docket/<%=encodeURIComponent('agency:' + id + ':"' + name + '"')%>" style="font-size: 80%">View more dockets &raquo;</a>
         </div>
         <% }); %>
 
@@ -133,7 +136,7 @@
                                     <%=stats[submission_type][i].name%>
                                 <% } %>
                             </strong><br />
-                            (<a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>">View <%=stats[submission_type][i].count%> comments</a>)
+                            (<a href="/search-document-non-fr/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + ":" + JSON.stringify(stats[submission_type][i].name) + " " + agg_filter)%>">View <%=stats[submission_type][i].count%> comments</a>)
                         </div>
                         <div class="clear"></div>
                     </div>
@@ -142,17 +145,19 @@
                     }
                 %>
                 <div class="clear"></div>
-                <a href="#">View all <%=submission_count%> comments &raquo;</a>
+                <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" ' + agg_filter)%>">
+                    View all <%=submission_count%> comments &raquo;
+                </a>
             </div>
         </div>
 
-        <% if (type === "docket") { %>
+        <% if (type === "docket" && stats.similar_dockets.length) { %>
         <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
-                <li><a href="#">Supporting Statement for the Information Collection Requirements of the Standards on Marine Terminals (26 CFR Part 1917)</a></li>
-                <li><a href="#">Petition Requesting Non-See-Through Packaging for Torch Fuel and Lamp Oil</a></li>
-                <li><a href="#">Occupational Injuries among Construction Workers Treated at the GWU Emergency Department</a></li>
+                <% _.each(stats.similar_dockets, function(docket) { %>
+                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a></li>
+                <% }); %>
             </ul>
         </div>
 

@@ -4,7 +4,13 @@ var Document = Backbone.Model.extend({ url: function() { return "/api/1.0/docume
 var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
 var Agency = Backbone.Model.extend({ url: function() { return "/api/1.0/agency/" + this.id; } });
 var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
-var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() { return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (this.get('in_page') ? "?page=" + this.get('in_page') : ''); } });
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() {
+    var qs = _.filter([
+        (this.get('in_page') ? "page=" + this.get('in_page') : null),
+        (this.get('limit') ? "limit=" + this.get('limit') : null)
+    ], function(x) { return x; }).join("&");
+    return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (qs ? "?" + qs : '');
+} });
 
 // Cluster models
 var DocketClusters = Backbone.Model.extend({
@@ -170,14 +176,68 @@ var SearchView = Backbone.View.extend({
 
     template: _.template($('#search-tpl').html()),
     render: function() {
-        $(this.el).html(this.template(this));
+        this.$el.html(this.template(this));
+        this.intertag();
+        return this;
+    },
+    intertag: function() {
+        var options = {
+            source: function(request, response) {
+                if (request.term.length == 0) {
+                    response([]);
+                } else {
+                    $.getJSON(AC_URL + request.term, function(data) {
+                        response(data.matches);
+                    });
+                }
+            }
+        }
+
+        if (this.options.type) {
+            $.extend(options, {
+                'addTag': function(item) {
+                    var new_tag = $('<span class="search-tag"><span class="ui-label"></span><span class="ui-icon ui-icon-close"></span></span>');
+                    new_tag.find('.ui-label').html(item.label);
+                    new_tag.data('value', item.value);
+                    new_tag.addClass('ui-tag-type-' + item.type);
+
+                    var area = $('.sidebar .search-type-' + item.type);
+                    new_tag.appendTo(area);
+
+                    var box = area.closest('.sidebar-item');
+                    if (box.is(":hidden")) {
+                        box.slideDown("fast");
+                    }
+                },
+                'getTags': function() {
+                    return $('.sidebar .search-type').find('.search-tag');
+                },
+                'clearTags': function() {
+                    $('.sidebar .search-type').find('.search-tag').remove();
+                }
+            });
+        }
+        this.$el.find("input[type=text]").intertag(options);
         return this;
     },
 
     search: function(evt) {
         evt.preventDefault();
-        app.navigate('/search/' + encodeURIComponent($(this.el).find('.search-query').val()), {trigger: true});
+        this.$el.find('input[type=text]').blur();
+        app.navigate('/search' + (this.options.type ? "-" + this.options.type : "") + '/' + encodeURIComponent(this.get_encoded_search()), {trigger: true});
         return false;
+    },
+
+    get_encoded_search: function() {
+        var val = this.$el.find('.ui-intertag').val();
+        var terms = [];
+
+        _.each(val.tags, function(tag) {
+            terms.push([tag.type, tag.value, JSON.stringify(tag.label)].join(":"));
+        })
+        terms.push(val.text);
+
+        return terms.join(" ");
     }
 })
 
@@ -185,28 +245,50 @@ var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
 
-    template: _.template($('#results-tpl').html()),
+    events: {
+        'click .sidebar .search-tag .ui-icon-close': 'removeTag'
+    },
+
+    templates: {
+        'shallow': _.template($('#shallow-working-results-tpl').html()),
+        'deep': _.template($('#deep-working-results-tpl').html()),
+        'complete': _.template($('#results-tpl').html())
+    },
     render: function() {
-        this.model.fetch(
-            {
-                'success': $.proxy(function() {
-                    var context = _.extend({}, helpers, this.model.toJSON());
-                    $(this.el).html(this.template(context));
+        var $el = this.$el.html(this.templates[this.options.depth](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
+        var search_populated = false;
+        _.each(this.options.models, $.proxy(function(_model) {
+            var model = _model.model;
+            model.fetch(
+                {
+                    'success': $.proxy(function() {
+                        var context = _.extend({'depth': this.options.depth}, helpers, model.toJSON());
+                        $el.find('.search-results-' + model.get('level')).html(this.templates.complete(context)).slideDown("fast");
+                        $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
-                    // update the URL for the right type
-                    if (!this.model.get('level')) {
-                        app.navigate('/search-' + this.model.attributes.search.aggregation_level + '/' + encodeURIComponent(this.model.attributes.search.raw_query) + (this.model.get('in_page') ? '/' + this.model.get('in_page') : ''), {trigger: false, replace: true});
+                        // populate the search input if necessary
+                        if (!search_populated) {
+                            $('.main-content .search form .ui-intertag').val({'tags': context.search.filters, 'text': context.search.text_query});
+                            search_populated = true;
+                        }
+                    }, this),
+                    'error': function() {
+                        console.log('failed');
                     }
-
-                    // populate the search input
-                    this.$el.closest('.search-view').find('form input.search-query').val(context.search.raw_query);
-                }, this),
-                'error': function() {
-                    console.log('failed');
                 }
-            }
-        );
+            );
+        }, this));
         return this;
+    },
+
+    removeTag: function(evt) {
+        var tag = $(evt.target).closest('.search-tag');
+        var container = tag.closest('.search-tags');
+        tag.remove();
+        console.log(container.children().length);
+        if (container.children().length == 0) {
+            container.closest('.sidebar-item').slideUp("fast");
+        }
     }
 })
 
@@ -218,13 +300,14 @@ var AggregatedDetailView = Backbone.View.extend({
     teaserTemplate: _.template($('#docket-teaser-tpl').html()),
 
     render: function() {
+        $(".main-loading").slideDown('fast');
         var mainFetch = this.model.fetch(
             {
                 'success': $.proxy(function() {
                     var jsonModel = this.model.toJSON();
 
                     var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // charts
                     var type = this.model.get('type');
@@ -266,6 +349,9 @@ var AggregatedDetailView = Backbone.View.extend({
                             sb_chart.append($square);
                         });
                     }
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -316,6 +402,7 @@ var DocumentDetailView = Backbone.View.extend({
     teaserTemplate: _.template($('#document-teaser-tpl').html()),
 
     render: function() {
+        $(".main-loading").slideDown('fast');
         var mainFetch = this.model.fetch(
             {
                 'success': $.proxy(function() {
@@ -326,7 +413,7 @@ var DocumentDetailView = Backbone.View.extend({
                         attachment['attachment'] = true;
                         return attachment;
                     }));
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // make the first attachment visible
                     $(this.el).find('.attachment-name').eq(0).click()
@@ -334,6 +421,9 @@ var DocumentDetailView = Backbone.View.extend({
                     $('.sidebar-item.collapsible h4').click(function() {
                         $(this).parents(".sidebar-item").toggleClass("active").find(".summary-table-wrapper").slideToggle('fast');
                     }).prepend("<a class='toggle'>Toggle</a>");
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -416,11 +506,12 @@ var EntityDetailView = Backbone.View.extend({
 
     template: _.template($('#entity-tpl').html()),
     render: function() {
+        $(".main-loading").slideDown('fast');
         this.model.fetch(
             {
                 'success': $.proxy(function() {
                     var context = _.extend({}, helpers, this.model.toJSON());
-                    $(this.el).html(this.template(context));
+                    $(this.el).css('display', 'none').html(this.template(context));
 
                     // charts
                     _.each(['submitter_mentions', 'text_mentions'], function(submission_type) {
@@ -437,6 +528,9 @@ var EntityDetailView = Backbone.View.extend({
                         });
                         SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
                     });
+
+                    $('.main-loading').slideUp('fast');
+                    this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -490,20 +584,35 @@ var ClusterView = Backbone.View.extend({
                         })
                     })
                 }           
-            
+                
+                // set up orientation
+                var orientation = 'horizontal';
+                if (orientation == 'horizontal') {
+                    var bubble_axis = 'x',
+                        level_axis = 'y',
+                        bubble_dimension = 'width',
+                        level_dimension = 'height';
+
+                } else if (orientation == 'vertical') {
+                    var bubble_axis = 'y',
+                        level_axis = 'x',
+                        bubble_dimension = 'height',
+                        level_dimension = 'width';
+                }
+
                 // do the drawing
-                var width = 960,
-                    height = 250;
+                var bubble_length = 960,
+                    level_length = 250;
 
-                var left_padding = 60;
+                var legend_padding = 60;
 
-                var width_scale = d3.scale.linear()
+                var bubble_scale = d3.scale.linear()
                     .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
-                    .range([0, width - left_padding]);
+                    .range([0, bubble_length - legend_padding]);
 
-                var height_scale = d3.scale.linear()
+                var level_scale = d3.scale.linear()
                     .domain([0, this.model.max_depth])
-                    .range([0, height]);
+                    .range([0, level_length]);
 
                 var gradient_scale = d3.scale.linear()
                     .domain([0, this.model.max_depth - 1])
@@ -514,12 +623,12 @@ var ClusterView = Backbone.View.extend({
                     .classed('loading', false)
                     .append("svg")
                     .classed("cluster-area", true)
-                    .style("width", (width) + "px")
-                    .style("height", height + "px");
+                    .style(bubble_dimension, bubble_length + "px")
+                    .style(level_dimension, level_length + "px");
 
                 this.chart = this.svg
                     .append("g")
-                    .attr("transform", "translate(" + left_padding + ",0)");
+                    .attr("transform", "translate(" + (orientation == 'horizontal' ? legend_padding + ",0" : "0," + legend_padding) + ")");
 
                 var divisions = this.chart.append("g");
                 var connections = this.chart.append("g");
@@ -533,10 +642,10 @@ var ClusterView = Backbone.View.extend({
                         .attr("data-row", function(d, i) { return i; })
                         .each(function(d, i) {
                             divisions.append("rect")
-                                    .attr('x', -1 * left_padding)
-                                    .attr('y', height_scale(i))
-                                    .attr('width', width)
-                                    .attr('height', height_scale(1))
+                                    .attr(bubble_axis, -1 * legend_padding)
+                                    .attr(level_axis, level_scale(i))
+                                    .attr(bubble_dimension, bubble_length)
+                                    .attr(level_dimension, level_scale(1))
                                     .attr('fill', '#777777')
                                     .style('opacity', gradient_scale(i));
                         })
@@ -544,10 +653,10 @@ var ClusterView = Backbone.View.extend({
                         .data(function(d, i) { return computed[i]; })
                         .enter()
                             .append("rect")
-                            .attr("y", function(d) { return height_scale(d.row) + 4; })
-                            .attr("x", function(d) { return width_scale(d.start) + 2; })
-                            .attr("height", height_scale(1) - 9)
-                            .attr("width", function(d) { return width_scale(d.size) - 5; })
+                            .attr(level_axis, function(d) { return level_scale(d.row) + 4; })
+                            .attr(bubble_axis, function(d) { return bubble_scale(d.start) + 2; })
+                            .attr(level_dimension, level_scale(1) - 9)
+                            .attr(bubble_dimension, function(d) { return bubble_scale(d.size) - 5; })
                             .attr("rx", 5)
                             .attr("ry", 5)
                             .classed("cluster-cell", true)
@@ -558,10 +667,12 @@ var ClusterView = Backbone.View.extend({
                             .on('mouseover', function(d, i) {
                                 var tip = $("<div>");
                                 tip.addClass("cluster-tip")
-                                tip.css({
-                                    "top": height_scale(d.row + 1) - 6 + "px",
-                                    "left": width_scale(d.start) + left_padding + 6 + "px",
-                                });
+
+                                var tipPos = {};
+                                tipPos[orientation == 'horizontal' ? "top" : "left"] = level_scale(d.row + 1) - 6 + "px";
+                                tipPos[orientation == 'horizontal' ? "left": "top"] = bubble_scale(d.start) + legend_padding + 6 + "px";
+                                tip.css(tipPos);
+
                                 if (d.phrases) {
                                     tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
                                 } else {
@@ -577,10 +688,10 @@ var ClusterView = Backbone.View.extend({
                             .each(function(d, i) {
                                 if (d.parent) {
                                     connections.append("line")
-                                        .attr('x1', width_scale(d.start + (d.size / 2)))
-                                        .attr('y1', height_scale(d.row + .5))
-                                        .attr('x2', width_scale(d.parent.start + (d.parent.size / 2)))
-                                        .attr('y2', height_scale(d.row - .5))
+                                        .attr(bubble_axis + '1', bubble_scale(d.start + (d.size / 2)))
+                                        .attr(level_axis + '1', level_scale(d.row + .5))
+                                        .attr(bubble_axis + '2', bubble_scale(d.parent.start + (d.parent.size / 2)))
+                                        .attr(level_axis + '2', level_scale(d.row - .5))
                                         .classed('cluster-connection', true)
                                         .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
                                 }
@@ -593,9 +704,10 @@ var ClusterView = Backbone.View.extend({
                         .classed("cluster-row-label", true)
                         .text(function(d, i) { return (10 * i) + 50 + "%"; })
                         .style("position", "absolute")
-                        .style("width", left_padding  - 1 + "px")
-                        .style("height", height_scale(1) + "px")
-                        .style("top", function(d, i) { return height_scale(i) + "px"; });
+                        .style(bubble_dimension, legend_padding  - 1 + "px")
+                        .style(level_dimension, level_scale(1) + "px")
+                        .style(orientation == 'horizontal' ? "top" : "left", function(d, i) { return level_scale(i) + "px"; })
+                        .style(orientation == 'horizontal' ? "left" : "top", "0px");
 
 
 
@@ -723,7 +835,7 @@ var ClusterView = Backbone.View.extend({
         this.documentModel.fetch({
             'success': $.proxy(function() {
                 var contents = $("<div class='cluster-doc-contents'>");
-                var pre = $("<pre>");
+                var pre = $("<div>");
                 contents.append(pre);
                 var children = docArea.children();
                 docArea.removeClass("loading").removeClass("pseudo-loading").append(contents);
@@ -784,43 +896,62 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id/similarity/cutoff-:cutoff/document-:docId", "docketClusters");
 
         // load the upper search box at the beginning
-        var topSearchView = new SearchView({'id': 'top-search-form'});
-        $('#top-search').html(topSearchView.render().el);
+        var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
+        topSearchView.intertag();
 
         // on all navigation, check to show/hide the search box
         this.on('all', function () {
-            if ($('#main .search-view').length != 0) {
+            if ($('#main .search').length != 0) {
                 $('#top-search').hide();
             } else {
-                $('#top-search').show().find('input[type=text]').val('');
+                $('#top-search').show().find('input[type=text]').val('')
+                    .end().find('.ui-intertag').trigger('tagschanged');
             }
         });
     },
 
     searchLanding: function() {
-        var searchView = new SearchView({'id': 'main-search-form'});
+        var searchView = new SearchView({'id': 'main-search-form', 'type': null});
         $('#main').html(searchView.render().el);
+        $('.main-content .search .ui-intertag').trigger('tagschanged');
     },
 
     defaultSearchResults: function(query, page) {
         this.searchResults(null, query, page);
     },
     searchResults: function(type, query, page) {
-        // are we on a search page?
-        var resultSet = $('#main .result-set');
-        if (resultSet.length == 0) {
-            this.searchLanding();
-            resultSet = $('#main .result-set');
-        }
-
         if (typeof page == "undefined") {
             page = null;
         }
 
-        var results = new SearchResults({'query': query, 'in_page': page, 'level': type});
-        var resultsView = new ResultsView({model: results});
+        // the query will have been encoded, so decode it
+        query = decodeURIComponent(query);
 
-        resultSet.html(resultsView.render().el);
+        if (type == null) {
+            // are we on a search page?
+            var container = $('.no-sidebar .result-set');
+            if (container.length == 0) {
+                this.searchLanding();
+                container = $('.no-sidebar .result-set');
+            }
+
+            var models = _.map(['docket', 'document-fr', 'document-non-fr'], function(type) {
+                return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
+            });
+            var depth = 'shallow';
+            var resultsView = new ResultsView({'models': models, 'depth': depth});
+
+            container.html(resultsView.render().el);
+        } else {
+            var models = [{'type': type, 'model': new SearchResults({'query': query, 'in_page': page, 'level': type})}];
+            var depth = 'deep';
+            var container = $('#main');
+            var resultsView = new ResultsView({'models': models, 'depth': depth});
+            container.html(resultsView.render().el);
+
+            var sv = new SearchView({'el': resultsView.$el.find('.search').get(0), 'type': type});
+            sv.intertag();
+        }
     },
  
     documentDetail: function(id) {
@@ -868,6 +999,10 @@ Backbone.history.start({pushState: true});
 
 /* assume backbone link handling, from Tim Branyen */
 $(document).on("click", "a:not([data-bypass])", function(evt) {
+    if (evt.isDefaultPrevented() || evt.metaKey || evt.ctrlKey) {
+        return;
+    }
+
     var href = $(this).attr("href");
     var protocol = this.protocol + "//";
 

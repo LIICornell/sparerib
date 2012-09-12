@@ -12,6 +12,9 @@
     <meta name="description" content="">
 
     <meta name="viewport" content="width=device-width">
+
+    <link rel="stylesheet" href="{% static "css/jquery.ui.minimal.css" %}">
+    <link rel="stylesheet" href="{% static "css/jquery.pretag.css" %}" type="text/css" />
     <link rel="stylesheet" href="{% static "css/style.css" %}">
 
     <script src="{% static "js/libs/modernizr-2.5.3.min.js" %}"></script>
@@ -24,7 +27,13 @@
     <header>
         <div class="header-content">
             <h1><a href="/">SpareRib</a></h1>
-            <div id="top-search"></div>
+            <div id="top-search">
+                <div class="search">
+                    <form>
+                        <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+                    </form>
+                </div>
+            </div>
             <ul id="top-menu">
                 <li class="about-link"><a href="#">About</a></li>
                 <li class="contact-link"><a href="#">Contact</a></li>
@@ -32,6 +41,7 @@
             </ul>
         </div>
     </header>
+    <div class="main-loading loading"></div>
     <div role="main" id="main">
         {% block "main" %}{% endblock %}
     </div>
@@ -72,9 +82,6 @@
     <script type="text/html" id="search-tpl">
         {% include "sparerib/search.mt.html" %}
     </script>
-    <script type="text/html" id="results-tpl">
-        {% include "sparerib/results.mt.html" %}
-    </script>
     <script type="text/html" id="clusters-tpl">
         {% include "sparerib/clusters.mt.html" %}
     </script>
@@ -83,6 +90,15 @@
     </script>
     <script type="text/html" id="document-teaser-tpl">
         {% include "sparerib/document_teaser.mt.html" %}
+    </script>
+    <script type="text/html" id="shallow-working-results-tpl">
+        {% include "sparerib/shallow_working_results.mt.html" %}
+    </script>
+    <script type="text/html" id="deep-working-results-tpl">
+        {% include "sparerib/deep_working_results.mt.html" %}
+    </script>
+    <script type="text/html" id="results-tpl">
+        {% include "sparerib/results.mt.html" %}
     </script>
 
     {# regular footer javascript #}
@@ -94,6 +110,10 @@
     <script src="{% static "js/libs/charts/d3.v2.min.js" %}"></script>
     <script src="{% static "js/libs/charts/sparerib_d3.js" %}"></script>
 
+    <script src="{% static "js/libs/jquery.caret.js" %}"></script>
+    <script src="{% static "js/libs/jquery.ui.combined.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/libs/jquery.pretag.js" %}"></script>
+
     <script src="{% static "js/plugins.js" %}"></script>
     <script src="{% static "js/sparerib.js" %}"></script>
 
@@ -102,6 +122,9 @@
         (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
         g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
         s.parentNode.insertBefore(g,s)}(document,'script'));
+    </script>
+    <script>
+    AC_URL = "{{ AC_URL|safe }}";
     </script>
 </body>
 </html>

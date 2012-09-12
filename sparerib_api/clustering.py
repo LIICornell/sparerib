@@ -167,7 +167,7 @@ class SingleClusterView(CommonClusterView):
             'documents': [{
                 'id': doc_id,
                 'title': metadatas[doc_id]['title'],
-                'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id]])
+                'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id] and metadatas[doc_id][field]])
             } for doc_id in cluster['members']]
         }
 
@@ -199,7 +199,8 @@ class DocumentClusterView(CommonClusterView):
             components.append((fr[0], text[cursor:cursor + fr[1]]))
             cursor += fr[1]
 
-        html = ''.join(['<span style="background-color:rgba(255,255,0,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
+        html = ''.join(['<span style="background-color:rgba(233,182,39,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
+        html = html.replace("\n", "<br />")
         return {
             'frequency_html': html
         }

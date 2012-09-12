@@ -8,7 +8,9 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
-import math
+from util import *
+
+import math, json
 
 import pyes
 from query_parse import parse_query
@@ -17,7 +19,7 @@ from collections import defaultdict
 
 from regs_models import *
 
-ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned']
+ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
 class SearchResultsView(DRFView):
     aggregation_level = None
@@ -44,7 +46,7 @@ class SearchResultsView(DRFView):
 
     def serialize_page_info(self, page, count):
         limit = self.get_limit()
-        page_count = int(math.ceil(count / limit))
+        page_count = int(math.ceil(float(count) / limit))
         out = {
             'next': self.url_with_page_number(page + 1) if page < page_count else None,
             'page': page,
@@ -55,19 +57,22 @@ class SearchResultsView(DRFView):
             'search': {
                 'text_query': self.text_query,
                 'filters': [{
-                    'category': f[0],
-                    'id': f[1],
-                    'name': f[2] if len(f) > 2 else f[1]
+                    'type': f[0],
+                    'value': f[1],
+                    'label': f[2] if len(f) > 2 else f[1]
                 } for f in self.filters if f[0] in ALLOWED_FILTERS],
                 'raw_query': self.raw_query,
-                'aggregation_level': self.aggregation_level
+                'aggregation_level': self.aggregation_level,
+                'search_type': getattr(self, 'search_type', self.aggregation_level)
             }
         }
 
         return out
 
-    def get_es_filters(self):
+    def get_es_filters(self, extra_terms={}):
         terms = defaultdict(list)
+        terms.update(extra_terms)
+
         for f in self.filters:
             if f[0] == 'agency':
                 terms['agency'] += [f[1]]
@@ -77,6 +82,14 @@ class SearchResultsView(DRFView):
                 terms['submitter_entities'] += [f[1]]
             elif f[0] == 'mentioned':
                 terms['files.entities'] += [f[1]]
+            elif f[0] == 'type':
+                # we might need to be more restrictive than extra_terms, and we need to validate that this filter makes sense
+                if 'document_type' in extra_terms:
+                    if extra_terms['document_type'] == terms['document_type']:
+                        terms['document_type'] = []
+                    if f[1] not in extra_terms['document_type']:
+                        continue
+                terms['document_type'] += [f[1]]
         count = len(terms.values())
         if count == 0:
             return None
@@ -135,7 +148,6 @@ class DocumentSearchResults(object):
             self.query['size'] = end - start
             
             es = pyes.ES(settings.ES_SETTINGS)
-            print self.query
             self._results = es.search_raw(self.query)
             self._count = self._results['hits']['total']
 
@@ -167,9 +179,23 @@ class DocumentSearchResultsView(SearchResultsView):
 
         query['fields'] = ['document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
-        print query
-
         return DocumentSearchResults(query)
+
+class FRSearchResultsView(DocumentSearchResultsView):
+    search_type = 'document-fr'
+    def get_es_filters(self, extra_terms={}):
+        terms = extra_terms.copy()
+        terms['document_type'] = ['rule', 'proposed_rule', 'notice']
+
+        return super(FRSearchResultsView, self).get_es_filters(terms)
+
+class NonFRSearchResultsView(DocumentSearchResultsView):
+    search_type = 'document-non-fr'
+    def get_es_filters(self, extra_terms={}):
+        terms = extra_terms.copy()
+        terms['document_type'] = ['supporting_material', 'public_submission', 'other']
+
+        return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
 class AggregatedSearchResults(list):
     def __init__(self, items, aggregation_level, aggregation_field, aggregation_collection):
@@ -264,3 +290,31 @@ class DefaultSearchResultsView(DRFView):
             new_url += "?" + request.META['QUERY_STRING']
 
         raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})
+
+def get_similar_dockets(text, exclude_docket):
+    es = pyes.ES(settings.ES_SETTINGS)
+
+    results = es.search_raw({
+        'query': {
+            'more_like_this': {
+                'fields': ['files.text'],
+                'like_text': text
+            }
+        },
+        'filter': {
+            'and': [
+                {
+                    'terms': {'document_type': ['rule', 'proposed_rule', 'notice']}
+                },
+                {
+                    'not': {
+                        'term': {'docket_id': exclude_docket}
+                    }
+                }
+            ]
+        },
+        'fields': ['docket_id']
+    })
+
+    docket_ids = [hit['fields']['docket_id'] for hit in results.hits.hits]
+    return uniq(docket_ids)

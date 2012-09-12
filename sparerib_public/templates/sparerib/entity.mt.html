@@ -69,7 +69,7 @@
                 </tr>
                 <% }); %>
             </table>
-            <br /><a href="#">View more comments &raquo;</a>
+            <br /><a href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
         </div>
 
         <div class="sidebar-item">
@@ -79,7 +79,7 @@
                 <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> (<%=docket.count%> mentions)</li>
                 <% }); %>
             </ul>
-            <br /><a href="#">View more mentions &raquo;</a>
+            <br /><a href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more mentions &raquo;</a>
         </div>
 
         <div class="sidebar-item last">
