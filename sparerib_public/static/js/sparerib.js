@@ -166,6 +166,17 @@ var expandMonths = function(months) {
 }
 
 // Views
+var HomeView = Backbone.View.extend({
+    tagName: 'div',
+    id: 'home-view',
+
+    template: _.template($('#home-tpl').html()),
+    render: function() {
+        this.$el.html(this.template({}));
+        return this;
+    }
+});
+
 var SearchView = Backbone.View.extend({
     tagName: 'div',
     className: 'search-view',
@@ -174,12 +185,6 @@ var SearchView = Backbone.View.extend({
         'submit form': 'search'
     },
 
-    template: _.template($('#search-tpl').html()),
-    render: function() {
-        this.$el.html(this.template(this));
-        this.intertag();
-        return this;
-    },
     intertag: function() {
         var options = {
             source: function(request, response) {
@@ -244,6 +249,7 @@ var SearchView = Backbone.View.extend({
 var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
+    className: 'search-view',
 
     events: {
         'click .sidebar .search-tag .ui-icon-close': 'removeTag'
@@ -884,7 +890,7 @@ var AppRouter = Backbone.Router.extend({
         this.route(/^(organization|individual|politician|entity)\/([a-zA-Z0-9-]*)\/([a-z0-9-]*)$/, "entityDetail");
         
         // search
-        this.route("", "searchLanding");
+        this.route("", "home");
         this.route("search/:term/:page", "defaultSearchResults");
         this.route("search/:term", "defaultSearchResults");
         this.route("search-:type/:term/:page", "searchResults");
@@ -910,10 +916,9 @@ var AppRouter = Backbone.Router.extend({
         });
     },
 
-    searchLanding: function() {
-        var searchView = new SearchView({'id': 'main-search-form', 'type': null});
-        $('#main').html(searchView.render().el);
-        $('.main-content .search .ui-intertag').trigger('tagschanged');
+    home: function() {
+        var homeView = new HomeView({});
+        $('#main').html(homeView.render().el);
     },
 
     defaultSearchResults: function(query, page) {
@@ -929,29 +934,19 @@ var AppRouter = Backbone.Router.extend({
 
         if (type == null) {
             // are we on a search page?
-            var container = $('.no-sidebar .result-set');
-            if (container.length == 0) {
-                this.searchLanding();
-                container = $('.no-sidebar .result-set');
-            }
-
             var models = _.map(['docket', 'document-fr', 'document-non-fr'], function(type) {
                 return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
             });
             var depth = 'shallow';
-            var resultsView = new ResultsView({'models': models, 'depth': depth});
-
-            container.html(resultsView.render().el);
         } else {
             var models = [{'type': type, 'model': new SearchResults({'query': query, 'in_page': page, 'level': type})}];
             var depth = 'deep';
-            var container = $('#main');
-            var resultsView = new ResultsView({'models': models, 'depth': depth});
-            container.html(resultsView.render().el);
-
-            var sv = new SearchView({'el': resultsView.$el.find('.search').get(0), 'type': type});
-            sv.intertag();
         }
+        var resultsView = new ResultsView({'models': models, 'depth': depth});
+        $("#main").html(resultsView.render().el);
+
+        var sv = new SearchView({'el': resultsView.$el.find('.search').get(0), 'type': type});
+        sv.intertag();
     },
  
     documentDetail: function(id) {

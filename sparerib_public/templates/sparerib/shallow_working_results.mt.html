@@ -1,8 +1,23 @@
-<% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
-<h3><%=agg_type[0]%></h3>
-
-<div class="search-results-wrapper">
-    <div class="search-results-loading search-results-loading-<%=agg_type[1]%> loading"></div>
-    <div class="search-results-loaded search-results-shallow search-results-<%=agg_type[1]%>"></div>
+<div class="banner">
+    <div class="banner-content">
+        <h2>Search</h2>
+    </div>
 </div>
-<% }); %>
+<div class="main-content no-sidebar">
+    <div class="search">
+        <form>
+            <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+            <div class="clear"></div>
+        </form>
+    </div>
+    <div class="result-set result-set-shallow">
+        <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
+        <h3><%=agg_type[0]%></h3>
+
+        <div class="search-results-wrapper">
+            <div class="search-results-loading search-results-loading-<%=agg_type[1]%> loading"></div>
+            <div class="search-results-loaded search-results-shallow search-results-<%=agg_type[1]%>"></div>
+        </div>
+        <% }); %>
+    </div>
+</div>
