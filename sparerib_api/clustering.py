@@ -88,7 +88,21 @@ class DocketHierarchyView(CommonClusterView):
                 'cutoff': out['cluster_hierarchy'][0]['cutoff']
             }
 
+        remove_members(out['cluster_hierarchy'])
+
         return out
+
+def remove_members(hierarchy):
+    """Remove doc IDs from cluster hierarchy.
+
+    IDs are needed for some internal operations, but aren't
+    needed in browser. Large dockets could have tense of thousands
+    of IDs, making API results unnecessarily large if not removed.
+    """
+    for c in hierarchy:
+        del c['members']
+        remove_members(c['children'])
+
 
 class HierarchyTeaserView(CommonClusterView):
     @profile
