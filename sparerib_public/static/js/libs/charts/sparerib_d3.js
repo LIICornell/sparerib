@@ -298,6 +298,28 @@ D3Charts = {
             'height': opts.chart_y + opts.chart_height + opts.tick_length + opts.label_padding + opts.row_height
         }
     },
+    _timeline_tick_format: function(ticks) {
+        /* swiped from d3 and tweaked */
+        var formats = [
+          [d3.time.format.utc("%Y"), function(d) { return true; }],
+          [d3.time.format.utc("%b %Y"), function(d) { return d.getUTCMonth(); }],
+          [d3.time.format.utc("%b %d, %Y"), function(d) { return d.getUTCDate() != 1; }],
+          [d3.time.format.utc("%a %d"), function(d) { return d.getUTCDay() && d.getUTCDate() != 1; }],
+          [d3.time.format.utc("%I %p"), function(d) { return d.getUTCHours(); }],
+          [d3.time.format.utc("%I:%M"), function(d) { return d.getUTCMinutes(); }],
+          [d3.time.format.utc(":%S"), function(d) { return d.getUTCSeconds(); }],
+          [d3.time.format.utc(".%L"), function(d) { return d.getUTCMilliseconds(); }]
+        ];
+
+         
+        var level = 0;
+        _.each(ticks, function(date) {
+            var i = formats.length - 1, f = formats[i];
+            while (!f[1](date)) f = formats[--i];
+            level = Math.max(level, i);
+        });
+        return formats[level][0];
+    },
     timeline_chart: function(div, data, opts) {
         if (typeof opts === 'undefined') opts = {};
         _.defaults(opts, D3Charts.TIMELINE_DEFAULTS);
@@ -327,13 +349,13 @@ D3Charts = {
         })
 
         // y-ticks
-        var ticks = chart.append('g')
+        var y_ticks = chart.append('g')
             .classed('ticks', true)
             .attr('transform', 'translate(0,' + (opts.chart_y) + ')')
             .selectAll('line.graph-tick')
             .data(y.ticks(5))
             .enter();
-                ticks.append('line')
+                y_ticks.append('line')
                     .classed('graph-tick', true)
                     .attr("x1", opts.chart_x - opts.tick_length)
                     .attr("x2", opts.chart_x + opts.chart_width)
@@ -342,7 +364,7 @@ D3Charts = {
                     .style("stroke", function(d, i) { return i == 0 ? opts.axis_color : opts.tick_color })
                     .style("stroke-width", "1")
                 var format = d3.format(',.0f');
-                ticks.append('text')
+                y_ticks.append('text')
                     .classed('chart-number', true)
                     .attr("x", opts.chart_x - opts.label_padding)
                     .attr("y", y)
@@ -353,13 +375,15 @@ D3Charts = {
                     .style('text-anchor', 'end');
         
         // x-ticks
-        var tickFormat = x.tickFormat(8);
-        var ticks = chart.append('g')
+        var x_tick_dates = x.ticks(5);
+        var tickFormat = D3Charts._timeline_tick_format(x_tick_dates);
+        //var tickFormat = x.tickFormat(10);
+        var x_ticks = chart.append('g')
             .classed('ticks', true)
             .selectAll('line.graph-tick')
-            .data(x.ticks(10))
+            .data(x_tick_dates)
             .enter();
-                ticks.append('line')
+                x_ticks.append('line')
                     .classed('graph-tick', true)
                     .attr("x1", x)
                     .attr("x2", x)
@@ -367,7 +391,7 @@ D3Charts = {
                     .attr("y2", opts.chart_y + opts.chart_height + opts.tick_length)
                     .style("stroke", opts.axis_color)
                     .style("stroke-width", "1")
-                ticks.append('text')
+                x_ticks.append('text')
                     .classed('chart-number', true)
                     .attr("x", x)
                     .attr("y", opts.chart_y + opts.chart_height + opts.tick_length + opts.label_padding)
