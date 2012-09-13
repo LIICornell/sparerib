@@ -277,6 +277,8 @@ D3Charts = {
         chart_y: 10,
         right_gutter: 135,
         label_padding: 10,
+        box_label_padding: 5,
+        box_label_max_width: 200,
         show_legend: true,
         legend_padding: 15,
         legend_r: 5,
@@ -301,7 +303,8 @@ D3Charts = {
         _.defaults(opts, D3Charts.TIMELINE_DEFAULTS);
 
         var size = D3Charts._get_timeline_size(opts);
-        var chart = d3.select('#' + div).append("svg")
+        var _div = d3.select('#' + div).style('position', 'relative');
+        var chart = _div.append("svg")
             .classed("chart-canvas", true)
             .attr("width", size.width)
             .attr("height", size.height);
@@ -399,33 +402,27 @@ D3Charts = {
                 left = true;
             }
 
-            var box = chart.append('g')
+            var box = _div.append('div')
                 .classed('graph-float', true);
-                
-            var rect = box.append('rect');
-            
-            var label = box.append("text")
+                            
+            var label = box.append("span")
                 .classed('chart-number', true)
-                .attr("y", y)
-                .attr("dy", ".5em") // vertical-align: middle
-                .attr('fill', opts.text_color)
                 .text(text)
-                .style('font', '11px arial,sans-serif');
+                .style('color', opts.text_color);
             
-            var width = label.node().getComputedTextLength();
-            rect.attr('width', width + (2 * opts.label_padding))
-                .attr('height', opts.row_height + opts.label_padding)
-                .attr('y', y - opts.label_padding)
-                .style('fill', '#fff')
-                .style('stroke', color)
-                .style('stroke-width', 1);
+            var width = Math.min(label.node().getClientRects()[0].width, opts.box_label_max_width);
+            box.style('width', width + 'px')
+                .style('background', '#fff')
+                .style('border', "1px solid " + color)
+                .style('position', 'absolute')
+                .style('padding', opts.box_label_padding + 'px')
+                .style('font', '11px arial,sans-serif');
 
+            box.style('top', y - ((box.node().getClientRects()[0].height) / 2) + 'px');
             if (left) {
-                label.attr("x", x - (2 * opts.label_padding)).style('text-anchor', 'end');
-                rect.attr('x', x - width - (3 * opts.label_padding));
+                box.style('left', (x - width - (2 * opts.label_padding)) + 'px');
             } else {
-                label.attr("x", x - (-2 * opts.label_padding)).style('text-anchor', 'start');
-                rect.attr('x', parseFloat(x) + opts.label_padding);
+                box.style('left', (parseFloat(x) + opts.label_padding) + 'px');
             }
             
             return box;
@@ -620,8 +617,8 @@ SpareribCharts = {
     timeline_chart: function(div, data) {
         var opts = {
             chart_height: 125,
-            chart_width: 520,
-            chart_x: 35,
+            chart_width: 515,
+            chart_x: 40,
             chart_y: 5,
             right_gutter: 5,
             label_padding: 10,
