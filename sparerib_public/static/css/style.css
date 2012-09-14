@@ -64,18 +64,78 @@ td { vertical-align: top; }
 
 .chromeframe { margin: 0.2em 0; background: #ccc; color: black; padding: 0.2em 0; }
 
+
+
 /* author styles */
 
-a, a:visited { color: #46535f; text-decoration: underline; }
-a:active, a:hover { color: #537b82; }
-h1, h2, h3 { font-family: "gnuolane",sans-serif; font-weight: 400; }
-h1 { color: #ffffff; font-size: 250%; }
-h1 a, h1 a:hover { color: #ffffff !important; }
-h2 { font-size: 210%; margin-bottom: 10px; margin-top: 0; padding-top: 0; line-height: 1;}
-h3, h4 { padding: 0; margin: 0; }
-h3 { font-size: 140%; }
-h4 { font-size: 115%; font-weight: bold; }
-body { background: url("../img/bg/body_bg.png"); color: #473f3d; }
+a, a:visited {
+    color: #46535f;
+    text-decoration: underline;
+    }
+
+a:active, a:hover {
+    color: #537b82;
+    }
+
+h1, h2, h3 {
+    font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+    font-weight: 400;
+    }
+
+h1 {
+    color: #ffffff;
+    font-size: 250%;
+    }
+
+h1 a, h1 a:hover {
+    color: #ffffff !important;
+    }
+
+h2 {
+    font-size: 210%;
+    margin-bottom: 10px;
+    margin-top: 0;
+    padding-top: 0;
+    line-height: 1;
+    }
+
+h3, h4 {
+    padding: 0;
+    margin: 0;
+    }
+
+h3 {
+    font-size: 140%;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-weight: 400;
+    }
+
+h4 { font-size: 115%;
+    font-weight: bold;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+p { font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-weight: 400;
+    }
+
+::-moz-selection {
+    background: #808b52;
+    color: #fff;
+    ext-shadow: none;
+    }
+
+::selection {
+    background: #808b52;
+    color: #fff;
+    text-shadow: none;
+    }
+
+body {
+    background: url("../img/bg/body_bg.png");
+    color: #473f3d;
+    }
+
 .clear { clear: both; }
 
 .header-content, .main-content, .mail-stripe-inner, .sunlight-stripe {
@@ -83,20 +143,24 @@ body { background: url("../img/bg/body_bg.png"); color: #473f3d; }
   margin-left: auto;
   margin-right: auto;
 }
+
 header {
   background: url("../img/bg/header_bg.png");
 }
+
 .header-content {
   position: relative;
   height: 130px;
   border-bottom: 1px solid #b5b5b5;
 }
+
 header h1 {
   left: 35px;
   top: 45px;
   position: absolute;
   margin: 0;
 }
+
 header ul#top-menu {
   list-style: none;
   padding: 0;
@@ -105,6 +169,7 @@ header ul#top-menu {
   left: 680px;
   width: 280px;
 }
+
 header ul#top-menu li {
   list-style: none;
   padding: 0;
@@ -116,9 +181,11 @@ header ul#top-menu li {
   text-align: center;
   font-size: 80%;
 }
+
 header ul#top-menu li a {
   color: #8d867f;
 }
+
 header .about-link { width: 70px; }
 header .contact-link { width: 80px; }
 header .sf-link { width: 105px; height: 40px; border-left: 0 !important;}
@@ -179,18 +246,13 @@ header .sf-link a {
 }
 .sign-up input[type=text] {
   border: 0;
-
   -moz-box-shadow: 2px 2px 4px #999;
   -webkit-box-shadow: 2px 2px 4px #999;
   box-shadow: 2px 2px 4px #999;
-
   font-size: 14px;
-
   padding: 6px 9px;
-
   outline: 0;
   -webkit-appearance: none;
-
   display: inline-block;
   margin-bottom: 8px;
   width: 150px;
@@ -200,7 +262,7 @@ header .sf-link a {
 }
 .sign-up input[type=submit] {
   color: #475360;
-  font-family: "gnuolane",sans-serif;
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-style: normal;
   font-weight: 700;
   background: none;
@@ -335,13 +397,13 @@ header .sf-link a {
   margin: 12px 0px 12px 0px;
 }
 .similarity-description .group-count {
-  font-family: "gnuolane",sans-serif;
+    font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
   font-size: 145%;
   color: #d59305;
 }
 .similarity-description .cutoff {
-  font-family: "gnuolane",sans-serif;
+    font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
   font-size: 145%;
   color: #529594;
@@ -441,7 +503,7 @@ header .sf-link a {
   font-size: 95%;
 }
 .comment-count {
-  font-family: "gnuolane",sans-serif;
+    font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
   font-size: 145%;
   color: #d59305;
@@ -1041,7 +1103,7 @@ table tr.even {
 }
 
 #landing h2 span{
-    font-family: arial, sans-serif;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
     font-style: italic;
     font-size: 25px;
     font-weight: normal;
