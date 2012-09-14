@@ -558,7 +558,7 @@ var EntityDetailView = Backbone.View.extend({
                                 'timeline': expandMonths(agency.months)
                             }
                         });
-                        SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data);
+                        SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data, {'show_legend': false});
                     });
 
                     $('.main-loading').slideUp('fast');

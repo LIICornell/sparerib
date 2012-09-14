@@ -704,7 +704,7 @@ SpareribCharts = {
         })
         D3Charts.piechart(div, in_data, opts);
     },
-    timeline_chart: function(div, data) {
+    timeline_chart: function(div, data, in_opts) {
         var opts = {
             chart_height: 125,
             chart_width: 515,
@@ -724,6 +724,9 @@ SpareribCharts = {
             tick_length: 5,
             overlay_colors: SpareribCharts.type_colors,
             show_legend: 'bottom'
+        }
+        if (typeof in_opts !== "undefined") {
+            opts = _.extend(opts, in_opts);
         }
 
         D3Charts.timeline_chart(div, data, opts);
