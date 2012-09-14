@@ -452,7 +452,7 @@ var DocumentDetailView = Backbone.View.extend({
                         });
                     });
                     SpareribCharts.tiny_timeline_chart('sidebar-timeline', timeline_data);
-                    this.$el.find('#sidebar-timeline svg').attr('width', '270');
+                    this.$el.find('#sidebar-timeline svg').attr('width', '240');
 
                     $('.main-loading').slideUp('fast');
                     this.$el.slideDown('fast');
