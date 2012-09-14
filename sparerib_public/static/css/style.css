@@ -307,6 +307,10 @@ header .sf-link a {
 .sidebar-item {
   font-size: 80%;
 }
+#sidebar-timeline {
+  width: 240px;
+  height: 75px;
+}
 .with-right-sidebar .sidebar-item {
   padding: 25px 30px 35px 15px;
   background: url('../img/bg/right_sidebar_stripe.png') no-repeat bottom left;

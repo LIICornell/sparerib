@@ -429,6 +429,31 @@ var DocumentDetailView = Backbone.View.extend({
                         $(this).parents(".sidebar-item").toggleClass("active").find(".summary-table-wrapper").slideToggle('fast');
                     }).prepend("<a class='toggle'>Toggle</a>");
 
+                    // draw the tiny chart
+                    var weeks = _.map(expandWeeks(context.docket.weeks), function(week) {
+                        if (_.contains(['public_submission', 'supporting_material', 'other'], context.type) && context.date >= week.date_range[0] && context.date <= week.date_range[1]) {
+                            week.selected = true;
+                        }
+                        return week;
+                    });
+                    var timeline_data = [{
+                        'name': 'Submissions',
+                        'href': '',
+                        'timeline': weeks,
+                        'overlays': []
+                    }];
+                    _.each(context.docket.fr_docs, function(doc) {
+                        timeline_data[0].overlays.push({
+                            'name': doc.title,
+                            'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
+                            'type': doc.type,
+                            'type_label': ({'notice': 'Notices', 'proposed_rule': 'Proposed Rules', 'rule': 'Rules'})[doc.type],
+                            'selected': context.id == doc.id
+                        });
+                    });
+                    SpareribCharts.tiny_timeline_chart('sidebar-timeline', timeline_data);
+                    this.$el.find('#sidebar-timeline svg').attr('width', '270');
+
                     $('.main-loading').slideUp('fast');
                     this.$el.slideDown('fast');
                 }, this),

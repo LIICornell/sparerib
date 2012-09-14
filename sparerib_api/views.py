@@ -188,16 +188,11 @@ class DocumentView(DRFView):
 
         document = results[0]
 
-        # basic docket metadata
+        # basic document metadata
         out = {
             'title': document.title,
             'url': reverse('document-view', kwargs=kwargs),
             'id': document.id,
-            'docket': {
-                'id': document.docket_id,
-                'url': reverse('docket-view', kwargs={'docket_id': document.docket_id}),
-                'title': Docket.objects(id=document.docket_id).only("title")[0].title
-            },
 
             'agency': {
                 'id': document.agency,
@@ -210,6 +205,19 @@ class DocumentView(DRFView):
             'attachments': [],
             'details': document.details if document.details else {}
         }
+
+        # docket metadata
+        docket = Docket.objects(id=document.docket_id)[0]
+        out['docket'] = {
+            'id': document.docket_id,
+            'url': reverse('docket-view', kwargs={'docket_id': document.docket_id}),
+            'title': docket.title,
+            'weeks': [],
+            'fr_docs': []
+        }
+        if docket.stats:
+            out['docket']['weeks'] = prettify_weeks(docket.stats['weeks'])
+            out['docket']['fr_docs'] = docket.stats['doc_info'].get('fr_docs', [])
 
         if out['date']:
             out['date'] = out['date'].isoformat()

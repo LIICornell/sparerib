@@ -290,7 +290,11 @@ D3Charts = {
         text_color: "#666666",
         link_color: "#0a6e92",
         tick_length: 5,
-        overlay_colors: {}
+        overlay_colors: {},
+        x_tick_count: 5,
+        y_tick_count: 5,
+        stroke_width: 3,
+        overlay_stroke_width: 2
     },
     _get_timeline_size: function(opts) {
         return {
@@ -353,7 +357,7 @@ D3Charts = {
             .classed('ticks', true)
             .attr('transform', 'translate(0,' + (opts.chart_y) + ')')
             .selectAll('line.graph-tick')
-            .data(y.ticks(5))
+            .data(y.ticks(opts.y_tick_count))
             .enter();
                 y_ticks.append('line')
                     .classed('graph-tick', true)
@@ -375,9 +379,8 @@ D3Charts = {
                     .style('text-anchor', 'end');
         
         // x-ticks
-        var x_tick_dates = x.ticks(5);
+        var x_tick_dates = x.ticks(opts.x_tick_count);
         var tickFormat = D3Charts._timeline_tick_format(x_tick_dates);
-        //var tickFormat = x.tickFormat(10);
         var x_ticks = chart.append('g')
             .classed('ticks', true)
             .selectAll('line.graph-tick')
@@ -416,7 +419,7 @@ D3Charts = {
                 .append('path')
                 .classed('graph-line', true)
                 .attr('d', function(d, i) { return line(d.timeline); })
-                .style('stroke-width', '3')
+                .style('stroke-width', opts.stroke_width)
                 .style('stroke', function(d, i) { return opts.colors[i]; })
                 .style('fill-opacity', 0);
         
@@ -460,6 +463,7 @@ D3Charts = {
 
             var series = parent.attr('data-series');
             var color = overlay ? dthis.attr('stroke') : opts.colors[parseInt(series)];
+            dthis.attr('data-default-fill', dthis.attr('fill'));
             dthis.attr('fill', color);
             this.floatingBox = overlay ?
                 make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')), color, d.name, false) :
@@ -481,7 +485,7 @@ D3Charts = {
             var overlay = parent.classed('overlay');
 
             var series = d3.select(this.parentNode).attr('data-series');
-            d3.select(this).attr("fill", overlay ? '#ffffff' : 'rgba(0,0,0,0)');
+            d3.select(this).attr("fill", dthis.attr('data-default-fill'));
             this.floatingBox.remove();
 
             var item = chart.selectAll("g.legend-item" + (overlay ?
@@ -512,10 +516,10 @@ D3Charts = {
                 .data(function(d, i) { return d.timeline; })
                 .enter()
                     .append('circle')
-                    .attr("fill", 'rgba(0,0,0,0)')
+                    .attr("fill", function(d, i) { return d.selected ? opts.colors[parseInt(d3.select(this.parentNode).attr('data-series'))] : 'rgba(0,0,0,0)'; })
                     .attr("cx", function(d,i) { return x(d.mean_date); })
                     .attr("cy", function(d,i) { return y(d.count); })
-                    .attr("r", opts.dot_r)
+                    .attr("r", function(d, i) { return d.selected ? 2 * opts.overlay_stroke_width : opts.dot_r; })
                     .style('stroke', 'rgba(0,0,0,0)')
                     .style('stroke-width', 8)
                     .on('mouseover', dotMouseOver)
@@ -560,7 +564,7 @@ D3Charts = {
                                     .attr("y1", y0)
                                     .attr("y2", y0)
                                     .style("stroke", color)
-                                    .style("stroke-width", "2");
+                                    .style("stroke-width", d.selected ? 2 * opts.overlay_stroke_width : opts.overlay_stroke_width);
 
                                 // vertical end-tick
                                 overlay.append("line")
@@ -569,17 +573,17 @@ D3Charts = {
                                     .attr("y1", y0 - opts.tick_length)
                                     .attr("y2", y0 + opts.tick_length)
                                     .style("stroke", color)
-                                    .style("stroke-width", "2");
+                                    .style("stroke-width", d.selected ? 2 * opts.overlay_stroke_width : opts.overlay_stroke_width);
 
                             }
                             // start circle
                             overlay.append("circle")
                                 .attr("cx", x1)
                                 .attr("cy", y0)
-                                .attr("r", opts.tick_length)
+                                .attr("r", opts.dot_r)
                                 .attr("stroke", color)
                                 .attr("fill", "#ffffff")
-                                .style("stroke-width", "2")
+                                .style("stroke-width", d.selected ? 2 * opts.overlay_stroke_width : opts.overlay_stroke_width)
                                 .on('mouseover', dotMouseOver)
                                 .on('mouseout', dotMouseOut);
                     });
@@ -720,6 +724,34 @@ SpareribCharts = {
             tick_length: 5,
             overlay_colors: SpareribCharts.type_colors,
             show_legend: 'bottom'
+        }
+
+        D3Charts.timeline_chart(div, data, opts);
+    },
+    tiny_timeline_chart: function(div, data) {
+        var opts = {
+            chart_height: 45,
+            chart_width: 180,
+            chart_x: 40,
+            chart_y: 5,
+            right_gutter: 5,
+            label_padding: 10,
+            legend_padding: 15,
+            legend_r: 3,
+            dot_r: 3,
+            row_height: 14,
+            colors : [SpareribCharts.type_colors.public_submission, SpareribCharts.type_colors.notice, SpareribCharts.type_colors.rule],
+            axis_color: "#827d7d",
+            tick_color: '#dcddde',
+            text_color: "#666666",
+            link_color: "#0a6e92",
+            tick_length: 5,
+            overlay_colors: SpareribCharts.type_colors,
+            show_legend: false,
+            x_tick_count: 2,
+            y_tick_count: 2,
+            stroke_width: 2,
+            overlay_stroke_width: 2
         }
 
         D3Charts.timeline_chart(div, data, opts);
