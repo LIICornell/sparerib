@@ -318,7 +318,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     // charts
                     var type = this.model.get('type');
                     var timeline_data = [{
-                        'name': 'Submission Timline',
+                        'name': 'Submissions',
                         'href': '',
                         'timeline': type == "docket" ? expandWeeks(context.stats.weeks) : expandMonths(context.stats.months),
                         'overlays': []
@@ -329,7 +329,8 @@ var AggregatedDetailView = Backbone.View.extend({
                             timeline_data[0].overlays.push({
                                 'name': doc.title,
                                 'date_range': doc.comment_date_range ? doc.comment_date_range : [doc.date, null],
-                                'type': doc.type
+                                'type': doc.type,
+                                'type_label': ({'notice': 'Notices', 'proposed_rule': 'Proposed Rules', 'rule': 'Rules'})[doc.type]
                             });
                         });
                     }

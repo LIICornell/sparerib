@@ -279,7 +279,7 @@ D3Charts = {
         label_padding: 10,
         box_label_padding: 5,
         box_label_max_width: 200,
-        show_legend: true,
+        show_legend: 'left',
         legend_padding: 15,
         legend_r: 5,
         dot_r: 5,
@@ -295,7 +295,7 @@ D3Charts = {
     _get_timeline_size: function(opts) {
         return {
             'width': opts.chart_x + opts.chart_width + opts.right_gutter,
-            'height': opts.chart_y + opts.chart_height + opts.tick_length + opts.label_padding + opts.row_height
+            'height': opts.chart_y + opts.chart_height + opts.tick_length + opts.label_padding + opts.row_height + (opts.show_legend == 'bottom' ? opts.legend_padding + opts.row_height : 0)
         }
     },
     _timeline_tick_format: function(ticks) {
@@ -453,6 +453,52 @@ D3Charts = {
         };
 
         // dots
+        var dotMouseOver = function(d, i) {
+            var dthis = d3.select(this);
+            var parent = d3.select(this.parentNode);
+            var overlay = parent.classed('overlay');
+
+            var series = parent.attr('data-series');
+            var color = overlay ? dthis.attr('stroke') : opts.colors[parseInt(series)];
+            dthis.attr('fill', color);
+            this.floatingBox = overlay ?
+                make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')), color, d.name, false) :
+                make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, format(d.count));
+
+            var item = chart.selectAll("g.legend-item" + (overlay ?
+                '.legend-overlay[data-series="' + series + '"][data-type="' + parent.attr('data-type') + '"]' :
+                '.legend-timeline[data-series="' + series + '"]'
+            ));
+
+            var circle = item.selectAll('circle')
+                .attr('transform', 'scale(1.5)');
+            circle.node() && clearTimeout(circle.node().timeout);
+            item.selectAll('text')
+                .style('font-weight', 'bold');
+        }, dotMouseOut = function(d, i) {
+            var dthis = d3.select(this);
+            var parent = d3.select(this.parentNode);
+            var overlay = parent.classed('overlay');
+
+            var series = d3.select(this.parentNode).attr('data-series');
+            d3.select(this).attr("fill", overlay ? '#ffffff' : 'rgba(0,0,0,0)');
+            this.floatingBox.remove();
+
+            var item = chart.selectAll("g.legend-item" + (overlay ?
+                '.legend-overlay[data-series="' + series + '"][data-type="' + parent.attr('data-type') + '"]' :
+                '.legend-timeline[data-series="' + series + '"]'
+            ));
+
+            var circle = item.selectAll('circle');
+            if (circle.node()) circle.node().timeout = setTimeout(function() {
+                circle.transition()
+                    .duration(200)
+                    .attr('transform', 'scale(1)');
+                item.selectAll('text')
+                    .style('font-weight', null);
+            }, 100)
+        };
+
         chart.append('g')
             .classed('graph-dots', true)
             .attr('transform', 'translate(0,' + (opts.chart_y) + ')')
@@ -472,32 +518,8 @@ D3Charts = {
                     .attr("r", opts.dot_r)
                     .style('stroke', 'rgba(0,0,0,0)')
                     .style('stroke-width', 8)
-                    .on('mouseover', function(d, i) {
-                        var series = d3.select(this.parentNode).attr('data-series');
-                        var color = opts.colors[parseInt(series)];
-                        var dthis = d3.select(this).attr('fill', color);
-                        this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')) + opts.chart_y, color, format(d.count));
-
-                        var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle')
-                            .attr('transform', 'scale(1.5)');
-                        circle.node() && clearTimeout(circle.node().timeout);
-                        chart.selectAll('g.legend-item[data-series="' + series + '"] text')
-                            .style('font-weight', 'bold');
-                    })
-                    .on('mouseout', function(d, i) {
-                        var series = d3.select(this.parentNode).attr('data-series');
-                        d3.select(this).attr("fill", 'rgba(0,0,0,0)');
-                        this.floatingBox.remove();
-
-                        var circle = chart.selectAll('g.legend-item[data-series="' + series + '"] circle');
-                        if (circle.node()) circle.node().timeout = setTimeout(function() {
-                            circle.transition()
-                                .duration(200)
-                                .attr('transform', 'scale(1)');
-                            chart.selectAll('g.legend-item[data-series="' + series + '"] text')
-                                .style('font-weight', null);
-                        }, 100)
-                    });
+                    .on('mouseover', dotMouseOver)
+                    .on('mouseout', dotMouseOut);
 
         // axes
         chart.append("line")
@@ -508,46 +530,6 @@ D3Charts = {
             .style("stroke", opts.axis_color)
             .style("stroke-width", "1");
         
-        // legend
-        if (opts.show_legend) {
-            var legend_x = opts.chart_x + opts.chart_width + opts.legend_padding;
-            var legend_y = opts.chart_y + (opts.chart_height / 2) - (data.length * opts.row_height / 2);
-            var legend = chart.append("g")
-                .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
-            
-            var legendItems = legend.selectAll("g.legend-item")
-                .data(data)
-                .enter()
-                    .append("g")
-                    .classed("legend-item", true)
-                    .attr("data-series", function(d, i) { return i; })
-                    .attr("transform", function(d, i) { return "translate(0," + ((i + .5) * opts.row_height) + ")"; })
-            
-                legendItems.append("circle")
-                    .attr("fill", function(d, i) { return opts.colors[i]; })
-                    .attr("cx", 0)
-                    .attr("cy", 0)
-                    .attr("r", opts.legend_r)
-                    .each(function() {
-                        this.timeout = null;
-                    })
-                
-                legendItems.each(function(d, i) {
-                    var parent = d3.select(this);
-                    if (d.href) {
-                        parent = parent.append("a")
-                        parent.attr('xlink:href', d.href);
-                    }
-                
-                    parent.append("text")
-                        .attr("y", ".45em") // vertical-align: middle
-                        .attr("x", opts.legend_padding)
-                        .attr('fill', parent.node().tagName.toLowerCase() == 'a' ? opts.link_color : opts.text_color)
-                        .text(function(d, i) { return d.name; })
-                        .style('font', '11px arial,sans-serif');
-                });
-        }
-
         // overlays
         var overlayGroups = chart.selectAll("g.overlay-group")
             .data(data)
@@ -561,6 +543,8 @@ D3Charts = {
                         .enter()
                         .append("g")
                         .classed("overlay", true)
+                        .attr('data-series', i)
+                        .attr("data-type", function(d, i) { return d.type; })
                         .each(function(d, i) {
                             var overlay = d3.select(this);
                             var x1 = x(new Date(d.date_range[0]));
@@ -593,21 +577,99 @@ D3Charts = {
                                 .attr("cx", x1)
                                 .attr("cy", y0)
                                 .attr("r", opts.tick_length)
-                                .style("stroke", color)
-                                .style("fill", "#ffffff")
+                                .attr("stroke", color)
+                                .attr("fill", "#ffffff")
                                 .style("stroke-width", "2")
-                                .on('mouseover', function(d, i) {
-                                    var dthis = d3.select(this).style('fill', color);
-                                    this.floatingBox = make_box(dthis.attr('cx'), parseFloat(dthis.attr('cy')), color, d.name, false);
-                                })
-                                .on('mouseout', function(d, i) {
-                                    d3.select(this).style("fill", '#ffffff');
-                                    this.floatingBox.remove();
-                                });
+                                .on('mouseover', dotMouseOver)
+                                .on('mouseout', dotMouseOut);
                     });
 
                 }
             })
+
+        // legend
+        if (opts.show_legend) {
+            if (opts.show_legend == 'left') {
+                var legend_x = opts.chart_x + opts.chart_width + opts.legend_padding;
+                var legend_y = opts.chart_y + (opts.chart_height / 2) - (data.length * opts.row_height / 2);
+            } else {
+                var legend_x = opts.chart_x;
+                var legend_y = opts.chart_y + opts.chart_height + opts.label_padding + (2 * opts.legend_padding);
+            }
+            var legend = chart.append("g")
+                .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
+            
+            if (opts.show_legend == 'left') {
+                var legend_offset = .5 * opts.row_height;
+            } else {
+                var legend_offset = 0;
+            }
+
+            var legendSeries = legend.selectAll("g.legend-series")
+                .data(data)
+                .enter()
+                    .append("g")
+                    .classed("legend-series", true)
+                    .attr("data-series", function(d, i) { return i; });
+
+            var legendItems = legendSeries.selectAll("g.legend-item")
+                .data(function(d, i) { return [d].concat(typeof d.overlays !== "undefined" && d.overlays.length ?
+                    _.uniq(d.overlays, false, function(x) { return x.type }) :
+                    []
+                )})
+                .enter()
+                    .append("g")
+                    .classed("legend-item", true)
+                    .each(function(d, i) {
+                        var dthis = d3.select(this);
+                        dthis.attr('data-series', d3.select(this.parentNode).attr('data-series'));
+                        if (i == 0) {
+                            dthis.classed('legend-timeline', true);
+                        } else {
+                            dthis.classed('legend-overlay', true);
+                            dthis.attr('data-type', d.type);
+                        }
+                    })
+            
+                legendItems.append("circle")
+                    .attr("fill", function(d, i) { return i == 0 ?
+                        opts.colors[parseInt(d3.select(this.parentNode.parentNode).attr("data-series"))] : 
+                        typeof opts.overlay_colors[d.type] === "undefined" ? "red": opts.overlay_colors[d.type];
+                    })
+                    .attr("cx", 0)
+                    .attr("cy", 0)
+                    .attr("r", opts.legend_r)
+                    .each(function() {
+                        this.timeout = null;
+                    })
+                
+                legendItems.each(function(d, i) {
+                    var parent = d3.select(this);
+
+                    if (d.href) {
+                        parent = parent.append("a")
+                        parent.attr('xlink:href', d.href);
+                    }
+                
+                    var text = parent.append("text")
+                        .attr("y", ".45em") // vertical-align: middle
+                        .attr("x", opts.legend_padding)
+                        .attr('fill', parent.node().tagName.toLowerCase() == 'a' ? opts.link_color : opts.text_color)
+                        .text(function(d, i) { return d.timeline ? d.name : d.type_label; })
+                        .style('font', '11px arial,sans-serif');
+
+                    // do this in a timeout to make sure we can computer the lengths accurately
+                    setTimeout(function() {
+                        if (opts.show_legend == 'left') {
+                            parent.attr("transform", "translate(0," + legend_offset + ")");
+                            legend_offset += opts.row_height;
+                        } else {
+                            parent.attr("transform", "translate(" + legend_offset + ",0)");
+                            legend_offset += (2 * opts.legend_r) + (3 * opts.legend_padding) + text.node().getComputedTextLength();
+                        }
+                    }, 0);
+                });
+        }
     }
 }
 
@@ -657,7 +719,7 @@ SpareribCharts = {
             link_color: "#0a6e92",
             tick_length: 5,
             overlay_colors: SpareribCharts.type_colors,
-            show_legend: false
+            show_legend: 'bottom'
         }
 
         D3Charts.timeline_chart(div, data, opts);
