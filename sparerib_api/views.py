@@ -233,7 +233,7 @@ class DocumentView(DRFView):
                 'file_type': view.type,
                 'extracted': view.extracted == 'yes',
                 'url': view.url,
-                'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'view'}) if view.extracted == 'yes' else None
+                'html': reverse('pretty-text-view', kwargs={'document_id': document.id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'view'}) if view.extracted == 'yes' else None
             })
 
             for entity in view.entities:
@@ -250,7 +250,7 @@ class DocumentView(DRFView):
                     'file_type': view.type,
                     'extracted': view.extracted == 'yes',
                     'url': view.url,
-                    'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'object_id': attachment.object_id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'attachment'}) if view.extracted == 'yes' else None
+                    'html': reverse('pretty-text-view', kwargs={'document_id': document.id, 'object_id': attachment.object_id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'attachment'}) if view.extracted == 'yes' else None
                 })
 
                 for entity in view.entities:
@@ -462,20 +462,6 @@ class EntityView(ResponseMixin, View):
             out['stats'] = {'count': 0}
 
         return self.render(Response(200, out))
-
-class RawTextView(View):
-    def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
-        doc = Doc.objects.get(id=document_id)
-        if view_type == 'view':
-            view = [view for view in doc.views if view.type == file_type][0]
-        else:
-            attachment = [attachment for attachment in doc.attachments if attachment.object_id == object_id][0]
-            view = [view for view in attachment.views if view.type == file_type][0]
-
-        if output_format == 'txt':
-            return HttpResponse(view.as_text(), content_type='text/plain')
-        else:
-            return HttpResponse(view.as_html(), content_type='text/html')
 
 class NotFoundView(DRFView):
     def get(self, request):

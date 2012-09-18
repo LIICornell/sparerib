@@ -1,9 +1,11 @@
 from django.conf.urls import patterns, url
-from views import AgencyView, DocketView, DocumentView, EntityView, RawTextView, NotFoundView
+from views import AgencyView, DocketView, DocumentView, EntityView, NotFoundView
 
 from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
 from clustering import DocketHierarchyView, SingleClusterView, DocumentClusterView, DocumentClusterChainView, HierarchyTeaserView
+
+from text import RawTextView, PrettyTextView
 
 urlpatterns = patterns('',
     # resource pages
@@ -20,9 +22,12 @@ urlpatterns = patterns('',
     url(r'^search/agency/(?P<query>.*$)', AgencySearchResultsView.as_view(), name='search-agency-view'),
     url(r'^search/(?P<query>.*$)', DefaultSearchResultsView.as_view(), name='search-default-view'),
 
-    # raw text
+    # view text
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'view'}),
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[0-9a-z]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'attachment'}),
+
+    url(r'^document/(?P<document_id>[A-Z0-9_-]+)/pretty_view_(?P<file_type>[0-9a-z]+)\.html$', PrettyTextView.as_view(), name='pretty-text-view', kwargs={'view_type': 'view', 'output_format': 'html'}),
+    url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[0-9a-z]+)/pretty_view_(?P<file_type>[0-9a-z]+)\.html$', PrettyTextView.as_view(), name='pretty-text-view', kwargs={'view_type': 'attachment', 'output_format': 'html'}),
 
     # clusters
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/hierarchy$', DocketHierarchyView.as_view(), name='docket-hierarchy'),
