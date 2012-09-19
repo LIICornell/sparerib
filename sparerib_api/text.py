@@ -25,26 +25,27 @@ class RawTextView(TextView):
             return HttpResponse(view.as_html(), content_type='text/html')
 
 # text beautifiers
-STYLE_EMBED = BeautifulSoup("""
+STYLE_EMBED = """
 <link rel='stylesheet' type='text/css' href='/static/css/style_iframe.css' />
 <script type="text/javascript" src="//use.typekit.net/faj8hqr.js"></script>
 <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-""")
+"""
 FINGERPRINTS = {'html': [], 'text': []}
-def fingerprint(type, pattern):
+def fingerprint(doctype, pattern):
     def decorator(func):
-        FINGERPRINTS[type].append((re.compile(pattern, re.DOTALL), func))
+        compiled = re.compile(pattern, re.DOTALL) if type(pattern) in [str, unicode] else pattern
+        FINGERPRINTS[doctype].append((compiled, func))
         return func
     return decorator
 
-@fingerprint("html", r"xmlns:xalan.*<h1>PUBLIC SUBMISSION</h1>")
+@fingerprint("html", r"xmlns:xalan.*<h1>[A-Z\s]+</h1>")
 def regsdotgov_standard_comment(content):
     # this is a common output type for comments from FDMS; ugly, but reasonably well-structured
 
     d = BeautifulSoup(content)
 
     # strip out its stylesheet and insert ours
-    d.find("style").replace_with(STYLE_EMBED)
+    d.find("style").replace_with(BeautifulSoup(STYLE_EMBED))
 
     # tweak the title and infobox
     title = d.select("table h1")[0]
@@ -73,6 +74,13 @@ def regsdotgov_standard_comment(content):
 
 
     return unicode(d)
+
+@fingerprint("html", re.compile(r'<meta name="generator" content="pdftohtml', re.I))
+def pdftohtml_document(content):
+    out = content.replace("</HEAD>", STYLE_EMBED + "</HEAD>")
+    out = re.sub(r"<body[^>]*>", "<body>", out, flags=re.I|re.DOTALL)
+
+    return out
 
 class PrettyTextView(TextView):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):

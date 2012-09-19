@@ -121,6 +121,12 @@ h4 { font-size: 115%;
   background: #eeeeee;
   border: 1px solid #dddddd;
   padding: 4px;
+  font-size: 80%;
+}
+
+.metadata, .submitter-information {
+  font-size: 80%;
+  color: #77716F;
 }
 /* end author styles */
 
