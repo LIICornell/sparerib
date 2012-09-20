@@ -84,7 +84,7 @@ h1, h2, h3 {
 
 h1 {
     color: #ffffff;
-    font-size: 250%;
+    font-size: 200%;
     }
 
 h1 a, h1 a:hover {
@@ -106,7 +106,6 @@ h3, h4 {
 
 h3 {
     font-size: 140%;
-    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
     font-weight: 400;
     }
 
@@ -146,6 +145,8 @@ body {
 
 header {
   background: url("../img/bg/header_bg.png");
+  border-bottom: 1px solid #e7e7e7;
+
 }
 
 .header-content {
@@ -198,10 +199,9 @@ header .sf-link a {
 }
 
 .banner {
-  border-top: 1px solid #e7e7e7;
-  background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
+    background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
-.banner h2 {
+.banner-content h2 {
   margin-bottom: 0px;
   margin-top: 8px;
   font-size: 180%;
@@ -211,7 +211,8 @@ header .sf-link a {
   width: 890px;
   margin-left: auto;
   margin-right: auto;
-  padding: 25px 35px 30px;
+  padding: 30px 35px 35px;
+
 }
 
 .mail-stripe-wrapper {
@@ -234,12 +235,23 @@ header .sf-link a {
   height: 60px;
   font-size: 90%;
 }
-.call-to-action strong {
+.call-to-action h4 {
   display: block;
   font-size: 135%;
   line-height: 100%;
-  font-weight: normal;
+  font-weight: bold;
+  padding-bottom:0px;
+  margin-bottom:0px;
 }
+
+.call-to-action p {
+  font-size: 75%;
+  line-height: 100%;
+  font-weight: normal;
+  padding-top: 7px;
+  margin-top:0;
+}
+
 .sign-up {
   width: 250px;
   float: right;
@@ -270,12 +282,21 @@ header .sf-link a {
 }
 
 .sunlight-stripe {
-  width: 610px;
-  padding: 25px 120px 70px 230px;
-  background: url("../img/sf_logo.png") no-repeat 65px 20px;
+  width: 860px;
+  padding: 25px 95px 70px 95px;
   font-size: 75%;
   color: #475360;
 }
+
+.sunlight-strip img {
+   float: left
+   }
+
+.sunlight-strip-text{
+    float: right;
+    width: 680px;
+}
+
 .with-right-sidebar {
   background: url("../img/bg/main_bg_right_sidebar.png") repeat-y top right;
 }
@@ -286,6 +307,7 @@ header .sf-link a {
 .main-column {
   width: 609px;
 }
+
 .with-right-sidebar .main-column {
   padding-left: 35px;
   float: left;
@@ -643,13 +665,10 @@ table tr.even {
   background: #0a6e92;
 }
 .notice {
-  padding: 10px;
-  text-align: center;
-  background: #e9e9e9;
+  padding: 10px 0;
   font-family: georgia, sans-serif;
   font-style: italic;
   margin-bottom: 20px;
-  border: 1px solid #cbcbcb;
 }
 
 .view-by {
@@ -1044,21 +1063,25 @@ table tr.even {
   text-align: left;
 }
 .ui-intertag .ui-tag-type-agency, .ui-menu .ui-tag-type-agency {
-  background: #eaff8e;
+  background: #e3e1dd;
   color: #899553;
-  border: 1px solid #899553;
+  border-bottom: 1px solid #adadad;
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 .ui-menu .ui-tag-type-agency a:after {
   content: "agency filter";
-  color: #a9b866;
+  color: #537b82;
   display: block;
   font-size: 80%;
   text-transform: uppercase;
 }
 .ui-intertag .ui-tag-type-submitter, .ui-menu .ui-tag-type-submitter {
-  background: #a3f3ff;
+  background: #f6f6f6;
   color: #537C82;
-  border: 1px solid #537C82;
+  border-bottom: 1px solid #adadad;
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 .ui-menu .ui-tag-type-submitter a:after {
   content: "submitter filter";
@@ -1098,6 +1121,11 @@ table tr.even {
 
 /* Landing Page Styles */
 
+
+.chart-bkgrnd{
+    background: url('../img/landing-chart.png') no-repeat right center;
+}
+
 #landing h2 {
     font-size: 44px;
 }
@@ -1110,7 +1138,10 @@ table tr.even {
 }
 
 .landing-top{
-    background: url('../img/landing-chart.png') no-repeat center right;
+    background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
+    margin-top:20px;
+    padding-bottom:40px;
+
 }
 
 .landing-top p{
@@ -1125,6 +1156,7 @@ table tr.even {
 
 .threecol {
     background: url('../img/bg/tricol.png') repeat-y scroll top left;
+    margin-bottom:40px;
 
 }
 
@@ -1159,8 +1191,11 @@ table tr.even {
     padding-right:10px;
 }
 
-#landing h4{
+#landing h3{
     color:#529594;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-weight:bold;
+    font-size: 15px;
 }
 
 #landing ul{
