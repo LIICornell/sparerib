@@ -673,13 +673,15 @@ var ClusterView = Backbone.View.extend({
                         .classed("cluster-row", true)
                         .attr("data-row", function(d, i) { return i; })
                         .each(function(d, i) {
-                            divisions.append("rect")
-                                    .attr(bubble_axis, -1 * legend_padding)
-                                    .attr(level_axis, level_scale(i))
-                                    .attr(bubble_dimension, bubble_length)
-                                    .attr(level_dimension, level_scale(1))
-                                    .attr('fill', '#777777')
-                                    .style('opacity', gradient_scale(i));
+                            d3.select(this).classed("cluster-row-" + i, true);
+                            divisions.append("line")
+                                    .attr(bubble_axis + "1", -1 * legend_padding)
+                                    .attr(bubble_axis + "2", bubble_length - legend_padding)
+                                    .attr(level_axis + "1", level_scale(i) + 0.5)
+                                    .attr(level_axis + "2", level_scale(i) + 0.5)
+                                    .attr('fill', 'rgba(0,0,0,0)')
+                                    .style('stroke', i == 0 ? 'none' : '#cccccc')
+                                    .style('stroke-width', '1');
                         })
                         .selectAll(".cluster-cell")
                         .data(function(d, i) { return computed[i]; })

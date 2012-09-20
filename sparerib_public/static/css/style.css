@@ -906,26 +906,21 @@ table tr.even {
   width: 960px;
 }
 .cluster-area {
-  background-color: #222222;
+  background: #ffffff;
 }
 .cluster-label {
-  margin-top: 4px;
+  margin-bottom: 14px;
 }
 .cluster-row-label {
   width: 100px;
-  border-right: 1px solid #aaaaaa;
+  border-right: 1px solid #cccccc;
   text-align: center;
-  font-family: georgia, serif;
-  font-style: italic;
   font-size: 110%;
   line-height: 45px;
-  color: #eeeeee;
 }
 .cluster-similarity {
   text-align: center;
-  font-family: georgia, serif;
-  font-style: italic;
-  background: #eeeeee;
+  background: rgba(34,34,34,0.1);
   text-transform: lowercase;
 }
 .cluster-tip {
@@ -938,7 +933,7 @@ table tr.even {
   z-index: 1000;
 }
 .cluster-docs {
-  margin-top: 10px;
+  margin-top: 20px;
   margin-bottom: 30px;
   height: 600px;
 }
@@ -973,30 +968,42 @@ table tr.even {
   overflow-y: auto;
   background: #ffffff;
 }
-.cluster-cell-alive {
+.cluster-row-0 .cluster-cell-alive {
+  fill: #47525e;
+}
+.cluster-row-1 .cluster-cell-alive {
+  fill: #577b81;
+}
+.cluster-row-2 .cluster-cell-alive {
   fill: #569594;
+}
+.cluster-row-3 .cluster-cell-alive {
+  fill: #6f9579;
+}
+.cluster-row-4 .cluster-cell-alive {
+  fill: #889359;
 }
 .cluster-cell-alive:hover {
   cursor: pointer;
-  fill: #dddddd;
+  fill: rgba(211,204,191,1);
 }
 .cluster-cell-dead {
   fill: #666666;
 }
 .cluster-cell-chain {
-  stroke: #ffffff;
+  stroke: #e7b538;
   stroke-width: 2px;
 }
 .cluster-cell-selected, .cluster-cell-chain.cluster-cell-selected {
   stroke-width: 0;
-  fill: #ffffff;
+  fill: #e7b538;
 }
 .cluster-connection {
   stroke-width: 2px;
-  stroke: #71c4c3;
+  stroke: #555555;
 }
 .cluster-connection-chain {
-  stroke: #ffffff;
+  stroke: #e7b538;
 }
 
 .cluster-doc-list ul {
