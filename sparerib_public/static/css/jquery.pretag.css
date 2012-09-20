@@ -1,11 +1,12 @@
 .ui-intertag-subinput {
     width: 5px;
-    border: 0;
+    border: 1px #FFF;
+    border-radius:6px;
     outline: none;
     margin: 0px;
     padding: 0px;
     padding-top: 7px;
-    padding-bottom: 7px;
+    padding-bottom: 11px;
     padding-left: 4px;
     float: left;
 }
