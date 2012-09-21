@@ -107,6 +107,8 @@ h3, h4 {
 h3 {
     font-size: 140%;
     font-weight: 400;
+    color: #529594;
+
     }
 
 h4 { font-size: 115%;
@@ -1227,6 +1229,20 @@ table tr.even {
     padding-top:10px;
 
 }
+
+
+
+/*  About page  */
+
+#about p{
+    font-size: 80%;
+    width: 66%;
+}
+
+#about h3{
+    padding-top:30px;
+}
+
 
 /* style dummy links */
 a[href=\#] {
