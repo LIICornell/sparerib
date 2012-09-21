@@ -177,6 +177,18 @@ var HomeView = Backbone.View.extend({
     }
 });
 
+var StaticView = Backbone.View.extend({
+    tagName: 'div',
+
+    render: function() {
+        $.get('/static/content/' + this.id + '.mt.html').done($.proxy(function(content) {
+            var template = _.template(content);
+            this.$el.html(template({}));            
+        }, this));
+        return this;
+    }
+});
+
 var SearchView = Backbone.View.extend({
     tagName: 'div',
     className: 'search-view',
@@ -918,7 +930,6 @@ var AppRouter = Backbone.Router.extend({
         this.route(/^(organization|individual|politician|entity)\/([a-zA-Z0-9-]*)\/([a-z0-9-]*)$/, "entityDetail");
         
         // search
-        this.route("", "home");
         this.route("search/:term/:page", "defaultSearchResults");
         this.route("search/:term", "defaultSearchResults");
         this.route("search-:type/:term/:page", "searchResults");
@@ -928,6 +939,10 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id/similarity", "docketClusters");
         this.route("docket/:id/similarity/cutoff-:cutoff", "docketClusters");
         this.route("docket/:id/similarity/cutoff-:cutoff/document-:docId", "docketClusters");
+
+        // static stuff
+        this.route("", "home");
+        this.route("about", "about");
 
         // load the upper search box at the beginning
         var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
@@ -1012,6 +1027,11 @@ var AppRouter = Backbone.Router.extend({
         window.clusters = clusters;
         var clusterView = new ClusterView({model: clusters});
         $('#main').html(clusterView.render().el);
+    },
+
+    about: function() {
+        var view = new StaticView({id: 'about'});
+        $('#main').html(view.render().el);
     }
 });
  
