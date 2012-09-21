@@ -1223,6 +1223,11 @@ table tr.even {
     font-size: 13px;
 }
 
+#landing .threecol img{
+    padding-top:10px;
+
+}
+
 /* style dummy links */
 a[href=\#] {
     opacity: 0.5;
