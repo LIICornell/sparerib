@@ -12,72 +12,113 @@
     </div>
 </div>
 
+<%
+    var agg_filter = (typeof title === "undefined" ? 'agency:' + id + ':' + JSON.stringify(name) : 'docket:' + id + ':' + JSON.stringify(title));
+%>
 <div class="main-content with-right-sidebar">
     <div class="main-column">
-        <h3>Docket Overview</h3>
+        <h3><%=capitalize(type)%> Overview</h3>
         <div class="main-column-item">
             <h4>Timeline</h4>
             <div id="submission-timeline"></div>
         </div>
-        <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
-            <div class="main-column-item">
-                <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
-                
-                <div class="document-summary">
-                    <div class="summary-title">Summary:</div>
-                    <div class="summary-contents">
-                        <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
-                    </div>
-                </div>
-                
-                <div class="document-info-shadow"></div>
-                <div class="document-info">
-                    <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
-                    <div class="comment-info">
-                        <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
-                        <div class="openness">Open for Comment</div>
-                    </div>
-                </div>
 
-                <div class="clear"></div>
+        <% if (type === "docket") { %>
+        <!-- docket-specific displays -->
+        
+        <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
+        <div class="main-column-item">
+            <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
+            
+            <div class="document-summary">
+                <div class="summary-title">Summary:</div>
+                <div class="summary-contents">
+                    <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
+                </div>
             </div>
+            
+            <div class="document-info-shadow"></div>
+            <div class="document-info">
+                <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
+                <div class="comment-info">
+                    <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
+                    <div class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></div>
+                </div>
+            </div>
+
+            <div class="clear"></div>
+        </div>
         <% }); %>
 
         <div class="main-column-split">
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
-                (<a href="#"><%=stats.type_breakdown.supporting_material%> documents total</a>)
+                <% if (stats.type_breakdown.supporting_material) { %>
+                (<a href="/search-document-non-fr/<%=encodeURIComponent('type:supporting_material:"Supporting Material" ' + agg_filter)%>"><%=stats.type_breakdown.supporting_material + " " + pluralize(stats.type_breakdown.supporting_material, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.supporting_material, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
                     <% }); %>
                 </ul>
-            </div>
+                <% } else { %>
+                <div class="notice">This docket doesn't contain any supporting or related materials.</div>
+                <% } %>            </div>
             <div class="main-column-right">
                 <h4>Other Material</h4>
-                (<a href="#"><%=stats.type_breakdown.other%> documents total</a>)
+                <% if (stats.type_breakdown.other) { %>
+                (<a href="/search-document-non-fr/<%=encodeURIComponent('type:other:"Other" ' + agg_filter)%>"><%=stats.type_breakdown.other + " " + pluralize(stats.type_breakdown.other, "document")%> total</a>)
                 <ul class="document-list">
                     <% _.each(stats.doc_info.other, function(doc) { %>
                     <li><a href="/document/<%=doc.id%>"><%=doc.title%></a></li>
                     <% }); %>
                 </ul>
+                <% } else { %>
+                <div class="notice">This docket doesn't contain any materials of type &ldquo;other.&rdquo;</div>
+                <% } %>
             </div>
             <div class="clear"></div>
         </div>
+
+        <% } else { %>
+        <!-- agency-specific displays -->
+        <% _.each([[recent_dockets, 'Most Recent Dockets'], [popular_dockets, 'Most Popular Dockets']], function(row) { %>
+        <div class="main-column-item">
+            <h4><%=row[1]%></h3>
+            <table class="rank-table">
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Total Comments</th>
+                </tr>
+                <% _.each(row[0], function(docket, idx) { %>
+                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                    <td class="date-field"><%=shortFormatDate(docket.date_range[0])%></td>
+                    <td><a href="/docket/<%=docket.id%>"><%=docket.title%></a></td>
+                    <td><%=docket.comment_count%></td>
+                </tr>
+                <% }); %>
+            </table>
+            <br /><a href="/search-docket/<%=encodeURIComponent('agency:' + id + ':"' + name + '"')%>" style="font-size: 80%">View more dockets &raquo;</a>
+        </div>
+        <% }); %>
+
+        <% } %>
     </div>
     <div class="sidebar">
         <div class="sidebar-item">
-            <a href="#">Track this docket with Scout &raquo;</a>
+            <a href="#">Track this <%=type%> with Scout &raquo;</a>
         </div>
+
+        <% if (type === "docket") { %>
         <div class="sidebar-item">
             <h4>Comment Similarity</h4>
-            <div class="similarity-description">
-                This docket contains <span class="group-count">26 groups</span> of comments at least <span class="cutoff">80% similar</span> to one another.
+            <div class="similarity-teaser loading">
             </div>
-            <a href="#">Explore the similarity of comments in this docket &raquo;</a>
         </div>
-        <div class="sidebar-item">
-            <h4>Top Comment Submitters (<a href="#"><%=submission_count%></a>)</h4>
+        <% } %>
+
+        <div class="sidebar-item <%=(type == 'agency' ? 'last' : '')%>">
+            <h4>Top Comment Submitters</h4>
             <div class="submitter-breakdown"></div>
             <div class="top-submitters">
                 <%
@@ -95,36 +136,35 @@
                                     <%=stats[submission_type][i].name%>
                                 <% } %>
                             </strong><br />
-                            (<a href="/search-document/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + " " + type + ":" + id)%>">View <%=stats[submission_type][i].count%> comments</a>)
+                            (<a href="/search-document-non-fr/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + ":" + JSON.stringify(stats[submission_type][i].name) + " " + agg_filter)%>">View <%=stats[submission_type][i].count%> comments</a>)
                         </div>
                         <div class="clear"></div>
                     </div>
                 <%
                         counted_comments += stats[submission_type][i].count;
                     }
-                    var other_count = submission_count - counted_comments;
                 %>
-                <div class="submitter" data-previous-submissions="<%=counted_comments%>" data-submission-count="<%=other_count%>">
-                    <div class="submitter-square submitter-square-other"></div>
-                    <div class="submitter-name">
-                        <strong><a href="#">All other comments</a></strong><br />
-                        (<a href="#">View <%=other_count%> comments</a>)
-                    </div>
-                    <div class="clear"></div>
-                </div>
+                <div class="clear"></div>
+                <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" ' + agg_filter)%>">
+                    View all <%=submission_count%> comments &raquo;
+                </a>
             </div>
         </div>
+
+        <% if (type === "docket" && stats.similar_dockets.length) { %>
         <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
-                <li><a href="#">Supporting Statement for the Information Collection Requirements of the Standards on Marine Terminals (26 CFR Part 1917)</a></li>
-                <li><a href="#">Petition Requesting Non-See-Through Packaging for Torch Fuel and Lamp Oil</a></li>
-                <li><a href="#">Occupational Injuries among Construction Workers Treated at the GWU Emergency Department</a></li>
+                <% _.each(stats.similar_dockets, function(docket) { %>
+                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a></li>
+                <% }); %>
             </ul>
         </div>
+
         <div class="sidebar-item last">
-            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this Docket on Regulations.gov &raquo;</a>
+            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this docket on Regulations.gov &raquo;</a>
         </div>
+        <% } %>
     </div>
     <div class="clear"></div>
 </div>

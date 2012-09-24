@@ -1,55 +1,91 @@
-<h2><%=name%></h2>
-<% for (var k = 0; k < 2; k++) {
-    var submission_type = (['submitter_mentions', 'text_mentions'])[k];
+<div class="banner">
+    <div class="banner-content">
+        <h2><%=name%></h2>
+    </div>
+</div>
 
-    if (stats[submission_type].count == 0) {
+<div class="main-content with-right-sidebar">
+    <div class="main-column">
+        
+        <% for (var k = 0; k < 2; k++) {
+            var submission_type = (['submitter_mentions', 'text_mentions'])[k];
+
+            if (stats[submission_type].count == 0) {
+                %>
+                    <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
+                    <div class="notice">This <%=type%> <%=({'submitter_mentions': 'has not submitted any documents.', 'text_mentions': 'was not mentioned in any documents.'})[submission_type]%></div>
+                <%
+                continue;
+            }
         %>
-            <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
-            <div class="notice">This <%=type%> <%=({'submitter_mentions': 'has not submitted any documents.', 'text_mentions': 'was not mentioned in any documents.'})[submission_type]%></div>
-        <%
-        continue;
-    }
-%>
-<div class="chart-row">
-    <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
-    <div class="dates">
-        <%=formatDate(stats[submission_type].date_range[0])%> &mdash; <%=formatDate(stats[submission_type].date_range[1])%>
-    </div>
-    <div class="double-chart">
-        <div id="<%=({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type]%>-timeline"></div>
-    </div>
-</div>
+        <h3><%=({'submitter_mentions': 'Documents Submitted', 'text_mentions': 'Mentions in Documents'})[submission_type]%></h3>
+        <div class="dates">
+            <%=formatDate(stats[submission_type].date_range[0])%> &mdash; <%=formatDate(stats[submission_type].date_range[1])%>
+        </div>
 
-<div class="chart-row">
-    <% for (var j = 0; j < 2; j++) { 
-        var breakdown_type = (['top_agencies', 'top_dockets'])[j];
-    %>
-    <div class="chart entities <%=(j == 0 ? "left" : "")%>">
-        <h4><%=({'top_agencies': 'Top Agencies', 'top_dockets': 'Top Dockets'})[breakdown_type]%></h4>
-        <table>
-            <tr>
-                <th>Entity</th><th><%=({'submitter_mentions': 'Submissions', 'text_mentions': 'Mentions'})[submission_type]%></th>
-            </tr>
-            <% 
-            for (var i = 0; i < stats[submission_type][breakdown_type].length; i++) { %>
-            <tr class="<%=(i % 2 == 0 ? 'even' : 'odd')%>">
-                <td>
-                    <a href="<%=stats[submission_type][breakdown_type][i].url.replace('/api/1.0', '')%>"><%=stats[submission_type][breakdown_type][i][({'top_agencies': 'name', 'top_dockets': 'title'})[breakdown_type]]%></a>
-                </td>
-                <td>
-                    <%=stats[submission_type][breakdown_type][i].count%>
-                    <a href="/search-document/<%=encodeURIComponent(({'submitter_mentions': 'submitter:', 'text_mentions': 'mentioned:'})[submission_type] + id + " " + ({'top_agencies': 'agency', 'top_dockets': 'docket'})[breakdown_type] + ":" + stats[submission_type][breakdown_type][i].id)%>" class="view-link">view &raquo;</a>
-                </td>
-            </tr>
-            <% } %>
-        </table>
-    </div>
-    <% } %>
-</div>
-<% } %>
+        <div class="main-column-item">
+            <div id="<%=({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type]%>-timeline"></div>
 
-<div class="pagination">
-    <a href="/search-document/<%=encodeURIComponent('submitter:' + id)%>" class="prev">see submissions &raquo;</a>
-    <a href="http://influenceexplorer.com/<%=type%>/<%=slug%>/<%=id%>" class="next">view on influence explorer &raquo;</a>
+            <div class="agency-legend">
+                <strong><%=({'submitter_mentions': 'Top Submissions by Agency', 'text_mentions': 'Top Mentions by Agency'})[submission_type]%></strong><br />
+                <div class="top-agencies">
+                    <% 
+                    for (var i = 0; i < Math.min(stats[submission_type]['top_agencies'].length, 3); i++) { %>
+                    <div class="top-agency">
+                        <div class="agency-square agency-square-<%=i%>"></div>
+                        <div class="agency-name">
+                            <strong>
+                                <a href="<%=stats[submission_type]['top_agencies'][i].url.replace('/api/1.0', '')%>"><%=stats[submission_type]['top_agencies'][i]['name']%></a>
+                            </strong><br />
+                            (<a href="/search-document/<%=encodeURIComponent(({'submitter_mentions': 'submitter:', 'text_mentions': 'mentioned:'})[submission_type] + id + " agency:" + stats[submission_type]['top_agencies'][i].id)%>"><%=stats[submission_type]['top_agencies'][i].count%> comments</a>)
+                        </div>
+                        <div class="clear"></div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-item">
+            <a href="#">Track this <%=type%> with Scout &raquo;</a><br />
+        </div>
+
+        <div class="sidebar-item">
+            <h4>Most recent comments</h4>
+            <table class="summary-table">
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                </tr>
+                <% _.each(stats.submitter_mentions.recent_comments, function(comment, idx) { %>
+                <tr class="<%=(idx % 2 == 0 ? 'even' : 'odd')%>">
+                    <td class="date-field"><%=shortFormatDate(comment.date)%></td>
+                    <td><a href="<%=comment.url%>"><%=comment.title%></a></td>
+                    <td><%=(comment.author ? comment.author : "<em>none listed</em>")%></td>
+                </tr>
+                <% }); %>
+            </table>
+            <br /><a href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
+        </div>
+
+        <div class="sidebar-item">
+            <h4>Top dockets mentioning <%=name%></h4>
+            <ul class="document-list">
+                <% _.each(stats.text_mentions.top_dockets.slice(0, 3), function(docket, idx) { %>
+                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> (<%=docket.count%> mentions)</li>
+                <% }); %>
+            </ul>
+            <br /><a href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more mentions &raquo;</a>
+        </div>
+
+        <div class="sidebar-item last">
+            <a href="http://influenceexplorer.com/<%=type%>/<%=slug%>/<%=id%>">View this <%=type%> on Influence Explorer &raquo;</a>
+        </div>
+    </div>
+
     <div class="clear"></div>
 </div>

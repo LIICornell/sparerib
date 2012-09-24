@@ -1,37 +1,67 @@
-<div class="view-by">
-    <span class="label">View by:</span>
-    <a class="<%=(search.aggregation_level == 'agency' ? 'current' : '')%>" href="<%='/search-agency/' + encodeURIComponent(search.raw_query) %>">agency</a> &raquo; <a class="<%=(search.aggregation_level == 'docket' ? 'current' : '')%>" href="<%='/search-docket/' + encodeURIComponent(search.raw_query) %>">docket</a> &raquo; <a class="<%=(search.aggregation_level == 'document' ? 'current' : '')%>" href="<%='/search-document/' + encodeURIComponent(search.raw_query) %>">document</a>
-</div>
-
-<h3>Results</h3>
-<div class="pages">page <%=page%> of <%=pages%></div>
-
 <% if (total == 0) { %>
 <div class="notice">We didn't find any search results for this term.</div>
 <% } else { %>
-<ul class="results">
-    <% for (var i = 0; i < results.length; i++) { %>
-    <li>
-        <% if (typeof results[i].fields.count !== "undefined") { %>
-        <span class="document-count">
-            matched <%=results[i].matched %> items of <%=results[i].fields.count%>
-            <a href="/search-document/<%=encodeURIComponent(search.raw_query + " " + search.aggregation_level + ":" + results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]])%>" class="view-link">view &raquo;</a>
-        </span>
-        <% } %>
-        <a class="title" href="/<%=search.aggregation_level%>/<%=results[i].fields[({'document': 'document_id', 'docket': 'docket_id', 'agency': 'agency'})[search.aggregation_level]]%>"><%=typeof results[i].fields.title === "undefined" ? results[i].fields.name : results[i].fields.title %></a>
+<div class="result-count">(<%=results.length%> of <%=total%> <%=pluralize(total, "result")%>)</div>
+<table class="results">
+    <% if (search.search_type == "docket") { %>
+        <tr>
+            <th>Title</th><th>Agency</th><th>Date Range</th><th>Matching Comments</th><th>Total Comments</th>
+        </tr>
         
-        <% if (search.aggregation_level == "agency") { %>
-        Federal agency
-        <% } else if (search.aggregation_level == "docket") { %>
-        <a class="agency" href="/agency/<%=results[i].fields.agency%>"><%=results[i].fields.agency%></a> <%=results[i].fields.rulemaking ? "rulemaking" : "non-rulemaking" %> docket <%=results[i].fields.docket_id%>
-        <% } else { %>
-        <%=capitalize(results[i].fields.document_type.split('_').join(' '))%> in docket <a href="/docket/<%=results[i].fields.docket_id%>"><%=results[i].fields.docket_id%></a>
+        <% _.each(results, function(result, idx) { %>
+        <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
+            <td class="title"><a href="/docket/<%=result.fields.docket_id%>"><%=result.fields.title%></a></td>
+            <td><%=result.fields.agency%></td>
+            <td><%=shortFormatDate(result.fields.date_range[0])%> &ndash; <%=shortFormatDate(result.fields.date_range[1])%></td>
+            <td><%=result.matched%></td>
+            <td><%=result.fields.count%></td>
+        </tr>
+        <% }); %>
+    <% } else if (search.search_type == "document-fr") { %>
+        <tr>
+            <th>Title</th><th>Type</th><th>Agency</th><th>Date</th>
+        </tr>
+        
+        <% _.each(results, function(result, idx) { %>
+        <tr class="<%=(idx % 2 == 0 || depth == 'deep' ? 'even': 'odd')%>">
+            <td class="title"><a href="/document/<%=result._id%>"><%=result.fields.title%></a></td>
+            <td><%=capitalize(result.fields.document_type.split('_').join(' '))%></t>
+            <td><%=result.fields.agency%></td>
+            <td><%=shortFormatDate(result.fields.posted_date)%></td>
+        </tr>
+        <% if (depth == 'deep') { %>
+        <tr>
+            <td colspan="5" class="snippet">
+                <%=result.highlight['files.text'].join(" &hellip; ")%>
+            </td>
+        </tr>
         <% } %>
-    </li>
+        <% }); %>
+    <% } else if (search.search_type == "document-non-fr") { %>
+        <tr>
+            <th>Title</th><th>Type</th><th>Agency</th><th>Docket</th><th>Date</th>
+        </tr>
+        
+        <% _.each(results, function(result, idx) { %>
+        <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
+            <td class="title"><a href="/document/<%=result._id%>"><%=result.fields.title%></a></td>
+            <td><%=capitalize(result.fields.document_type.split('_').join(' '))%></t>
+            <td><%=result.fields.agency%></td>
+            <td><%=result.fields.docket_id%>
+            <td><%=shortFormatDate(result.fields.posted_date)%></td>
+        </tr>
+        <% }); %>
     <% } %>
-</ul>
+</table>
+
+<% if (depth == 'shallow') { %>
+<br /><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) %>">View more <%=({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[search.search_type]%> results &raquo;</a>
+<% } else { %>
 <div class="pagination">
-    <% if (previous) { %><a href="<%='/search-' + search.aggregation_level + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.aggregation_level + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
+    <% if (previous) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
     <div class="clear"></div>
 </div>
+<% } %>
+
+
 <% } %>
