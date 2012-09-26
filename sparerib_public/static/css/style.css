@@ -120,6 +120,10 @@ p { font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue"
     font-weight: 400;
     }
 
+.bold{
+    font-weight:bold;
+}
+
 ::-moz-selection {
     background: #808b52;
     color: #fff;
@@ -467,7 +471,8 @@ header .sf-link a {
   height: 12px;
   width: 12px;
   float: left;
-  margin-top: 4px;
+  margin-top: 1px;
+  margin-right:7px;
 }
 .sidebar .submitter-square-0 { background: #47535f; }
 .sidebar .submitter-square-1 { background: #537c82; }
@@ -477,8 +482,20 @@ header .sf-link a {
 .sidebar .submitter-square-other { background: #ffffff; }
 .sidebar .submitter-name {
   width: 230px;
-  float: right;
   margin-bottom: 8px;
+}
+.viewlink{
+    margin-top:0;
+    padding-left:19px;
+}
+
+.submitter-name p {
+    margin-bottom:0;
+}
+
+ul.submitter-name{
+    list-style: none;
+    padding-left:0;
 }
 .sidebar .top-submitters .clear {
   margin-top: 4px;
@@ -651,15 +668,25 @@ span.dates {
   height: 12px;
   width: 12px;
   float: left;
-  margin-top: 4px;
+  margin-top: 1px;
+  margin-right:7px;
 }
 .main-column .agency-square-0 { background: #899553; }
 .main-column .agency-square-1 { background: #47535F; }
 .main-column .agency-square-2 { background: #539594; }
 .main-column .agency-name {
   width: 534px;
-  float: right;
   margin-bottom: 8px;
+}
+
+ul.agency-name{
+    list-style: none;
+    padding-left:0;
+}
+
+
+.top-agencies{
+    padding-left:0;
 }
 .main-column .agency-legend {
   font-size: 80%;

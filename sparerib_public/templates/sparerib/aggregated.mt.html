@@ -126,17 +126,18 @@
                     for (var i = 0; i < Math.min(5, stats[submission_type].length); i++) {
                 %>
                     <div class="submitter" data-previous-submissions="<%=counted_comments%>" data-submission-count="<%=stats[submission_type][i].count%>">
-                        <div class="submitter-square submitter-square-<%=i%>"></div>
-                        <div class="submitter-name">
-                            <strong>
+
+                        <ul class="submitter-name">
+                            <li>
+                                <div class="submitter-square submitter-square-<%=i%>"></div>
                                 <% if (stats[submission_type][i].type == 'organization') { %>
-                                    <a href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a>
+                                    <p class="bold"><a  href="<%=stats[submission_type][i].url%>"><%=stats[submission_type][i].name%></a></p>
                                 <% } else { %>
                                     <%=stats[submission_type][i].name%>
                                 <% } %>
-                            </strong>
-                            (<a href="/search-document-non-fr/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + ":" + JSON.stringify(stats[submission_type][i].name) + " " + agg_filter)%>">View <%=stats[submission_type][i].count%> comments</a>)
-                        </div>
+                            <span class="viewlink">(<a href="/search-document-non-fr/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + ":" + JSON.stringify(stats[submission_type][i].name) + " " + agg_filter)%>">View <%=stats[submission_type][i].count%> comments</a>)</span>
+                            </li>
+                        </ul>
                     </div>
                 <%
                         counted_comments += stats[submission_type][i].count;
