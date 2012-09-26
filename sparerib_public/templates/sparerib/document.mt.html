@@ -1,11 +1,11 @@
 <div class="banner">
     <div class="banner-content">
-        <div class="breadcrumbs">
-            <a href="/agency/<%=agency.id%>"><%=agency.name%></a> &raquo; <a href="/docket/<%=docket.id%>"><%=docket.title%></a> &raquo;
-        </div>
-        <div class="dates">
+        <ol class="breadcrumbs">
+            <li><a href="/agency/<%=agency.id%>"><%=agency.name%></a> &raquo;&nbsp;</li> <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> &raquo;</li>
+        </ol>
+        <span class="dates">
             <%=formatDate(date)%>
-        </div>
+        </span>
         <h2><%=title%></h2>
     </div>
 </div>
@@ -13,6 +13,7 @@
 <div class="main-content with-left-sidebar">
     <div class="sidebar">
         <div class="sidebar-item">
+            <h4>Docket Timeline</h4>
             <div id="sidebar-timeline"></div>
         </div>
         <% if (type == 'public_submission') { %>
@@ -44,7 +45,7 @@
 
     <div class="main-column">
         <h3><%=prettifyLabel(type)%> Overview</h3>
-        
+
         <div class="main-column-item">
             <h4>Document Text</h4>
             <% _.each(full_attachments, function(attachment) { %>
@@ -69,14 +70,14 @@
                         <% i++ }); %>
                     </div>
                     <div class="type-selection">
-                        <span>Showing text extracted from the</span>
+                        <p>Showing text extracted from the
                         <select>
                         <% var i = 0; _.each(attachment.views, function(view) { %>
                             <option value="<%=i%>"><%=view.file_type%></div>
                         <% i++ }); %>
                         </select>
-                        <span>version of the document</span><br />
-                        <a href="#">download from regulations.gov &raquo;</a>
+                        version of the document</p>
+                        <a href="#">Download from regulations.gov &raquo;</a>
                     </div>
                 </div>
             </div>
@@ -104,7 +105,7 @@
                     </tr>
                     <% }); %>
                 </table>
-                <br /><a href="#" style="font-size: 80%">View more comments &raquo;</a>
+                <a href="#" style="font-size: 80%">View more comments &raquo;</a>
             </div>
             <% } %>
 

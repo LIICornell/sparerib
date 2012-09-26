@@ -1,13 +1,13 @@
 <div class="banner">
     <div class="banner-content">
         <% if (typeof agency !== "undefined") { %>
-        <div class="breadcrumbs">
-            <a href="<%=agency.url%>"><%=agency.name%></a> &raquo;
-        </div>
+        <ol class="breadcrumbs">
+            <li><a href="<%=agency.url%>"><%=agency.name%></a> &raquo;</li>
+        </ol>
         <% } %>
-        <div class="dates">
+        <span class="dates">
             <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
-        </div>
+        </span>
         <h2><%=(typeof title === "undefined" ? name : title)%></h2>
     </div>
 </div>
@@ -15,7 +15,7 @@
 <%
     var agg_filter = (typeof title === "undefined" ? 'agency:' + id + ':' + JSON.stringify(name) : 'docket:' + id + ':' + JSON.stringify(title));
 %>
-<div class="main-content with-right-sidebar">
+<div class="main-content with-right-sidebar clearfix">
     <div class="main-column">
         <h3><%=capitalize(type)%> Overview</h3>
         <div class="main-column-item">
@@ -25,32 +25,31 @@
 
         <% if (type === "docket") { %>
         <!-- docket-specific displays -->
-        
+
         <% _.each(stats.doc_info.fr_docs, function(fr_doc) { %>
-        <div class="main-column-item">
+        <div class="main-column-item clearfix">
             <h4><%=({'notice': 'Notice', 'proposed_rule': 'Proposed Rule', 'rule': 'Rule'})[fr_doc.type]%>: <a href="/document/<%=fr_doc.id%>"><%=fr_doc.title%></a></h4>
-            
+
             <div class="document-summary">
-                <div class="summary-title">Summary:</div>
-                <div class="summary-contents">
-                    <%=(fr_doc.summary ? fr_doc.summary : "<em>No summary information available.</em>")%>
-                </div>
-            </div>
-            
-            <div class="document-info-shadow"></div>
-            <div class="document-info">
-                <div class="document-date"><%=shortFormatDate(fr_doc.date)%></div>
-                <div class="comment-info">
-                    <strong>Comments:</strong> <span class="comment-count"><%=fr_doc.stats.count%></span>
-                    <div class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></div>
-                </div>
+                <h4 class="summary-title">Summary:</h4>
+                <p class="summary-contents">
+                    <%=(fr_doc.summary ? fr_doc.summary : "No summary information available.")%>
+                </p>
             </div>
 
-            <div class="clear"></div>
+            <div class="document-info-shadow"></div>
+            <dl class="document-info">
+                <dt class="hidden">Date</dt>
+                <dd class="document-date"><%=shortFormatDate(fr_doc.date)%></dd>
+                <dt class="comment-info">Comments:&nbsp;<dt>
+                <dd class="comment-count"><%=fr_doc.stats.count%></dd>
+                    <span class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></span>
+            </dl>
+
         </div>
         <% }); %>
 
-        <div class="main-column-split">
+        <div class="main-column-split clearfix">
             <div class="main-column-left">
                 <h4>Supporting &amp; Related Material</h4>
                 <% if (stats.type_breakdown.supporting_material) { %>
@@ -61,8 +60,9 @@
                     <% }); %>
                 </ul>
                 <% } else { %>
-                <div class="notice">This docket doesn't contain any supporting or related materials.</div>
-                <% } %>            </div>
+                <p class="notice">This docket doesn't contain any supporting or related materials.</p>
+                <% } %>
+            </div>
             <div class="main-column-right">
                 <h4>Other Material</h4>
                 <% if (stats.type_breakdown.other) { %>
@@ -73,10 +73,9 @@
                     <% }); %>
                 </ul>
                 <% } else { %>
-                <div class="notice">This docket doesn't contain any materials of type &ldquo;other.&rdquo;</div>
+                <p class="notice">This docket doesn't contain any materials of type &ldquo;other.&rdquo;</p>
                 <% } %>
             </div>
-            <div class="clear"></div>
         </div>
 
         <% } else { %>
@@ -98,7 +97,7 @@
                 </tr>
                 <% }); %>
             </table>
-            <br /><a href="/search-docket/<%=encodeURIComponent('agency:' + id + ':"' + name + '"')%>" style="font-size: 80%">View more dockets &raquo;</a>
+            <a href="/search-docket/<%=encodeURIComponent('agency:' + id + ':"' + name + '"')%>" style="font-size: 80%">View more dockets &raquo;</a>
         </div>
         <% }); %>
 
@@ -120,7 +119,7 @@
         <div class="sidebar-item <%=(type == 'agency' ? 'last' : '')%>">
             <h4>Top Comment Submitters</h4>
             <div class="submitter-breakdown"></div>
-            <div class="top-submitters">
+            <div class="top-submitters ">
                 <%
                     var submission_type = 'top_submitter_entities';
                     var counted_comments = 0;
@@ -135,16 +134,14 @@
                                 <% } else { %>
                                     <%=stats[submission_type][i].name%>
                                 <% } %>
-                            </strong><br />
+                            </strong>
                             (<a href="/search-document-non-fr/<%=encodeURIComponent(({'top_submitter_entities': 'submitter:', 'top_text_entities': 'mentioned:'})[submission_type] + stats[submission_type][i].id + ":" + JSON.stringify(stats[submission_type][i].name) + " " + agg_filter)%>">View <%=stats[submission_type][i].count%> comments</a>)
                         </div>
-                        <div class="clear"></div>
                     </div>
                 <%
                         counted_comments += stats[submission_type][i].count;
                     }
                 %>
-                <div class="clear"></div>
                 <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" ' + agg_filter)%>">
                     View all <%=submission_count%> comments &raquo;
                 </a>
@@ -166,5 +163,4 @@
         </div>
         <% } %>
     </div>
-    <div class="clear"></div>
 </div>

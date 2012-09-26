@@ -6,7 +6,7 @@
 
 <div class="main-content with-right-sidebar">
     <div class="main-column">
-        
+
         <% for (var k = 0; k < 2; k++) {
             var submission_type = (['submitter_mentions', 'text_mentions'])[k];
 
@@ -27,16 +27,16 @@
             <div id="<%=({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type]%>-timeline"></div>
 
             <div class="agency-legend">
-                <strong><%=({'submitter_mentions': 'Top Submissions by Agency', 'text_mentions': 'Top Mentions by Agency'})[submission_type]%></strong><br />
+                <strong><%=({'submitter_mentions': 'Top Submissions by Agency', 'text_mentions': 'Top Mentions by Agency'})[submission_type]%></strong>
                 <div class="top-agencies">
-                    <% 
+                    <%
                     for (var i = 0; i < Math.min(stats[submission_type]['top_agencies'].length, 3); i++) { %>
                     <div class="top-agency">
                         <div class="agency-square agency-square-<%=i%>"></div>
                         <div class="agency-name">
                             <strong>
                                 <a href="<%=stats[submission_type]['top_agencies'][i].url.replace('/api/1.0', '')%>"><%=stats[submission_type]['top_agencies'][i]['name']%></a>
-                            </strong><br />
+                            </strong>
                             (<a href="/search-document/<%=encodeURIComponent(({'submitter_mentions': 'submitter:', 'text_mentions': 'mentioned:'})[submission_type] + id + " agency:" + stats[submission_type]['top_agencies'][i].id)%>"><%=stats[submission_type]['top_agencies'][i].count%> comments</a>)
                         </div>
                         <div class="clear"></div>
@@ -69,7 +69,7 @@
                 </tr>
                 <% }); %>
             </table>
-            <br /><a href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
+            <a href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
         </div>
 
         <div class="sidebar-item">
@@ -79,7 +79,7 @@
                 <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> (<%=docket.count%> mentions)</li>
                 <% }); %>
             </ul>
-            <br /><a href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more mentions &raquo;</a>
+            <a href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more mentions &raquo;</a>
         </div>
 
         <div class="sidebar-item last">
