@@ -809,13 +809,22 @@ table tr.even {
 .summary-table {
   width: 100%;
   margin-top: 8px;
+  border-bottom: 1px solid #cbcbcb;
+  padding:5px 0;
 }
 .summary-table .item-label {
+  float: left;
+  width: 100px;
+}
+
+.summary-table .item {
   color: #77716f;
+  float:left;
+  padding-left:5px;
+  margin-left:0;
+  width:145px;
 }
-.summary-table tr {
-  border-bottom: 1px solid #cbcbcb;
-}
+
 .summary-table tr:last-child {
   border-bottom: none;
 }
