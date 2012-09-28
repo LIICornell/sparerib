@@ -68,6 +68,12 @@ td { vertical-align: top; }
 
 /* author styles */
 
+.text-replace {
+    border-bottom: medium none;
+    display: block;
+    text-indent: -9999em;
+}
+
 a, a:visited {
     color: #46535f;
     text-decoration: underline;
@@ -162,19 +168,22 @@ header {
 }
 
 header h1 {
-  left: 35px;
-  top: 45px;
-  position: absolute;
+    float:left;
+  padding-left: 35px;
+  padding-top: 45px;
   margin: 0;
+  padding-right:300px;
 }
 
 header ul#top-menu {
   list-style: none;
   padding: 0;
   margin: 0;
-  position: relative;
-  left: 680px;
   width: 280px;
+  float:right;
+
+  margin-bottom:0;
+  padding-bottom:0;
 }
 
 header ul#top-menu li {
@@ -191,6 +200,11 @@ header ul#top-menu li {
 
 header ul#top-menu li a {
   color: #8d867f;
+}
+
+nav {
+    padding-bottom:0;
+    margin-bottom:0;
 }
 
 header .about-link { width: 70px; }
@@ -220,18 +234,12 @@ header .sf-link a {
   padding: 30px 35px 35px;
 }
 
-.mail-stripe-wrapper {
-  background: url("../img/bg/bottom_stripe_bg.png") repeat-x bottom left;
-  padding: 1px 0 3px 0;
-  border-top: 1px solid #bcbcbc;
-}
+
 .mail-stripe {
-  background: url("../img/bg/header_bg.png");
+    background: url("../img/bg/footer.png") repeat-x top left;
+    height: 167px;
 }
-.mail-stripe-inner {
-  width: 880px;
-  padding: 25px 40px 25px 40px;
-}
+
 .call-to-action {
   padding: 20px 0px 0px 90px;
   background: url("../img/product_of_sunlight.png") no-repeat top left;
@@ -239,6 +247,8 @@ header .sf-link a {
   width: 525px;
   height: 60px;
   font-size: 90%;
+  margin-top:40px;
+  margin-left:30px;
 }
 .call-to-action h4 {
   display: block;
@@ -249,8 +259,7 @@ header .sf-link a {
   margin-bottom:0px;
 }
 
-.call-to-action span {
-  font-size: 75%;
+.call-to-action p {
   line-height: 100%;
   font-weight: normal;
   padding-top: 7px;
@@ -261,7 +270,18 @@ header .sf-link a {
 .sign-up {
   width: 250px;
   float: right;
+  margin-top:50px;
 }
+ul.sign-up {
+    list-style: none;
+    padding-left:0;
+}
+
+.sign-up li{
+    padding:0;
+    margin:0;
+}
+
 .sign-up input[type=text] {
   border: 0;
   -moz-box-shadow: 2px 2px 4px #999;
@@ -294,8 +314,11 @@ header .sf-link a {
   color: #475360;
 }
 
-.sunlight-strip img {
-   float: left
+.sunlight-footer {
+   background: url("../../static/img/sf_logo.png") no-repeat;
+   width:136px;
+   height:41px;
+   float:left;
    }
 
 .sunlight-strip-text{
@@ -833,15 +856,16 @@ table tr.even {
 }
 
 #top-search {
-  position: absolute;
-  top: 75px;
-  left: 608px;
   width: 321px;
+  float: right;
+  margin-top:0;
+  padding-top:40px;
+  padding-right:30px;
 }
 #top-search h2, #top-search .result-set {
   display: none;
 }
-#top-search .search input[type=submit], .main-content .search input[type=submit] {
+#top-search input[type=submit], .main-content .search input[type=submit] {
   display: block;
   float: left;
   width: 53px;
@@ -863,7 +887,7 @@ table tr.even {
 .main-content .search input[type=submit] {
   margin-top: 5px;
 }
-#top-search .ui-intertag, .main-content .search .ui-intertag {
+#top-search input[type=text] {
   width: 250px;
 
   border: 4px solid #dddcda;
@@ -882,6 +906,8 @@ table tr.even {
   -webkit-appearance: none;
   display: block;
   float: left;
+
+  padding:5px 0;
 }
 #top-search .ui-intertag {
   width: 250px;
@@ -889,7 +915,7 @@ table tr.even {
 .main-content .search .ui-intertag {
   width: 440px;
 }
-.main-content .search .ui-intertag .ui-intertag-tags, .main-content .search .ui-intertag input[type=text] {
+.main-content .search .ui-intertag .ui-intertag-tags {
   font-size: 160%;
 }
 .main-content .search .ui-intertag .ui-intertag-tags {
@@ -1224,7 +1250,6 @@ table tr.even {
 }
 
 .threecol {
-    background: url('../img/bg/tricol.png') repeat-y scroll top left;
     margin-bottom:40px;
 
 }
@@ -1239,32 +1264,40 @@ table tr.even {
 
 .firstcol{
     float:left;
-    width:270px;
-    padding-left:10px;
+    width:285px;
     padding-right:20px;
+    background: url('../img/bg/triline.png') repeat-y scroll top right;
+    padding-bottom:20px;
+
 
 }
 
 .midcol{
     float:left;
-    width:270px;
+    width:285px;
     padding-left:20px;
     padding-right:20px;
-
+    background: url('../img/bg/triline.png') repeat-y scroll top right;
+    padding-bottom:80px;
 }
 
 .lastcol{
-    float:left;
-    width:270px;
-    padding-left:20px;
-    padding-right:10px;
+    float: left;
+    width: 260px;
+    padding-left: 20px;
+    padding-top:0;
+}
+
+#landing.no-sidebar{
+    padding-top:0;
 }
 
 #landing h3{
     color:#529594;
     font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-    font-weight:bold;
+    font-weight: bold;
     font-size: 15px;
+    padding-top:20px;
 }
 
 #landing ul{

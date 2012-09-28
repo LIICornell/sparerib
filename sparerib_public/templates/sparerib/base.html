@@ -28,13 +28,6 @@
     <header>
         <div class="header-content">
             <h1><a href="/"><img src="../../static/img/DocketWrench_01.png" width="206" height="62" alt="Docket Wrench logo"></a></h1>
-            <div id="top-search">
-                <div class="search">
-                    <form>
-                        <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
-                    </form>
-                </div>
-            </div>
             <nav>
                 <ul id="top-menu">
                     <li class="about-link"><a href="/about">About</a></li>
@@ -42,6 +35,9 @@
                     <li class="sf-link"><a href="http://sunlightfoundation.com">Sunlight Foundation</a>
                 </ul>
             </nav>
+            <form id="top-search" class="search">
+                <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
+            </form>
         </div>
     </header>
     <div class="main-loading loading"></div>
@@ -49,25 +45,22 @@
         {% block "main" %}{% endblock %}
     </div>
     <footer>
-        <div class="mail-stripe-wrapper">
-            <div class="mail-stripe ">
-                <div class="mail-stripe-inner clearfix">
-                    <div class="call-to-action">
-                        <h4>Like this project and want to discover others like it?
-                        <span>Join the Sunlight Foundation's open government community to learn more.</span></h4>
-                    </div>
-                    <div class="sign-up">
-                        <form name="list-sign-up">
-                            <input class="email-field" type="text" value="Email Address" />
-                            <input class="zip-field" type="text" value="Zip Code" />
-                            <input type="submit" value="Sign Up" />
-                        </form>
-                    </div>
+        <div class="mail-stripe ">
+            <div class="mail-stripe-inner">
+                <div class="call-to-action">
+                    <h4>Like this project and want to discover others like it?</h4>
+                    <p>Join the Sunlight Foundation's open government community to learn more.</p>
                 </div>
+                <ul class="sign-up">
+                    <form name="list-sign-up">
+                        <li><input class="email-field" type="text" value="Email Address" /></li>
+                        <li><input class="zip-field" type="text" value="Zip Code" /><input type="submit" value="Sign Up" /></li>
+                    </form>
+                </ul>
             </div>
         </div>
         <div class="sunlight-stripe">
-            <a href="http://sunlightfoundation.com"><img src="../../static/img/sf_logo.png" width="136" height="41" alt="Sunlight Foundation"></a>
+            <a class="sunlight-footer text-replace" href="http://sunlightfoundation.com">http://sunlightfoundation.com</a>
             <p class="sunlight-strip-text">Founded in 2006, the Sunlight Foundation is a non-partisan non-profit that uses cutting-edge technology and ideas to make government transparent and accountable. Visit <a href="http://sunlightfoundation.com">SunlightFoundation.com</a> to learn more.</p>
         </div>
     </footer>
