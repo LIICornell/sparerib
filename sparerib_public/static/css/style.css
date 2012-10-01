@@ -175,6 +175,14 @@ header h1 {
   padding-right:100px;
 }
 
+h1 a {
+text-indent: -9999em;
+display: block;
+background: url(../../static/img/DocketWrench_02.png) top left no-repeat;
+width: 350px;
+height: 50px;
+}
+
 header ul#top-menu {
   list-style: none;
   padding: 0;
