@@ -29,7 +29,7 @@
             <td><%=result.fields.agency%></td>
             <td><%=shortFormatDate(result.fields.posted_date)%></td>
         </tr>
-        <% if (depth == 'deep') { %>
+        <% if (depth == 'deep' && typeof result.highlight !== "undefined") { %>
         <tr>
             <td colspan="5" class="snippet">
                 <%=result.highlight['files.text'].join(" &hellip; ")%>

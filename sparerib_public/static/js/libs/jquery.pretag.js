@@ -10,7 +10,7 @@
         $(this).each(function() {
             options = $.extend({
                 'source': function(request, response) { response([]); },
-                'addTag': function(item) {
+                'addTag': function(item, fromClick) {
                     var new_tag = $(tag);
                     new_tag.find('.ui-label').html(item.label);
                     new_tag.data('value', item.value);
@@ -25,6 +25,16 @@
                 },
                 'clearTags': function() {
                     tags.html("");
+                },
+                'setText': function(text) {
+                    var input = container.find("input").eq(0);
+                    if (text) {
+                        input.val(text);
+                    }
+                },
+                'getText': function(text) {
+                    var input = container.find("input").eq(0);
+                    return input.val();
                 }
             }, options);
 
@@ -80,7 +90,7 @@
 
                     $this.val(pre_tag + post_tag);
 
-                    options.addTag(ui.item);
+                    options.addTag(ui.item, true);
 
                     $this.focus();
                     $this.caret(pre_tag.length,pre_tag.length);
@@ -159,8 +169,7 @@
                 val.tags.push(item);
             });
             
-            var input = $el.find("input").eq(0);
-            val.text = input.val();
+            val.text = options.getText();
             
             return val;
         },
@@ -170,13 +179,10 @@
             
             options.clearTags();
             $.each(val.tags ? val.tags : [], function(idx, item) {
-                options.addTag(item);
+                options.addTag(item, false);
             });
             
-            var input = $el.find("input").eq(0);
-            if (val.text) {
-                input.val(val.text);
-            }
+            options.setText(val.text);
         }
     }
 })(jQuery);

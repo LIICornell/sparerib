@@ -5,46 +5,78 @@
 </div>
 <div class="main-content with-left-sidebar">
     <div class="sidebar">
-        <div class="sidebar-item search-filter">
-            <h4>Agencies</h4>
+        <div class="sidebar-item search-filter search-filter-keyword" data-filter-type="keyword">
+            <!-- this should move -->
+            <h4 style="font-size: 140%; margin-bottom: 10px;">Filter by</h4>
+
+            <h4>Keyword</h4>
+            <div class="search">
+                <form>
+                    <input type="text" name="query" class="search-query" /> <span class="ui-icon ui-icon-plus"></span>
+                    <div class="clear"></div>
+                </form>
+            </div>
+            <div class="search-tags search-type-keyword"></div>
+        </div>
+        <div class="sidebar-item search-filter" data-filter-type="agency">
+            <h4>Agency</h4>
+            <div class="search">
+                <form>
+                    <input type="text" name="query" class="search-query" />
+                    <div class="clear"></div>
+                </form>
+            </div>
             <div class="search-tags search-type search-type-agency"></div>
         </div>
-        <div class="sidebar-item search-filter">
-            <h4>Submitters</h4>
+        <div class="sidebar-item search-filter" data-filter-type="submitter">
+            <h4>Submitter</h4>
+            <div class="search">
+                <form>
+                    <input type="text" name="query" class="search-query" />
+                    <div class="clear"></div>
+                </form>
+            </div>
             <div class="search-tags search-type search-type-submitter"></div>
         </div>
-        <div class="sidebar-item search-filter">
-            <h4>Entities Mentioned</h4>
+        <div class="sidebar-item search-filter search-filter-magic">
+            <h4>Entity Mentioned</h4>
             <div class="search-tags search-type search-type-mentioned"></div>
         </div>
-        <div class="sidebar-item search-filter">
-            <h4>Dates and Times</h4>
+        <div class="sidebar-item search-filter search-filter-magic">
+            <h4>Date and Time</h4>
             <div class="search-tags search-type search-type-date"></div>
         </div>
-        <div class="sidebar-item search-filter">
-            <h4>Dockets</h4>
+        <div class="sidebar-item search-filter search-filter-magic">
+            <h4>Docket</h4>
             <div class="search-tags search-type search-type-docket"></div>
         </div>
-        <div class="sidebar-item search-filter">
-            <h4>Document Types</h4>
+        <div class="sidebar-item search-filter search-filter-magic">
+            <h4>Document Type</h4>
             <div class="search-tags search-type search-type-type"></div>
         </div>
     </div>
     <div class="main-column">
-        <div class="search">
-            <form>
-                <input type="text" name="query" class="search-query" /> <input type="submit" value="go" />
-                <div class="clear"></div>
-            </form>
-        </div>
-        <div class="result-set result-set-deep">
-            <h3><%=capitalize(({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
+        <% if (depth == "deep") { %>
+            <div class="result-set result-set-deep">
+                <h3><%=capitalize(({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
 
-            <div class="search-results-wrapper">
-                <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
-                <div class="search-results-loaded search-results-shallow search-results-<%=level%>"></div>
+                <div class="search-results-wrapper">
+                    <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
+                    <div class="search-results-loaded search-results-shallow search-results-<%=level%>"></div>
+                </div>
             </div>
-        </div>
+        <% } else { %>
+            <div class="result-set result-set-shallow">
+                <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
+                <h3><%=agg_type[0]%></h3>
+
+                <div class="search-results-wrapper">
+                    <div class="search-results-loading search-results-loading-<%=agg_type[1]%> loading"></div>
+                    <div class="search-results-loaded search-results-shallow search-results-<%=agg_type[1]%>"></div>
+                </div>
+                <% }); %>
+            </div>
+        <% } %>
     </div>
     <div class="clear"></div>
 </div>

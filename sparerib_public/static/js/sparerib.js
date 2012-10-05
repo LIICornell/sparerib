@@ -194,7 +194,8 @@ var SearchView = Backbone.View.extend({
     className: 'search-view',
 
     events: {
-        'submit form': 'search'
+        'submit form': 'search',
+        'click .ui-icon-plus': 'add_keyword'
     },
 
     intertag: function() {
@@ -211,8 +212,9 @@ var SearchView = Backbone.View.extend({
         }
 
         if (this.options.type) {
+            var view = this;
             $.extend(options, {
-                'addTag': function(item) {
+                'addTag': function(item, fromClick) {
                     var new_tag = $('<span class="search-tag"><span class="ui-label"></span><span class="ui-icon ui-icon-close"></span></span>');
                     new_tag.find('.ui-label').html(item.label);
                     new_tag.data('value', item.value);
@@ -225,12 +227,40 @@ var SearchView = Backbone.View.extend({
                     if (box.is(":hidden")) {
                         box.slideDown("fast");
                     }
+
+                    if (fromClick) {
+                        view.search();
+                    }
                 },
                 'getTags': function() {
                     return $('.sidebar .search-type').find('.search-tag');
                 },
                 'clearTags': function() {
                     $('.sidebar .search-type').find('.search-tag').remove();
+                },
+                'setText': function(text) {
+                    $('.sidebar .search-type-keyword').find('.search-tag').remove();
+                    if (text) {
+                        options.addTag({type: 'keyword', label: text, value: text});
+                    }
+                },
+                'getText': function() {
+                    var out = [];
+                    $('.sidebar .search-type-keyword').find('.search-tag').each(function() {
+                        out.push($(this).data('value'));
+                    })
+                    return out.join(" ");
+                },
+                'source': function(request, response) {
+                    var filterType = $(this.element[0]).closest('.search-filter').data('filter-type');
+                    if (request.term.length == 0 || filterType == "keyword") {
+                        response([]);
+                    } else {
+                        var tf = {'agency': 'a', 'submitter': 'o'};
+                        $.getJSON(AC_URL + request.term + "&type=" + tf[filterType], function(data) {
+                            response(data.matches);
+                        });
+                    }
                 }
             });
         }
@@ -239,7 +269,7 @@ var SearchView = Backbone.View.extend({
     },
 
     search: function(evt) {
-        evt.preventDefault();
+        if (evt) evt.preventDefault();
         this.$el.find('input[type=text]').blur();
         app.navigate('/search' + (this.options.type ? "-" + this.options.type : "") + '/' + encodeURIComponent(this.get_encoded_search()), {trigger: true});
         return false;
@@ -255,6 +285,20 @@ var SearchView = Backbone.View.extend({
         terms.push(val.text);
 
         return terms.join(" ");
+    },
+
+    add_keyword: function(evt) {
+        var itg = this.$el.find('.ui-intertag');
+        var input = itg.find('input[type=text]');
+        var val = input.val();
+        if (val) {
+            itg.data('intertagOptions').addTag({
+                type: 'keyword',
+                label: val,
+                value: val
+            }, true);
+            input.val("");
+        }
     }
 })
 
@@ -273,7 +317,7 @@ var ResultsView = Backbone.View.extend({
         'complete': _.template($('#results-tpl').html())
     },
     render: function() {
-        var $el = this.$el.html(this.templates[this.options.depth](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
+        var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
         var search_populated = false;
         _.each(this.options.models, $.proxy(function(_model) {
             var model = _model.model;
@@ -286,7 +330,7 @@ var ResultsView = Backbone.View.extend({
 
                         // populate the search input if necessary
                         if (!search_populated) {
-                            $('.main-content .search form .ui-intertag').val({'tags': context.search.filters, 'text': context.search.text_query});
+                            $('.main-content .search form .ui-intertag').eq(0).val({'tags': context.search.filters, 'text': context.search.text_query});
                             search_populated = true;
                         }
                     }, this),
@@ -303,10 +347,11 @@ var ResultsView = Backbone.View.extend({
         var tag = $(evt.target).closest('.search-tag');
         var container = tag.closest('.search-tags');
         tag.remove();
-        console.log(container.children().length);
-        if (container.children().length == 0) {
+        if (container.children().length == 0 && container.closest('.search-filter').hasClass('search-filter-magic')) {
             container.closest('.sidebar-item').slideUp("fast");
         }
+
+        container.closest('.search-filter').find('form').trigger('submit');
     }
 })
 
@@ -947,16 +992,6 @@ var AppRouter = Backbone.Router.extend({
         // load the upper search box at the beginning
         var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
         topSearchView.intertag();
-
-        // on all navigation, check to show/hide the search box
-        this.on('all', function () {
-            if ($('#main .search').length != 0) {
-                $('#top-search').hide();
-            } else {
-                $('#top-search').show().find('input[type=text]').val('')
-                    .end().find('.ui-intertag').trigger('tagschanged');
-            }
-        });
     },
 
     home: function() {
@@ -981,15 +1016,19 @@ var AppRouter = Backbone.Router.extend({
                 return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
             });
             var depth = 'shallow';
+            var stype = true;
         } else {
             var models = [{'type': type, 'model': new SearchResults({'query': query, 'in_page': page, 'level': type})}];
             var depth = 'deep';
+            var stype = type;
         }
         var resultsView = new ResultsView({'models': models, 'depth': depth});
         $("#main").html(resultsView.render().el);
 
-        var sv = new SearchView({'el': resultsView.$el.find('.search').get(0), 'type': type});
-        sv.intertag();
+        resultsView.$el.find('.search').each(function() {
+            var sv = new SearchView({'el': this, 'type': stype});
+            sv.intertag();
+        })
     },
  
     documentDetail: function(id) {

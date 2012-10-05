@@ -895,7 +895,7 @@ table tr.even {
 .main-content .search input[type=submit] {
   margin-top: 5px;
 }
-#top-search input[type=text] {
+#top-search .ui-intertag {
   width: 250px;
 
   border: 4px solid #dddcda;
@@ -914,20 +914,53 @@ table tr.even {
   -webkit-appearance: none;
   display: block;
   float: left;
-
-  padding:5px 0;
-}
-#top-search .ui-intertag {
-  width: 250px;
 }
 .main-content .search .ui-intertag {
-  width: 440px;
+  width: 250px;
+
+  border: 1px solid #dddcda;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+
+  font-size: 12px;
+  background: #ffffff;
+
+  outline: 0;
+  -webkit-appearance: none;
+  display: block;
+  float: left;
+}
+.main-content .search-filter-keyword .search .ui-intertag {
+  width: 225px !important;
+}
+.main-content .search .ui-intertag .ui-intertag-subinput {
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 .main-content .search .ui-intertag .ui-intertag-tags {
   font-size: 160%;
 }
 .main-content .search .ui-intertag .ui-intertag-tags {
   margin-top: 2px;
+}
+.sidebar .search {
+  position: relative;
+}
+.sidebar .search-filter .ui-icon {
+  float: right;
+  height: 12px;
+  width: 12px;
+  background-position: 0 0;
+}
+.sidebar .search-filter .ui-icon-close {
+  background-image: url("../img/icons/regulations-ex.png") !important;
+}
+.sidebar .search-filter .ui-icon-plus {
+  background-image: url("../img/icons/regulations-plus.png") !important;
+  margin-right: 3px;
+  margin-top: 4px;
+  cursor: pointer;
 }
 .ui-intertag .ui-tag {
   font-size: 75%;
@@ -937,20 +970,14 @@ table tr.even {
   top: 32px;
   left: 4px;
 }
+#top-search .search {
+  position: relative;
+}
 .ui-icon {
   background-image: url("../img/icons/ui-icons_222222_256x240.png") !important;
 }
-.main-content .search {
-  position: relative;
-  margin: 0 auto 20px auto;
-  background: rgba(211, 204, 191, 0.34) url("../img/bg/infobox_bg.png") repeat-x bottom left;
-  width: 515px;
-}
 .no-sidebar .search {
   padding: 40px 90px;
-}
-.with-left-sidebar .search {
-  padding: 40px 47px;
 }
 .no-sidebar .ui-menu-area {
   position: absolute;
@@ -959,11 +986,15 @@ table tr.even {
 }
 .with-left-sidebar .ui-menu-area {
   position: absolute;
-  top: 80px;
-  left: 51px;
+  top: 22px;
+  left: 1px;
 }
 .main-content .search .ui-icon {
   top: 6px;
+}
+.sidebar .search {
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 #results-view h3 {
@@ -1217,7 +1248,7 @@ table tr.even {
 .search-tag:last-child {
   border: 0;
 }
-.search-filter {
+.search-filter-magic {
   display: none;
 }
 
