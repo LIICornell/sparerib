@@ -211,7 +211,7 @@ var SearchView = Backbone.View.extend({
             }
         }
 
-        if (this.options.type) {
+        if (this.options.filters == "complex") {
             var view = this;
             $.extend(options, {
                 'addTag': function(item, fromClick) {
@@ -990,7 +990,7 @@ var AppRouter = Backbone.Router.extend({
         this.route("about", "about");
 
         // load the upper search box at the beginning
-        var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null});
+        var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null, 'filters': 'simple'});
         topSearchView.intertag();
     },
 
@@ -1016,17 +1016,15 @@ var AppRouter = Backbone.Router.extend({
                 return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
             });
             var depth = 'shallow';
-            var stype = true;
         } else {
             var models = [{'type': type, 'model': new SearchResults({'query': query, 'in_page': page, 'level': type})}];
             var depth = 'deep';
-            var stype = type;
         }
         var resultsView = new ResultsView({'models': models, 'depth': depth});
         $("#main").html(resultsView.render().el);
 
         resultsView.$el.find('.search').each(function() {
-            var sv = new SearchView({'el': this, 'type': stype});
+            var sv = new SearchView({'el': this, 'type': type, 'filters': 'complex'});
             sv.intertag();
         })
     },
