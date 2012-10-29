@@ -102,8 +102,8 @@ var helpers = {
         return count == 1 ? singular : plural;
     },
     'slugify': function(value) {
-        var stripped = $.trim(value.replace(/[^\w\s-]/, '')).toLowerCase();
-        return stripped.replace(/[-\s]+/, '-');
+        var stripped = $.trim(value.replace(/[^\w\s-]/g, '')).toLowerCase();
+        return stripped.replace(/[-\s]+/g, '-');
     }
 }
 
