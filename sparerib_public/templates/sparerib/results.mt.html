@@ -51,16 +51,29 @@
             <td><%=shortFormatDate(result.fields.posted_date)%></td>
         </tr>
         <% }); %>
+    <% } else if (search.search_type == "entity-agency") { %>
+        <tr>
+            <th>Name</th><th>Type</th>
+        </tr>
+        
+        <% _.each(results, function(result, idx) { %>
+        <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
+            <td class="title"><a href="/<%=result._type%>/<%=(result._type == 'organization' ? slugify(result.fields.name) + '/' : '')%><%=result._id%>"><%=result.fields.name%></a></td>
+            <td><%=capitalize(result._type)%></td>
+        </tr>
+        <% }); %>
     <% } %>
 </table>
 
-<% if (depth == 'shallow') { %>
-<br /><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) %>">View more <%=({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[search.search_type]%> results &raquo;</a>
-<% } else { %>
-<div class="pagination">
-    <% if (previous) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
-    <div class="clear"></div>
-</div>
+<% if (search.search_type != 'entity-agency') { %>
+    <% if (depth == 'shallow') { %>
+    <br /><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) %>">View more <%=({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[search.search_type]%> results &raquo;</a>
+    <% } else { %>
+    <div class="pagination">
+        <% if (previous) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
+        <div class="clear"></div>
+    </div>
+    <% } %>
 <% } %>
 
 

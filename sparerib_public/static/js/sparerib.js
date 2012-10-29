@@ -100,6 +100,10 @@ var helpers = {
             plural = singular + "s";
         }
         return count == 1 ? singular : plural;
+    },
+    'slugify': function(value) {
+        var stripped = $.trim(value.replace(/[^\w\s-]/, '')).toLowerCase();
+        return stripped.replace(/[-\s]+/, '-');
     }
 }
 
@@ -331,6 +335,32 @@ var ResultsView = Backbone.View.extend({
                         // populate the search input if necessary
                         if (!search_populated) {
                             $('.main-content .search form .ui-intertag').eq(0).val({'tags': context.search.filters, 'text': context.search.text_query});
+
+                            if (context.search.filters.length && this.options.depth == "shallow") {
+                                this.$el.find('.filter-results:hidden').slideDown('fast');
+                                entity_context = _.extend({'depth': this.options.depth}, helpers, {
+                                    'total': context.search.filters.length,
+                                    'search': {
+                                        'search_type': 'entity-agency',
+                                        'raw_query': ''
+                                    },
+                                    'results': _.map(context.search.filters, function(filter) {
+                                        return {
+                                            "_id": filter.value,
+                                            "_type": filter.type == 'submitter' ? 'organization' : 'agency', 
+                                            "fields": {
+                                                "name": filter.label
+                                            }, 
+                                            "url": "http://regulations.sunlightlabs.com/api/1.0/" + filter.type + "/" + filter.value
+                                        };
+                                    })
+                                });
+                                $el.find('.search-results-entity-agency').html(this.templates.complete(entity_context)).slideDown("fast");
+                                $el.find('.search-results-loading-entity-agency').slideUp("fast");
+                            } else {
+                                this.$el.find('.filter-results:visible').slideUp('fast');
+                            }
+
                             search_populated = true;
                         }
                     }, this),

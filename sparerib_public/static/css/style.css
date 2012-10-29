@@ -1041,6 +1041,7 @@ table tr.even {
 .results .snippet em {
   background: #ffff00;
 }
+.filter-results { display: none; }
 
 .cluster-map {
   height: 250px;

@@ -67,6 +67,15 @@
             </div>
         <% } else { %>
             <div class="result-set result-set-shallow">
+                <div class="filter-results">
+                    <h3>Agencies and Organizations</h3>
+
+                    <div class="search-results-wrapper">
+                        <div class="search-results-loading search-results-loading-entity-agency loading"></div>
+                        <div class="search-results-loaded search-results-shallow search-results-entity-agency"></div>
+                    </div>
+                </div>
+
                 <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
                 <h3><%=agg_type[0]%></h3>
 
