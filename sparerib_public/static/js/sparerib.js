@@ -665,7 +665,7 @@ var ClusterView = Backbone.View.extend({
     id: 'cluster-view',
     
     events: {
-        'click .cluster-cell-alive': 'handleSwitchCluster',
+        'selectcluster .cluster-map': 'handleSwitchCluster',
         'click .cluster-doc-list li': 'handleSwitchDoc',
     },
 
@@ -682,184 +682,8 @@ var ClusterView = Backbone.View.extend({
         this.model.fetch({
             'success': $.proxy(function() {
                 var computed = this.model.flatten();
-
-                var start = 0;
-                _.each(computed[0], function(item) {
-                    item.start = start;
-                    start += item.size;
-                })
-
-                // do the rest of the rows
-                for (var depth = 0; depth < this.model.max_depth - 1; depth++) {
-                    _.each(computed[depth], function(item) {
-                        var children = _.sortBy(item.children, function(child) { return -1 * child.size; });
-                        var child_total = d3.sum(_.map(children, function(d) { return d.size; }));
-
-                        // start used to start at the parent's start, but is now adjusted to center the trees
-                        var start = item.start + ((item.size - child_total) / 2);
-                        _.each(children, function(child) {
-                            child.start = start;
-                            start += child.size;
-                        })
-                    })
-                }           
-                
-                // set up orientation
-                var orientation = 'horizontal';
-                if (orientation == 'horizontal') {
-                    var bubble_axis = 'x',
-                        level_axis = 'y',
-                        bubble_dimension = 'width',
-                        level_dimension = 'height';
-
-                } else if (orientation == 'vertical') {
-                    var bubble_axis = 'y',
-                        level_axis = 'x',
-                        bubble_dimension = 'height',
-                        level_dimension = 'width';
-                }
-
-                // do the drawing
-                var bubble_length = 960,
-                    level_length = 250;
-
-                var legend_padding = 60;
-
-                var bubble_scale = d3.scale.linear()
-                    .domain([0, d3.sum(_.map(computed[0], function(d) { return d.size; }))])
-                    .range([0, bubble_length - legend_padding]);
-
-                var level_scale = d3.scale.linear()
-                    .domain([0, this.model.max_depth])
-                    .range([0, level_length]);
-
-                var gradient_scale = d3.scale.linear()
-                    .domain([0, this.model.max_depth - 1])
-                    .range([0, 1]);
-
-                var map = $('.cluster-map').css({'position': 'relative'});
-                this.svg = d3.select(map.get(0))
-                    .classed('loading', false)
-                    .append("svg")
-                    .classed("cluster-area", true)
-                    .style(bubble_dimension, bubble_length + "px")
-                    .style(level_dimension, level_length + "px");
-
-                this.chart = this.svg
-                    .append("g")
-                    .attr("transform", "translate(" + (orientation == 'horizontal' ? legend_padding + ",0" : "0," + legend_padding) + ")");
-
-                var divisions = this.chart.append("g");
-                var connections = this.chart.append("g");
-                this.connections = connections;
-
-                this.chart.selectAll(".cluster-row")
-                    .data(computed)
-                    .enter()
-                        .append("g")
-                        .classed("cluster-row", true)
-                        .attr("data-row", function(d, i) { return i; })
-                        .each(function(d, i) {
-                            d3.select(this).classed("cluster-row-" + i, true);
-                            divisions.append("line")
-                                    .attr(bubble_axis + "1", -1 * legend_padding)
-                                    .attr(bubble_axis + "2", bubble_length - legend_padding)
-                                    .attr(level_axis + "1", level_scale(i) + 0.5)
-                                    .attr(level_axis + "2", level_scale(i) + 0.5)
-                                    .attr('fill', 'rgba(0,0,0,0)')
-                                    .style('stroke', i == 0 ? 'none' : '#cccccc')
-                                    .style('stroke-width', '1');
-                        })
-                        .selectAll(".cluster-cell")
-                        .data(function(d, i) { return computed[i]; })
-                        .enter()
-                            .append("rect")
-                            .attr(level_axis, function(d) { return level_scale(d.row) + 4; })
-                            .attr(bubble_axis, function(d) { return bubble_scale(d.start) + 2; })
-                            .attr(level_dimension, level_scale(1) - 9)
-                            .attr(bubble_dimension, function(d) { return bubble_scale(d.size) - 5; })
-                            .attr("rx", 5)
-                            .attr("ry", 5)
-                            .classed("cluster-cell", true)
-                            .classed("cluster-cell-alive", function(d) { return parseInt(d.name) >= 0; })
-                            .classed("cluster-cell-dead", function(d) { return parseInt(d.name) < 0; })
-                            .attr("data-cluster-id", function(d) { return Math.round(100 * parseFloat(d.cutoff)) + "-" + d.name; })
-                            .attr("data-cluster-size", function(d) { return d.size; })
-                            .on('mouseover', function(d, i) {
-                                var tip = $("<div>");
-                                tip.addClass("cluster-tip")
-
-                                var tipPos = {};
-                                tipPos[orientation == 'horizontal' ? "top" : "left"] = level_scale(d.row + 1) - 6 + "px";
-                                tipPos[orientation == 'horizontal' ? "left": "top"] = bubble_scale(d.start) + legend_padding + 6 + "px";
-                                tip.css(tipPos);
-
-                                if (d.phrases) {
-                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p><ul><li>" + d.phrases.join("</li><li>") + "</li><ul>");
-                                } else {
-                                    tip.html("<strong>" + d.size + " documents.</strong><p>Distinguishing phrases:</p>").addClass("loading")
-                                }
-                                var $this = $(this);
-                                $this.data('tooltip', tip);
-                                map.append(tip);
-                            })
-                            .on('mouseout', function() {
-                                $(this).data('tooltip').remove();
-                            })
-                            .each(function(d, i) {
-                                if (d.parent) {
-                                    connections.append("line")
-                                        .attr(bubble_axis + '1', bubble_scale(d.start + (d.size / 2)))
-                                        .attr(level_axis + '1', level_scale(d.row + .5))
-                                        .attr(bubble_axis + '2', bubble_scale(d.parent.start + (d.parent.size / 2)))
-                                        .attr(level_axis + '2', level_scale(d.row - .5))
-                                        .classed('cluster-connection', true)
-                                        .attr('data-cluster-id', d3.select(this).attr('data-cluster-id'));
-                                }
-                            })
-
-                d3.select(map.get(0)).selectAll("div.cluster-row-label")
-                    .data(computed)
-                    .enter()
-                        .append("div")
-                        .classed("cluster-row-label", true)
-                        .text(function(d, i) { return (10 * i) + 50 + "%"; })
-                        .style("position", "absolute")
-                        .style(bubble_dimension, legend_padding  - 1 + "px")
-                        .style(level_dimension, level_scale(1) + "px")
-                        .style(orientation == 'horizontal' ? "top" : "left", function(d, i) { return level_scale(i) + "px"; })
-                        .style(orientation == 'horizontal' ? "left" : "top", "0px");
-
-
-
-                var prepopulate = this.model.get('prepopulate');
-                if (prepopulate) {
-                    var $box = d3.select($(this.chart[0]).find('rect[data-cluster-id=' + Math.round(100*prepopulate.cutoff) + "-" + prepopulate.cluster + ']').get(0)).classed('cluster-cell-selected', true);
-                    this.switchCluster(prepopulate.cluster, prepopulate.cutoff);
-                    this.switchDoc(prepopulate.cluster, prepopulate.document);
-                }
-
-                var stats = this.model.get('stats');
-                this.$el.find('.cluster-label').html(Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered))  + "% of the documents in this docket are represented above; the rest are unique")
-            
-                // re-fetch the data, this time with summaries
-                // when cluster cell's mouseover callback is next called, data will be there
-                this.model.set("require_summaries", true);
-                if (! computed[0][0].phrases) {
-                    this.model.fetch({
-                        'success': $.proxy(function() {
-                            computed = this.model.flatten();
-                            d3.selectAll('.cluster-row')
-                                .each(function(row, i) {
-                                    d3.select(this).selectAll('.cluster-cell')
-                                        .each(function(cell, j) {
-                                            d3.select(this).datum().phrases = computed[i][j].phrases;
-                                        })
-                                });
-                        }, this)
-                    });
-                }
-            
+                var chart = this.$el.find('.cluster-map').removeClass('loading');
+                this.circles = window.SpareribBubbles.drawBubbles({'element': chart.get(), 'data': this.model.get('cluster_hierarchy')});
             }, this),
             'error': function() {
                 console.log('DocketClusters.fetch() failed');
@@ -869,15 +693,8 @@ var ClusterView = Backbone.View.extend({
         return this;
     },
 
-    handleSwitchCluster: function(evt) {
-        var $box = $(evt.target).closest('.cluster-cell');
-        var dbox = d3.select($box.get(0));
-        var clusterData = $box.attr('data-cluster-id').split("-");
-        var clusterId = clusterData[1], cutoff = clusterData[0] / 100;
-
-        this.switchCluster(clusterId, cutoff, dbox.classed('cluster-cell-chain'));
-        d3.select($box.parents('.cluster-map').get(0)).selectAll('.cluster-cell-selected').classed('cluster-cell-selected', false);
-        dbox.classed('cluster-cell-selected', true);
+    handleSwitchCluster: function(evt, opts) {
+        this.switchCluster(opts.clusterId, opts.cutoff, opts.inChain);
     },
     switchCluster: function(clusterId, cutoff, inChain) {
         if (cutoff != this.model.get('cutoff')) {
@@ -974,6 +791,7 @@ var ClusterView = Backbone.View.extend({
             this.chainModel = new ClusterChain({'docket_id': this.model.id, 'id': docId});
             this.chainModel.fetch({
                 'success': $.proxy(function() {
+                    /*
                     var sizes = this.chainModel.get('clusters');
 
                     // additionally, we'll highlight the relevant clusters in the top view 
@@ -984,6 +802,9 @@ var ClusterView = Backbone.View.extend({
                         d3.select($(this.chart[0]).find('.cluster-cell' + filter).get(0)).classed('cluster-cell-chain', true);
                         d3.select($(this.chart[0]).find('.cluster-connection' + filter).get(0)).classed('cluster-connection-chain', true);
                     }, this));
+                    */
+                    this.circles.removeAllFromChain();
+                    this.circles.addToChain(this.chainModel.get('clusters'));
                 }, this),
                 'error': function() {
                     console.log('failed');

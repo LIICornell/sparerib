@@ -8,6 +8,8 @@ var CHILD_MAX_R = 50;
 var MAX_R = 0.4 * H;
 var PERCENT_MARGIN = 10;
 var PERCENT_OFFSET = 40;
+var TOTAL_W = W;
+var TOTAL_H = H + (ROWSIZE * 4) + 10;
 
 var drawBubbles = function(opts) {
 
@@ -27,10 +29,12 @@ var drawBubbles = function(opts) {
 
     var colorScale = d3.scale.linear().domain([0.5,0.9]).range(['#bbd5d4', '#579594']);
 
-    var svg = d3.selectAll(chartElement).append('svg')
-        .classed('chart', true)
-        .style('width', '1024px')
-        .style('height', '768px');
+    var container = d3.selectAll(chartElement);
+    var $container = $(chartElement);
+    var svg = container.append('svg')
+        .classed('circle-chart', true)
+        .style('width', TOTAL_W + 'px')
+        .style('height', TOTAL_H + 'px');
 
     svg.append('rect')
         .attr('width', W)
@@ -76,7 +80,10 @@ var drawBubbles = function(opts) {
                 .style('fill', depthColor)
                 .attr('data-depth-color', depthColor)
                 .style('stroke-width', '1')
-                .attr('r', child.radius);
+                .attr('r', child.radius)
+                .attr('data-cluster-id', child.source.name)
+                .attr('data-cluster-cutoff', child.source.cutoff)
+                .attr('id', "cluster-" + String(child.source.name) + "-" + String(100 * child.source.cutoff));
 
             var line = lines.append('line')
                 .attr('stroke', '#d5d1c8')
@@ -146,6 +153,7 @@ var drawBubbles = function(opts) {
     }
 
     var mainGroup = svg.append('g');
+    var maxTreeSize = 0;
     var circles = mainGroup.selectAll('.circle').data(nodes.slice(0)).enter()
         .append('g')
         .classed('circle', true)
@@ -159,20 +167,29 @@ var drawBubbles = function(opts) {
                 .classed('parent', true)
                 .style('stroke', '#cccccc')
                 .style('stroke-width', '1')
-                .attr('r', function(d) { return d.radius - 1; });
+                .attr('r', function(d) { return d.radius - 1; })
+                .attr('data-cluster-id', function(d) { return d.source.name; })
+                .attr('data-cluster-cutoff', function(d) { return d.source.cutoff; })
+                .attr('id', function(d) { return "cluster-" + String(d.source.name) + "-" + String(100 * d.source.cutoff) });
             var circleElement = circleSelection[0][0];
 
             var vSelect = function(circle) {
                 circle.style('fill', '#e9b627').classed('selected', true);
+                $container.trigger('selectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
             var vDeselect = function(circle) {
-                circle.style('fill', circle.attr('data-depth-color')).classed('selected', false);
+                circle
+                    .style('fill', circle.attr('data-depth-color'))
+                    .classed('selected', false);
+                $container.trigger('deselectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
 
             var releaseMove = function(d, i) {
                 if (d.fixed) return;
 
                 borders.transition().duration(100).attr("opacity", 0);
+
+                removeAllFromChain();
 
                 var circle = mainGroup.selectAll('.parent');
                 mainGroup.selectAll('.level').attr('transform', "");
@@ -190,6 +207,7 @@ var drawBubbles = function(opts) {
                         fixed = true;
                         _d.fixed = false;
                         var cgroup = d3.select(this);
+                        cgroup.classed('group-selected', false);
                         cgroup.selectAll('circle')
                             .classed('group-selected', false)
                             .filter('.selected')
@@ -241,7 +259,7 @@ var drawBubbles = function(opts) {
 
                     if (_t > t) {
                         setTimeout(function() {
-                            dthis.selectAll('circle').classed('group-selected', true);
+                            dthis.classed('group-selected', true).selectAll('circle').classed('group-selected', true);
                             vSelect(dthis.selectAll('.parent'));
                             drop(dthis);
                         }, 0)
@@ -301,6 +319,7 @@ var drawBubbles = function(opts) {
             var childSGroup = dthis.append("g").classed('level-scale', true).attr('opacity', '0');
             var children = drawChildren(d.source.children, childSGroup, lines);
             dthis.attr('data-tree-size', children.treeSize);
+            if (children.treeSize > maxTreeSize) maxTreeSize = children.treeSize;
 
             var scaleFactor = Math.min(2 * d.radius / children.treeSize, 1);
             childSGroup.attr('transform', 'scale(' + scaleFactor + "," + scaleFactor + ')');
@@ -396,7 +415,7 @@ var drawBubbles = function(opts) {
             dthis.on('click', releaseMove)
             dthis.on('mouseover', parentHoverIn).on('mouseout', parentHoverOut);
         });
-
+    
     force.on("tick", function(e) {
         /* collision detection */
         var q = d3.geom.quadtree(nodes),
@@ -450,6 +469,23 @@ var drawBubbles = function(opts) {
         };
     }
 
+    var addToChain = function(clusters) {
+        _.each(clusters, function(cluster) {
+            var domId = "#cluster-" + cluster.id + "-" + (cluster.cutoff * 100);
+            svg.selectAll(domId)
+                .classed('in-chain', true)
+                .style('stroke-width', '1.5px')
+                .style('stroke', '#e9b627');
+        })
+    };
+
+    var removeAllFromChain = function() {
+        svg.selectAll('.in-chain')
+            .classed('in-chain', false)
+            .style('stroke-width', '1px')
+            .style('stroke', '#eeeeee');
+    }
+
     /* percents */
     var borders = svg.append("g").attr("opacity", 0);
     for (var i = 0; i < 5; i++) {
@@ -475,6 +511,36 @@ var drawBubbles = function(opts) {
             .style("font-family", "helvetica, sans-serif")
             .style("font-size", "12px");
     }
+
+    /* phrase box */
+    var tpbWidth = TOTAL_W - maxTreeSize - 20;
+    var pbWidth = Math.min(535, tpbWidth);
+    var pbHeight = TOTAL_H - H - 30;
+    var pbShape = {
+        'x': TOTAL_W - pbWidth,
+        'y': TOTAL_H - pbHeight - 20,
+        'width': pbWidth,
+        'height': pbHeight
+    };
+    pbShape.center = {
+        'x': pbShape.x + (pbShape.width / 2),
+        'y': pbShape.y + (pbShape.height / 2),
+    }
+    var phraseGroup = svg.append("g");
+    phraseGroup.append("rect")
+        .attr("x", pbShape.x)
+        .attr("y", pbShape.y)
+        .attr("width", pbShape.width)
+        .attr("height", pbShape.height)
+        .style("stroke", "#222222")
+        .style("stroke-width", "1px")
+        .style("fill", "none");
+
+    return {
+        'addToChain': addToChain,
+        'removeAllFromChain': removeAllFromChain
+    }
+
 }
 
 window.SpareribBubbles = {
