@@ -9,7 +9,10 @@ var MAX_R = 0.4 * H;
 var PERCENT_MARGIN = 10;
 var PERCENT_OFFSET = 40;
 
-var drawBubbles = function(chartElement, bubbleData) {
+var drawBubbles = function(opts) {
+
+    var chartElement = opts.element;
+    var bubbleData = opts.data;
 
     // some hackery to scale radii to make the area of the circles be about FRACTION of the area of the whole view
     var areas = d3.sum(_.map(bubbleData, function(d) { return d.size * Math.PI; }));
