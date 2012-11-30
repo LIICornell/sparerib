@@ -10,6 +10,15 @@ var PERCENT_MARGIN = 10;
 var PERCENT_OFFSET = 40;
 var TOTAL_W = W;
 var TOTAL_H = H + (ROWSIZE * 4) + 10;
+var PHRASE_CIRCLE_R = 4;
+var SELECTED_COLOR = "#e9b627";
+
+var THREE_PI_OVER_FOUR = (3 * Math.PI) / 4;
+
+var getBounds = function(delement) {
+    var bounds = delement.getBoundingClientRect ? delement.getBoundingClientRect() : delement[0][0].getBoundingClientRect();
+    return {'top': bounds.top + window.scrollY, 'left': bounds.left + window.scrollX, 'width': bounds.width, 'height': bounds.height};
+}
 
 var drawBubbles = function(opts) {
 
@@ -43,6 +52,8 @@ var drawBubbles = function(opts) {
         .style('stroke', '#000000')
         .style('stroke-width', '1');
 
+    var svgRect = getBounds(svg);
+
     var xpos = 0;
     var ypos = [H / 3, (2 * H) / 3];
     var nodes = [
@@ -52,6 +63,8 @@ var drawBubbles = function(opts) {
     )
 
     var fixedRx = 0, fixedRy = 0;
+    var selected = null;
+    var phraseTm = null;
 
     var force = d3.layout.force()
         .gravity(0.1)
@@ -133,14 +146,14 @@ var drawBubbles = function(opts) {
 
     var updateLines = function(circles) {
         var parent = circles.filter('.parent');
-        var prect = parent[0][0].getBoundingClientRect();
-        var px = (prect.left + prect.right) / 2;
-        var py = (prect.top + prect.bottom) / 2;
+        var prect = getBounds(parent);
+        var px = prect.left + (prect.width / 2);
+        var py = prect.top + (prect.height / 2);
         circles.each(function(d, i) {
             var circle = this;
-            var rect = circle.getBoundingClientRect();
-            var x = ((rect.left + rect.right) / 2) - px;
-            var y = ((rect.top + rect.bottom) / 2) - py;
+            var rect = getBounds(circle);
+            var x = (rect.left + (rect.width / 2)) - px;
+            var y = (rect.top + (rect.height / 2)) - py;
             d3.select(circle.lineToParent)
                 .attr('x1', x)
                 .attr('y1', y);
@@ -162,6 +175,7 @@ var drawBubbles = function(opts) {
             var dthis = d3.select(this);
 
             var lines = dthis.append("g").classed('level-lines', true);
+            lines.attr('visibility', 'hidden');
             
             var circleSelection = dthis.append('circle')
                 .classed('parent', true)
@@ -174,13 +188,17 @@ var drawBubbles = function(opts) {
             var circleElement = circleSelection[0][0];
 
             var vSelect = function(circle) {
-                circle.style('fill', '#e9b627').classed('selected', true);
+                circle.style('fill', SELECTED_COLOR).classed('selected', true);
+                selected = circle;
+                phraseConnect(circle, false);
                 $container.trigger('selectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
             var vDeselect = function(circle) {
                 circle
                     .style('fill', circle.attr('data-depth-color'))
                     .classed('selected', false);
+                selected = null;
+                if (phraseLine[0][0].clusterCircle == circle[0][0]) phraseConnect(null, false);
                 $container.trigger('deselectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
 
@@ -199,6 +217,7 @@ var drawBubbles = function(opts) {
                     dthis.attr('transform', 'scale(' + sf + ',' + sf + ')');
                 })
                 updateLines(mainGroup.selectAll('circle'));
+                mainGroup.selectAll('.level-lines').attr('visibility', 'hidden');
                 var fixed = false;
 
                 circles.each(function(_d, i) {
@@ -222,15 +241,7 @@ var drawBubbles = function(opts) {
                     }
                 })
 
-                if (fixed) {
-                    force.resume();
-                    var _this = this;
-                    setTimeout(function() {
-                        move.call(_this, d, i);
-                    }, 250)
-                } else {
-                    move.call(this, d, i);
-                }
+                move.call(this, d, i);
             }
 
             var move = function(d, i) {
@@ -244,6 +255,9 @@ var drawBubbles = function(opts) {
 
                 var ix = d3.interpolateNumber(d.x, fixedRx);
                 var iy = d3.interpolateNumber(d.y, H - d.radius);
+
+                var parent = dthis.selectAll('.parent');
+                selected = parent;
 
                 var duration = 500;
                 var ease = d3.ease("cubic-in-out");
@@ -260,7 +274,7 @@ var drawBubbles = function(opts) {
                     if (_t > t) {
                         setTimeout(function() {
                             dthis.classed('group-selected', true).selectAll('circle').classed('group-selected', true);
-                            vSelect(dthis.selectAll('.parent'));
+                            vSelect(parent);
                             drop(dthis);
                         }, 0)
                         return true;
@@ -281,6 +295,10 @@ var drawBubbles = function(opts) {
                 var circles = group.selectAll('circle');
 
                 var si = d3.interpolateNumber(parseFloat(scales.attr('data-scale-factor')), 1);
+                
+                updateLines(circles);
+                group.selectAll('.level-lines').attr('visibility', 'visible');
+
                 d3.timer(function(elapsed) {
                     var _t = elapsed / duration;
                     var t = _.min([1,_t]);
@@ -302,7 +320,7 @@ var drawBubbles = function(opts) {
                     updateLines(circles);
 
                     if (_t > t) {
-                        var lineEnd = parseFloat(dthis.attr('data-tree-size')) + PERCENT_OFFSET + PERCENT_MARGIN;
+                        var lineEnd = Math.max(parseFloat(dthis.attr('data-tree-size')), 2 * dthis.datum().radius) + PERCENT_OFFSET + PERCENT_MARGIN;
                         borders.selectAll('line')
                             .attr('x2', lineEnd);
                         borders.selectAll('text.percent-0')
@@ -354,12 +372,15 @@ var drawBubbles = function(opts) {
                 if (!circle.classed('group-selected') || circle.classed('selected')) return;
 
                 circle.style('fill', d3.rgb(circle.attr('data-depth-color')).brighter(0.3));
+
+                phraseConnect(circle, false);
             };
             var childHoverOut = function() {
                 var circle = d3.select(this);
                 if (!circle.classed('group-selected') || circle.classed('selected')) return;
 
                 circle.style('fill', circle.attr('data-depth-color'));
+                phraseConnect(selected ? selected : null, false);
             }
             var childClick = function() {
                 var circle = d3.select(this);
@@ -379,8 +400,12 @@ var drawBubbles = function(opts) {
                 .on('mouseout', function() { childHoverOut.call(d3.selectAll(this.parentNode.childNodes).filter('circle')[0][0]); })
                 .on('click', function() { childClick.call(d3.selectAll(this.parentNode.childNodes).filter('circle')[0][0]); })
 
-
             var parentHoverIn = function(d, i) {
+                if (phraseTm) {
+                    clearTimeout(phraseTm);
+                    phraseTm = null;
+                }
+                
                 var dthis = d3.select(this);
                 var data = dthis.data()[0];
                 if (data.fixed || data.hoverState) return;
@@ -395,6 +420,8 @@ var drawBubbles = function(opts) {
                     .style('fill', function(d, i) { return d3.select(this).attr('data-depth-color'); });
 
                 data.hoverState = true;
+
+                phraseConnect(dthis.selectAll('.parent'), false);
             };
             var parentHoverOut = function(d, i) {
                 var dthis = d3.select(this);
@@ -407,14 +434,56 @@ var drawBubbles = function(opts) {
                     .attr('opacity', 0);
                 trans
                     .selectAll('.parent')
-                    .style('fill', function(d, i) { return d3.select(this).attr('data-color'); });
+                    .style('fill', function(d, i) {
+                        var dthis = d3.select(this);
+                        return dthis.classed("selected") ? SELECTED_COLOR : dthis.attr('data-color');
+                    });
 
                 data.hoverState = false;
+
+                // do the phrase connection reset on a timeout to prevent bouncing
+                if (!phraseTm) {
+                    phraseTm = setTimeout(function() {
+                        phraseConnect(selected ? selected : null, false);
+                        phraseTm = null;
+                    }, 200)
+                }
             };
 
             dthis.on('click', releaseMove)
             dthis.on('mouseover', parentHoverIn).on('mouseout', parentHoverOut);
         });
+    
+    var phraseConnect = function(circle, update) {
+        if (circle == null) {
+            var x = phraseLine.attr("x2");
+            var y = phraseLine.attr("y2");
+            phraseLine.attr("x1", x).attr("y1", y);
+            phraseDot.attr("cx", x).attr("cy", y);
+            phraseLine[0][0].clusterCircle = null;
+            return;
+        }
+
+        if (phraseLine[0][0].clusterCircle == circle[0][0] && !update) return;
+
+        phraseLine[0][0].clusterCircle = circle[0][0];
+        var rect = getBounds(circle);
+
+        var cx = rect.left + (rect.width / 2) - svgRect.left;
+        var x = cx + parseInt(circle.attr('r')) - (2 * PHRASE_CIRCLE_R);
+        var y = rect.top + (rect.height / 2) - svgRect.top;
+        phraseDot.attr("cx", x).attr("cy", y);
+
+        /* figure out where the end of the line should go so it doesn't intersect the circle */
+        var theta = Math.atan((pbShape.center.x - x)/(pbShape.center.y - y));
+        var theta_star = (Math.PI / 2) - theta;
+        if (theta_star > (3 * Math.PI / 4)) theta_star += Math.PI;
+
+        var lx = (PHRASE_CIRCLE_R * Math.cos(theta_star)) + x;
+        var ly = (PHRASE_CIRCLE_R * Math.sin(theta_star)) + y;
+
+        phraseLine.attr("x1", lx).attr("y1", ly);
+    }
     
     force.on("tick", function(e) {
         /* collision detection */
@@ -434,6 +503,8 @@ var drawBubbles = function(opts) {
                 }
                 return "translate(" + d.x + "," + d.y + ")" 
             });
+
+        if (phraseLine[0][0].clusterCircle) phraseConnect(d3.select(phraseLine[0][0].clusterCircle), true);
     });
 
     function collide(node) {
@@ -472,7 +543,9 @@ var drawBubbles = function(opts) {
     var addToChain = function(clusters) {
         _.each(clusters, function(cluster) {
             var domId = "#cluster-" + cluster.id + "-" + (cluster.cutoff * 100);
-            svg.selectAll(domId)
+            var element = svg.selectAll(domId);
+            if (!element.classed('group-selected')) return;
+            element
                 .classed('in-chain', true)
                 .style('stroke-width', '1.5px')
                 .style('stroke', '#e9b627');
@@ -513,7 +586,7 @@ var drawBubbles = function(opts) {
     }
 
     /* phrase box */
-    var tpbWidth = TOTAL_W - maxTreeSize - 20;
+    var tpbWidth = TOTAL_W - (maxTreeSize + PERCENT_MARGIN + PERCENT_OFFSET) - 20;
     var pbWidth = Math.min(535, tpbWidth);
     var pbHeight = TOTAL_H - H - 30;
     var pbShape = {
@@ -534,6 +607,21 @@ var drawBubbles = function(opts) {
         .attr("height", pbShape.height)
         .style("stroke", "#222222")
         .style("stroke-width", "1px")
+        .style("fill", "none");
+    var phraseLine = phraseGroup.append("line")
+        .attr("x1", pbShape.center.x)
+        .attr("y1", pbShape.center.y)
+        .attr("x2", pbShape.center.x)
+        .attr("y2", pbShape.center.y)
+        .style("stroke", "#473f3d")
+        .style("stroke-width", "2px");
+    phraseLine[0][0].clusterCircle = null;
+    var phraseDot = phraseGroup.append("circle")
+        .attr("cx", pbShape.center.x)
+        .attr("cy", pbShape.center.y)
+        .attr("r", PHRASE_CIRCLE_R)
+        .style("stroke", "#473f3d")
+        .style("stroke-width", "2px")
         .style("fill", "none");
 
     return {
