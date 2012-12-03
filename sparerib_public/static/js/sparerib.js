@@ -39,7 +39,7 @@ var DocketClusters = Backbone.Model.extend({
         
         return computed;
     },
-    
+
     url: function() {
         var preselect = this.get('docId');
         var cutoff = this.get('cutoff');
@@ -666,7 +666,12 @@ var ClusterView = Backbone.View.extend({
     
     events: {
         'selectcluster .cluster-map': 'handleSwitchCluster',
+        'hovercluster': 'showPhrases',
         'click .cluster-doc-list li': 'handleSwitchDoc',
+    },
+
+    initialize: function() {
+        this.phrases = {};
     },
 
     template: _.template($('#clusters-tpl').html()),
@@ -681,9 +686,23 @@ var ClusterView = Backbone.View.extend({
 
         this.model.fetch({
             'success': $.proxy(function() {
-                var computed = this.model.flatten();
                 var chart = this.$el.find('.cluster-map').removeClass('loading');
-                this.circles = window.SpareribBubbles.drawBubbles({'element': chart.get(), 'data': this.model.get('cluster_hierarchy')});
+
+                var hierarchy = this.model.get('cluster_hierarchy');
+                this.circles = window.SpareribBubbles.drawBubbles({'element': chart.get(), 'data': hierarchy});
+
+                if (hierarchy.length == 0 || hierarchy[0].phrases) {
+                    this.circles.setPhrasesLoading("false");
+                    this.computePhrases();
+                } else {
+                    this.model.set("require_summaries", true);
+                    this.model.fetch({
+                        'success': $.proxy(function() {
+                            this.circles.setPhrasesLoading("false");
+                            this.computePhrases();
+                        }, this)
+                    })
+                }
             }, this),
             'error': function() {
                 console.log('DocketClusters.fetch() failed');
@@ -737,6 +756,21 @@ var ClusterView = Backbone.View.extend({
             // the new cluster that's been selected appears to be in the same chain as the current cluster, so we can preemptively reload the current document
             this.switchDoc(this.clusterModel.id, docArea.attr('data-document-id'), true);
         }
+    },
+
+    computePhrases: function() {
+        var flat = this.model.flatten();
+        var phrases = this.phrases;
+        _.each(flat, function(row) {
+            _.each(row, function(node) {
+                phrases[node.name + "_" + (100 * node.cutoff)] = node.phrases;
+            })
+        });
+    },
+    showPhrases: function(evt, opts) {
+        var key = opts.clusterId ? opts.clusterId + "_" + (100 * opts.cutoff) : false;
+        var phrases = key && this.phrases[key] ? this.phrases[key] : [];
+        this.circles.setPhrases(phrases);
     },
 
     handleSwitchDoc: function(evt) {

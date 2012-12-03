@@ -39,7 +39,6 @@ var drawBubbles = function(opts) {
     var colorScale = d3.scale.linear().domain([0.5,0.9]).range(['#bbd5d4', '#579594']);
 
     var container = d3.selectAll(chartElement);
-    var $container = $(chartElement);
     var svg = container.append('svg')
         .classed('circle-chart', true)
         .style('width', TOTAL_W + 'px')
@@ -51,6 +50,9 @@ var drawBubbles = function(opts) {
         .style('fill', 'none')
         .style('stroke', '#000000')
         .style('stroke-width', '1');
+
+    var $container = $(chartElement);
+    $container.css('position', 'relative');
 
     var svgRect = getBounds(svg);
 
@@ -461,6 +463,8 @@ var drawBubbles = function(opts) {
             phraseLine.attr("x1", x).attr("y1", y);
             phraseDot.attr("cx", x).attr("cy", y);
             phraseLine[0][0].clusterCircle = null;
+
+            $container.trigger('hovercluster', [{'clusterId': null, 'cutoff': null, 'inChain': false}]);
             return;
         }
 
@@ -483,6 +487,7 @@ var drawBubbles = function(opts) {
         var ly = (PHRASE_CIRCLE_R * Math.sin(theta_star)) + y;
 
         phraseLine.attr("x1", lx).attr("y1", ly);
+        $container.trigger('hovercluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
     }
     
     force.on("tick", function(e) {
@@ -547,7 +552,7 @@ var drawBubbles = function(opts) {
             if (!element.classed('group-selected')) return;
             element
                 .classed('in-chain', true)
-                .style('stroke-width', '1.5px')
+                .style('stroke-width', '2px')
                 .style('stroke', '#e9b627');
         })
     };
@@ -588,7 +593,7 @@ var drawBubbles = function(opts) {
     /* phrase box */
     var tpbWidth = TOTAL_W - (maxTreeSize + PERCENT_MARGIN + PERCENT_OFFSET) - 20;
     var pbWidth = Math.min(535, tpbWidth);
-    var pbHeight = TOTAL_H - H - 30;
+    var pbHeight = TOTAL_H - H - 40;
     var pbShape = {
         'x': TOTAL_W - pbWidth,
         'y': TOTAL_H - pbHeight - 20,
@@ -600,14 +605,6 @@ var drawBubbles = function(opts) {
         'y': pbShape.y + (pbShape.height / 2),
     }
     var phraseGroup = svg.append("g");
-    phraseGroup.append("rect")
-        .attr("x", pbShape.x)
-        .attr("y", pbShape.y)
-        .attr("width", pbShape.width)
-        .attr("height", pbShape.height)
-        .style("stroke", "#222222")
-        .style("stroke-width", "1px")
-        .style("fill", "none");
     var phraseLine = phraseGroup.append("line")
         .attr("x1", pbShape.center.x)
         .attr("y1", pbShape.center.y)
@@ -624,9 +621,30 @@ var drawBubbles = function(opts) {
         .style("stroke-width", "2px")
         .style("fill", "none");
 
+    var phraseText = "<strong>Distinguishing phrases of selected comment group:</strong>";
+    var $phraseDiv = $("<div>")
+        .css({
+            'position': 'absolute',
+            'top': (pbShape.y + 20) + "px",
+            'left': pbShape.x + "px",
+            'width': (pbShape.width - 32) + "px",
+            'height': (pbShape.height - 52) + "px",
+            'border': "1px solid #473f3d",
+            'font-family': "helvetica, sans-serif",
+            'font-size': '12px',
+            'padding': '15px',
+            'overflow-y': 'auto'
+        })
+        .addClass("phrase-box")
+        .addClass("loading")
+        .html(phraseText);
+    $container.append($phraseDiv);
+
     return {
         'addToChain': addToChain,
-        'removeAllFromChain': removeAllFromChain
+        'removeAllFromChain': removeAllFromChain,
+        'setPhrasesLoading': function(state) { $phraseDiv.toggleClass("loading", state); },
+        'setPhrases': function(phrases) { $phraseDiv.html(phraseText + (phrases.length ? "<ul><li>" + phrases.join("</li><li>") + "</li></ul>" : ""))}
     }
 
 }
