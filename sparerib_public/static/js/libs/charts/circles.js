@@ -175,6 +175,7 @@ var drawBubbles = function(opts) {
         .each(function(d, i) {
 
             var dthis = d3.select(this);
+            dthis.attr('id', 'cluster-group-' + d.source.name);
 
             var lines = dthis.append("g").classed('level-lines', true);
             lines.attr('visibility', 'hidden');
@@ -204,7 +205,7 @@ var drawBubbles = function(opts) {
                 $container.trigger('deselectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
 
-            var releaseMove = function(d, i) {
+            var releaseMove = function(d, i, toSelect) {
                 if (d.fixed) return;
 
                 borders.transition().duration(100).attr("opacity", 0);
@@ -243,10 +244,10 @@ var drawBubbles = function(opts) {
                     }
                 })
 
-                move.call(this, d, i);
+                move.call(this, d, i, toSelect);
             }
 
-            var move = function(d, i) {
+            var move = function(d, i, toSelect) {
                 if (!dthis.data()[0].hoverState) parentHoverIn.call(dthis[0][0]);
 
                 var ts = parseFloat(dthis.attr('data-tree-size'));
@@ -258,8 +259,8 @@ var drawBubbles = function(opts) {
                 var ix = d3.interpolateNumber(d.x, fixedRx);
                 var iy = d3.interpolateNumber(d.y, H - d.radius);
 
-                var parent = dthis.selectAll('.parent');
-                selected = parent;
+                toSelect = toSelect ? toSelect : dthis.selectAll('.parent');
+                selected = toSelect;
 
                 var duration = 500;
                 var ease = d3.ease("cubic-in-out");
@@ -276,7 +277,7 @@ var drawBubbles = function(opts) {
                     if (_t > t) {
                         setTimeout(function() {
                             dthis.classed('group-selected', true).selectAll('circle').classed('group-selected', true);
-                            vSelect(parent);
+                            vSelect(toSelect);
                             drop(dthis);
                         }, 0)
                         return true;
@@ -354,7 +355,9 @@ var drawBubbles = function(opts) {
             circleSelection.style('fill', color);
             circleSelection.attr('data-depth-color', colorScale(d.source.cutoff));
 
-            updateLines(mainGroup.selectAll('circle'));
+            var allCircles = dthis.selectAll('circle');
+            allCircles.attr('data-group-id', d.source.name);
+            updateLines(allCircles);
 
             var number = dthis.append("text")
                 .classed('parent-number', true)
@@ -644,7 +647,13 @@ var drawBubbles = function(opts) {
         'addToChain': addToChain,
         'removeAllFromChain': removeAllFromChain,
         'setPhrasesLoading': function(state) { $phraseDiv.toggleClass("loading", state); },
-        'setPhrases': function(phrases) { $phraseDiv.html(phraseText + (phrases.length ? "<ul><li>" + phrases.join("</li><li>") + "</li></ul>" : ""))}
+        'setPhrases': function(phrases) { $phraseDiv.html(phraseText + (phrases.length ? "<ul><li>" + phrases.join("</li><li>") + "</li></ul>" : ""))},
+        'select': function(id, cutoff) {
+            var circle = d3.selectAll('#cluster-' + id + "-" + (100 * cutoff));
+            var groupId = circle.attr('data-group-id');
+            var group = d3.selectAll("#cluster-group-" + id);
+            group.on("click")(group.datum(), 0, circle);
+        }
     }
 
 }
