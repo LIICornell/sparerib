@@ -229,7 +229,7 @@ header .sf-link a {
 .banner {
     background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
-.banner-content h2 {
+.banner-content h2, .cluster-summary h2 {
   margin-bottom: 0px;
   margin-top: 8px;
   font-size: 180%;
@@ -1050,9 +1050,26 @@ table tr.even {
 .cluster-area {
   background: #ffffff;
 }
-.cluster-label {
-  margin-bottom: 14px;
+
+.cluster-summary {
+  position: relative;
+  min-height: 275px;
+  margin-top: 30px;
 }
+.cluster-meta {
+  width: 350px;
+}
+.cluster-summary .percent {
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-weight: 700;
+  font-size: 125%;
+}
+.cluster-visualization h4 {
+  margin-left: 40px;
+  margin-bottom: 8px;
+  visibility: hidden;
+}
+
 .cluster-row-label {
   width: 100px;
   border-right: 1px solid #cccccc;

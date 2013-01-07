@@ -683,10 +683,12 @@ var ClusterView = Backbone.View.extend({
         
     renderMap: function() {
         this.$el.find('.cluster-map').html("").addClass('loading');
+        this.$el.find('.cluster-breakdown').html("");
 
         this.model.fetch({
             'success': $.proxy(function() {
                 var chart = this.$el.find('.cluster-map').removeClass('loading');
+                this.$el.find('.cluster-visualization h4').css('visibility', 'visible');
 
                 var hierarchy = this.model.get('cluster_hierarchy');
                 this.circles = window.SpareribBubbles.drawBubbles({'element': chart.get(), 'data': hierarchy});
@@ -696,6 +698,9 @@ var ClusterView = Backbone.View.extend({
                     this.circles.select(prepopulate.cluster, prepopulate.cutoff);
                     this.switchDoc(prepopulate.cluster, prepopulate.document);
                 }
+
+                var stats = this.model.get('stats');
+                this.renderSummary(stats);
 
                 if (hierarchy.length == 0 || hierarchy[0].phrases) {
                     this.computePhrases();
@@ -716,6 +721,43 @@ var ClusterView = Backbone.View.extend({
         });
 
         return this;
+    },
+
+    renderSummary: function(stats) {
+        var percentage = Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered));
+
+        var pie = SpareribCharts.cluster_piechart(this.$el.find(".cluster-breakdown").get(0), [{"type": "unclustered", "percentage": 100 - percentage}, {"type": "clustered", "percentage": percentage}]);
+        pie.style("position", "absolute").style("bottom", "0px").style("left", "0px");
+        var $container = $(pie[0][0].parentNode);
+
+        _.each([[445, 120 - 45, "unclustered"], [445, 120 + 45, "clustered"]], function(coords) {
+            var group = pie.append("g");
+            group.append("line")
+                .attr("x1", coords[0] + 4)
+                .attr("y1", coords[1])
+                .attr("x2", coords[0] + 140)
+                .attr("y2", coords[1])
+                .style("stroke", "#473f3d")
+                .style("stroke-width", "2px");
+            group.append("circle")
+                .attr("cx", coords[0])
+                .attr("cy", coords[1])
+                .attr("r", 4)
+                .style("stroke", "#473f3d")
+                .style("stroke-width", "2px")
+                .style("fill", "none");
+            if (coords[2] == "clustered") {
+                var text = "<span class='percent'>" + percentage + "%</span> of comments are unique and have less than 50% similarity to other comments";
+            } else {
+                var text = "<span class='percent'>" + (100 - percentage) + "%</span> of comments have at least 50% similarity to one or more other comments";
+            }
+            var $div = $("<div>").html(text).css({'position': 'absolute', 'left': (coords[0] + 150) + 'px', 'bottom': (250 - coords[1]), 'width': '265px', 'font-size': '80%'});
+            $container.append($div);
+        });
+        
+        SpareribCharts.brace(pie, 445, 230, pie.selectAll('.slice-clustered')[0][0].getBoundingClientRect().width, "up");
+        SpareribCharts.brace(pie, 445, 240, 885, "down");
+        pie.append("line").attr("x1", 445).attr("x2", 445).attr("y1", 230).attr("y2", 240).style("stroke", "#cbc5b9").style("stroke-width", "1px");
     },
 
     handleSwitchCluster: function(evt, opts) {

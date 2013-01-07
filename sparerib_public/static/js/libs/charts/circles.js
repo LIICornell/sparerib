@@ -44,11 +44,11 @@ var drawBubbles = function(opts) {
         .style('width', TOTAL_W + 'px')
         .style('height', TOTAL_H + 'px');
 
-    svg.append('rect')
-        .attr('width', W)
-        .attr('height', H)
+    svg.append('line')
+        .attr("x1", 0).attr('x2', W)
+        .attr('y1', H).attr("y2", H)
         .style('fill', 'none')
-        .style('stroke', '#000000')
+        .style('stroke', '#cbc5b9')
         .style('stroke-width', '1');
 
     var $container = $(chartElement);
@@ -583,7 +583,7 @@ var drawBubbles = function(opts) {
                 .attr("x2", 100)
                 .attr("y1", lineOffset)
                 .attr("y2", lineOffset)
-                .attr("stroke", "#222222")
+                .attr("stroke", "#cbc5b9")
                 .attr("stroke-width", "1");
         }
 
@@ -638,7 +638,7 @@ var drawBubbles = function(opts) {
             'left': pbShape.x + "px",
             'width': (pbShape.width - 32) + "px",
             'height': (pbShape.height - 52) + "px",
-            'border': "1px solid #473f3d",
+            'border': "1px solid #cbc5b9",
             'font-family': "helvetica, sans-serif",
             'font-size': '12px',
             'padding': '15px',
