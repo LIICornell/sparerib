@@ -459,6 +459,7 @@ var drawBubbles = function(opts) {
             dthis.on('mouseover', parentHoverIn).on('mouseout', parentHoverOut);
         });
     
+    var connected = null;
     var phraseConnect = function(circle, update) {
         if (circle == null) {
             var x = phraseLine.attr("x2");
@@ -468,6 +469,7 @@ var drawBubbles = function(opts) {
             phraseLine[0][0].clusterCircle = null;
 
             $container.trigger('hovercluster', [{'clusterId': null, 'cutoff': null, 'inChain': false}]);
+            connected = null;
             return;
         }
 
@@ -490,7 +492,11 @@ var drawBubbles = function(opts) {
         var ly = (PHRASE_CIRCLE_R * Math.sin(theta_star)) + y;
 
         phraseLine.attr("x1", lx).attr("y1", ly);
-        $container.trigger('hovercluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
+
+        if (connected == null || connected[0][0] != circle[0][0]) {
+            $container.trigger('hovercluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
+            connected = circle;
+        }
     }
     
     force.on("tick", function(e) {
@@ -646,7 +652,14 @@ var drawBubbles = function(opts) {
     return {
         'addToChain': addToChain,
         'removeAllFromChain': removeAllFromChain,
-        'setPhrasesLoading': function(state) { $phraseDiv.toggleClass("loading", state); },
+        'setPhrasesLoading': function(state) {
+            $phraseDiv.toggleClass("loading", state);
+            // if we've loaded the phrases and there's already a circle selected, trigger hover behavior for it
+            var circle = svg.selectAll('circle.selected');
+            if (state && !circle.empty()) {
+                $container.trigger('hovercluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
+            }
+        },
         'setPhrases': function(phrases) { $phraseDiv.html(phraseText + (phrases.length ? "<ul><li>" + phrases.join("</li><li>") + "</li></ul>" : ""))},
         'select': function(id, cutoff) {
             var circle = d3.selectAll('#cluster-' + id + "-" + (100 * cutoff));

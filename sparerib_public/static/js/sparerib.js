@@ -698,14 +698,14 @@ var ClusterView = Backbone.View.extend({
                 }
 
                 if (hierarchy.length == 0 || hierarchy[0].phrases) {
-                    this.circles.setPhrasesLoading("false");
                     this.computePhrases();
+                    this.circles.setPhrasesLoading("false");
                 } else {
                     this.model.set("require_summaries", true);
                     this.model.fetch({
                         'success': $.proxy(function() {
-                            this.circles.setPhrasesLoading("false");
                             this.computePhrases();
+                            this.circles.setPhrasesLoading("false");
                         }, this)
                     })
                 }
