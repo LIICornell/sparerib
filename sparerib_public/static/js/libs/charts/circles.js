@@ -54,7 +54,7 @@ var drawBubbles = function(opts) {
     var $container = $(chartElement);
     $container.css('position', 'relative');
 
-    var svgRect = getBounds(svg);
+    var svgRect = getBounds(container);
 
     var xpos = 0;
     var ypos = [H / 3, (2 * H) / 3];
