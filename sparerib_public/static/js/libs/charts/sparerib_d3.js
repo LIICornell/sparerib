@@ -815,7 +815,7 @@ SpareribCharts = {
             'up': "rotate(180," + x + ", " + y + ")"
         }
 
-        svg.append("path")
+        return svg.append("path")
             .style("stroke", "#cbc5b9")
             .style("stroke-width", "1px")
             .style("fill", "none")
@@ -830,5 +830,33 @@ SpareribCharts = {
                 "a " + CURVE_R + "," + CURVE_R + " 0 0,0 -" + CURVE_R + "," + CURVE_R + " "
             )
             .attr("transform", transforms[direction]);
+    },
+    drawHS: function(svg, x1, y1, x2, y2) {
+        var xm = (x1 + x2) / 2;
+        var ym = (y1 + y2) / 2;
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x1 + "," + y1 + " " +
+                "Q" + xm + "," + y1 + " " + xm + "," + ym + " " +
+                "Q" + xm + "," + y2 + " " + x2 + "," + y2
+            );
+    },
+    drawVS: function(svg, x1, y1, x2, y2) {
+        var xm = (x1 + x2) / 2;
+        var ym = (y1 + y2) / 2;
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x1 + "," + y1 + " " +
+                "Q" + x1 + "," + ym + " " + xm + "," + ym + " " +
+                "Q" + x2 + "," + ym + " " + x2 + "," + y2
+            );
     }
 }

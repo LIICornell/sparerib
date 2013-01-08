@@ -1044,8 +1044,9 @@ table tr.even {
 .filter-results { display: none; }
 
 .cluster-map {
-  height: 670px;
-  width: 960px;
+  height: 710px;
+  width: 890px;
+  overflow: visible;
 }
 .cluster-area {
   background: #ffffff;
@@ -1092,13 +1093,14 @@ table tr.even {
   z-index: 1000;
 }
 .cluster-docs {
-  margin-top: 20px;
+  margin-top: 10px;
   margin-bottom: 30px;
   height: 600px;
+  width: 890px;
 }
 .cluster-doc {
   float: right;
-  width: 685px;
+  width: 590px;
   height: 100%;
   position: relative;
   overflow: auto;
@@ -1115,12 +1117,12 @@ table tr.even {
 }
 
 .cluster-doc-contents {
-  font-size: 85%;
+  font-size: 80%;
   padding: 10px;
 }
 .cluster-doc-list {
   float: left;
-  width: 260px;
+  width: 220px;
   border: 1px solid #999999;
   height: 100%;
   overflow-x: hidden;

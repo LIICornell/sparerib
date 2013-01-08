@@ -8,8 +8,9 @@ var CHILD_MAX_R = 50;
 var MAX_R = 0.4 * H;
 var PERCENT_MARGIN = 10;
 var PERCENT_OFFSET = 40;
+var BRACE_HEIGHT = 50;
 var TOTAL_W = W;
-var TOTAL_H = H + (ROWSIZE * 4) + 10;
+var TOTAL_H = H + (ROWSIZE * 4) + BRACE_HEIGHT + 10;
 var PHRASE_CIRCLE_R = 4;
 var SELECTED_COLOR = "#e9b627";
 
@@ -164,6 +165,7 @@ var drawBubbles = function(opts) {
                     .attr('x2', x)
                     .attr('y2', y);
             });
+            if (circle.docsGroup) docsConnect(d3.select(circle));
         })
     }
 
@@ -194,6 +196,7 @@ var drawBubbles = function(opts) {
                 circle.style('fill', SELECTED_COLOR).classed('selected', true);
                 selected = circle;
                 phraseConnect(circle, false);
+                docsConnect(circle);
                 $container.trigger('selectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
             var vDeselect = function(circle) {
@@ -202,6 +205,7 @@ var drawBubbles = function(opts) {
                     .classed('selected', false);
                 selected = null;
                 if (phraseLine[0][0].clusterCircle == circle[0][0]) phraseConnect(null, false);
+                docsDisconnect(circle);
                 $container.trigger('deselectcluster', [{'clusterId': circle.attr('data-cluster-id'), 'cutoff': circle.attr('data-cluster-cutoff'), 'inChain': circle.classed('in-chain')}]);
             }
 
@@ -498,6 +502,50 @@ var drawBubbles = function(opts) {
             connected = circle;
         }
     }
+
+    var docsConnect = function(circle) {
+        docsBrace.style('visibility', 'visible');
+
+        var cel = circle[0][0];
+
+        var x = (2 * PHRASE_CIRCLE_R) - parseInt(circle.attr('r'));
+        var y = 0;
+
+        if (!cel.docsGroup) {
+            var docsGroup = svg.append("g");
+            cel.parentNode.insertBefore(docsGroup[0][0], cel.nextSibling);
+
+            var docsDot = docsGroup.append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", PHRASE_CIRCLE_R)
+                .style("stroke", "#473f3d")
+                .style("stroke-width", "2px")
+                .style("fill", "none");
+            cel.docsGroup = docsGroup;
+        } else {
+            cel.docsGroup.selectAll("path").remove();
+        }
+
+        var circleBounds = getBounds(circle);
+        var center = {'x': circleBounds.left + (circleBounds.width / 2), 'y': circleBounds.top + (circleBounds.height / 2)};
+        var vs = SpareribCharts.drawVS(cel.docsGroup, x, PHRASE_CIRCLE_R, docsBraceCoords.x - (center.x - svgRect.left), docsBraceCoords.y - (center.y - svgRect.top));
+        vs
+            .style("stroke", "#89827b")
+            .style("stroke-width", "2px")
+            .attr("stroke-dasharray","2,5")
+            .attr("stroke-linecap", "round");
+    }
+
+    var docsDisconnect = function(circle) {
+        docsBrace.style('visibility', 'hidden');
+
+        var group = circle[0][0].docsGroup;
+        if (group) {
+            group.remove();
+            circle[0][0].docsGroup = null;
+        }
+    }
     
     force.on("tick", function(e) {
         /* collision detection */
@@ -602,10 +650,10 @@ var drawBubbles = function(opts) {
     /* phrase box */
     var tpbWidth = TOTAL_W - (maxTreeSize + PERCENT_MARGIN + PERCENT_OFFSET) - 20;
     var pbWidth = Math.min(535, tpbWidth);
-    var pbHeight = TOTAL_H - H - 40;
+    var pbHeight = TOTAL_H - H - 40 - BRACE_HEIGHT;
     var pbShape = {
         'x': TOTAL_W - pbWidth,
-        'y': TOTAL_H - pbHeight - 20,
+        'y': TOTAL_H - pbHeight - 20 - BRACE_HEIGHT,
         'width': pbWidth,
         'height': pbHeight
     };
@@ -619,8 +667,10 @@ var drawBubbles = function(opts) {
         .attr("y1", pbShape.center.y)
         .attr("x2", pbShape.center.x)
         .attr("y2", pbShape.center.y)
-        .style("stroke", "#473f3d")
-        .style("stroke-width", "2px");
+        .style("stroke", "#89827b")
+        .style("stroke-width", "2px")
+        .attr("stroke-dasharray","2,5")
+        .attr("stroke-linecap", "round");
     phraseLine[0][0].clusterCircle = null;
     var phraseDot = phraseGroup.append("circle")
         .attr("cx", pbShape.center.x)
@@ -648,6 +698,10 @@ var drawBubbles = function(opts) {
         .addClass("loading")
         .html(phraseText);
     $container.append($phraseDiv);
+
+    var docsBraceCoords = {'x': 110, 'y': TOTAL_H - BRACE_HEIGHT + 5, 'width': 215};
+    var docsBrace = SpareribCharts.brace(svg, docsBraceCoords.x, docsBraceCoords.y, docsBraceCoords.width, "down");
+    docsBrace.style('visibility', 'hidden');
 
     return {
         'addToChain': addToChain,
