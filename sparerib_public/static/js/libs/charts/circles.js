@@ -620,7 +620,7 @@ var drawBubbles = function(opts) {
                     if (element.classed('group-selected')) {
                         formatElement();
                     }
-                }, 250)
+                }, 500)
             }
         })
     };
