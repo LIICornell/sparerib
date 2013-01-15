@@ -21,10 +21,13 @@
     line-height:1.5;
     zoom:1;
 }
-.ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active {
-    background: #eeeeee;
-    border: 1px solid #333333;
+.ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active, .ui-menu .ui-menu-item a.ui-state-focus {
+    background: #dddddd;
     color: #333333;
+}
+
+.ui-helper-hidden-accessible {
+    display: none;
 }
 
 .ui-icon { display: block; text-indent: -99999px; overflow: hidden; background-repeat: no-repeat; width: 16px; height: 16px; background-image: url(images/ui-icons_222222_256x240.png); }

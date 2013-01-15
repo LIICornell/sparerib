@@ -104,7 +104,7 @@
                     var menu = $(this).data('autocomplete').menu.element;
                     menu.find('li').each(function(idx, item) {
                         var $item = $(item);
-                        var data = $item.data('item.autocomplete');
+                        var data = $item.data('uiAutocompleteItem');
                         if (data.type) {
                             $item.addClass('ui-tag-type-' + data.type)
                         }
