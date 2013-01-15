@@ -812,7 +812,9 @@ SpareribCharts = {
 
         var transforms = {
             'down': "",
-            'up': "rotate(180," + x + ", " + y + ")"
+            'up': "rotate(180," + x + ", " + y + ")",
+            'left': "rotate(90," + x + ", " + y + ")",
+            'right': "rotate(270," + x + ", " + y + ")"
         }
 
         return svg.append("path")

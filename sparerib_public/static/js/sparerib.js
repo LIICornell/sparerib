@@ -701,6 +701,7 @@ var ClusterView = Backbone.View.extend({
 
                 var stats = this.model.get('stats');
                 this.renderSummary(stats);
+                this.renderDoclistGraphics();
 
                 if (hierarchy.length == 0 || hierarchy[0].phrases) {
                     this.computePhrases();
@@ -747,9 +748,9 @@ var ClusterView = Backbone.View.extend({
                 .style("stroke-width", "2px")
                 .style("fill", "none");
             if (coords[2] == "clustered") {
-                var text = "<span class='percent'>" + percentage + "%</span> of comments are unique and have less than 50% similarity to other comments";
+                var text = "<span class='percent'>" + percentage + "%</span> of comments have at least 50% similarity to one or more other comments";
             } else {
-                var text = "<span class='percent'>" + (100 - percentage) + "%</span> of comments have at least 50% similarity to one or more other comments";
+                var text = "<span class='percent'>" + (100 - percentage) + "%</span> of comments are unique and have less than 50% similarity to other comments";
             }
             var $div = $("<div>").html(text).css({'position': 'absolute', 'left': (coords[0] + 150) + 'px', 'bottom': (250 - coords[1]), 'width': '265px', 'font-size': '80%'});
             $container.append($div);
@@ -758,6 +759,58 @@ var ClusterView = Backbone.View.extend({
         SpareribCharts.brace(pie, 445, 230, pie.selectAll('.slice-clustered')[0][0].getBoundingClientRect().width, "up");
         SpareribCharts.brace(pie, 445, 240, 885, "down");
         pie.append("line").attr("x1", 445).attr("x2", 445).attr("y1", 230).attr("y2", 240).style("stroke", "#cbc5b9").style("stroke-width", "1px");
+    },
+
+    renderDoclistGraphics: function() {
+        
+        var svg = d3.select(this.el).selectAll('.cluster-docs').insert("svg", ".cluster-doc");
+        svg
+            .style('width', '75px')
+            .style('height', '610px')
+            .style('margin-top', '-4px')
+            .style('float', 'left');
+        SpareribCharts.brace(svg, 40, 304, 608, "right");
+        this.doclistSvg = svg;
+        this.doclistSvgOffset = $(svg[0][0]).offset().top;
+
+        var _this = this;
+        this.$el.find('.cluster-doc-list').on('scroll', function() {
+            _this.updateDoclistGraphics();
+        });
+
+        this.updateDoclistGraphics();
+    },
+    updateDoclistGraphics: function() {
+        var selected = this.$el.find('.cluster-doc-list .cluster-doc-selected');
+        var svg = $(this.doclistSvg[0][0]);
+        if (selected.length > 0) {
+            var offset = (selected.offset().top - this.doclistSvgOffset) + (selected.height() / 2) + 4;
+            var circle = this.doclistSvg.selectAll('circle');
+
+            if (offset < 2 || offset > 608) {
+                circle.remove();
+                offset = Math.min(Math.max(2, offset), 608);
+            } else {
+                if (circle.empty()) {
+                    circle = this.doclistSvg.append("circle")
+                        .attr("r", 4)
+                        .attr("cx", 8)
+                        .style("stroke", "#473f3d")
+                        .style("stroke-width", "2px")
+                        .style("fill", "none");
+                }
+                circle
+                    .attr("cy", offset);
+            }
+
+            this.doclistSvg.selectAll('path.S').remove();
+            SpareribCharts.drawHS(this.doclistSvg, 12, offset, 40, 304)
+                .classed("S", true)
+                .style("stroke", "#89827b")
+                .style("stroke-width", "2px")
+                .attr("stroke-dasharray","2,5")
+                .attr("stroke-linecap", "round");
+        }
     },
 
     handleSwitchCluster: function(evt, opts) {
@@ -787,6 +840,7 @@ var ClusterView = Backbone.View.extend({
                 if (ul.attr('data-cluster-id') == docArea.attr('data-cluster-id')) {
                     // the document area is already showing the right thing, so select the right thing on our side
                     ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").addClass("cluster-doc-selected");
+                    this.updateDoclistGraphics();
                 } else if (ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").length > 0) {
                     // we're already looking at a document within this cluster, but it needs to be reloaded to get the highlighting right
                     ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").eq(0).click();
@@ -827,6 +881,7 @@ var ClusterView = Backbone.View.extend({
         this.switchDoc(this.clusterModel.id, docId);
         $box.parent().find('.cluster-doc-selected').removeClass('cluster-doc-selected');
         $box.addClass('cluster-doc-selected');
+        this.updateDoclistGraphics();
     },
     switchDoc: function(clusterId, docId, pseudoLoad) {
         var cutoff = this.model.get('cutoff');
