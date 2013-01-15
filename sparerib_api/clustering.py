@@ -85,8 +85,8 @@ class DocketHierarchyView(CommonClusterView):
                 out['stats']['agency'] = None
 
         # choose a cluster and document to prepopulate if one hasn't been requested
-        prepop = int(request.GET.get('prepopulate_document', 0))
-        if prepop:
+        prepop = int(request.GET.get('prepopulate_document', -1))
+        if prepop > -1:
             pp_cluster = find_doc_in_hierarchy(hierarchy, prepop, self.cutoff)
             if pp_cluster:
                 out['prepopulate'] = {
