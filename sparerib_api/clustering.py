@@ -65,10 +65,24 @@ class DocketHierarchyView(CommonClusterView):
             'cluster_hierarchy': sorted(hierarchy, key=lambda x: x['size'], reverse=True),
             'stats': {
                 'clustered': total_clustered,
-                'unclustered': docket.stats['count'] - total_clustered if 'count' in docket.stats else None
+                'unclustered': docket.stats['count'] - total_clustered if 'count' in docket.stats else None,
+                'date_range': docket.stats['date_range'] if 'date_range' in docket.stats else None
             },
             'prepopulate': None
         }
+
+        # populate agency info
+        agency = docket.agency
+        if agency:
+            agency_meta = list(Agency.objects(id=agency).only("name"))
+            if agency_meta:
+                out['stats']['agency'] = {
+                    'id': agency,
+                    'name': agency_meta[0].name,
+                    'url': '/agency/%s' % agency
+                }
+            else:
+                out['stats']['agency'] = None
 
         # choose a cluster and document to prepopulate if one hasn't been requested
         prepop = int(request.GET.get('prepopulate_document', 0))
@@ -199,10 +213,16 @@ class DocumentClusterView(CommonClusterView):
             components.append((fr[0], text[cursor:cursor + fr[1]]))
             cursor += fr[1]
 
-        html = ''.join(['<span style="background-color:rgba(233,182,39,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
+        html = ''.join(['<span style="background-color:rgba(160,211,216,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
         html = html.replace("\n", "<br />")
         return {
-            'frequency_html': html
+            'metadata': {
+                'title': doc['metadata'].get('title', None),
+                'submitter': ', '.join([doc['metadata'][field] for field in ['submitter_name', 'submitter_organization'] if field in doc['metadata'] and doc['metadata'][field]]),
+                'document_id': doc['metadata'].get('document_id', None),
+            },
+            'frequency_html': html,
+            'truncated': len(doc['text']) == 10000
         }
 
 class DocumentClusterChainView(CommonClusterView):

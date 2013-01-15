@@ -133,7 +133,10 @@ D3Charts = {
         amount_color: '#000000',
         row_height: 14,
         legend_padding: 15,
-        legend_r: 5
+        legend_r: 5,
+        show_legend: true,
+        show_animation: true,
+        sort: true
     },
     _get_piechart_size: function(opts) {
         return {
@@ -148,7 +151,8 @@ D3Charts = {
         var twopi = 2 * Math.PI;
         
         var size = D3Charts._get_piechart_size(opts);
-        var chart = d3.select("#" + div)
+        var _div = typeof div === "string" ? d3.select("#" + div) : d3.select(div);
+        var chart = _div
             .append("svg")
                 .classed('chart-canvas', true)
                 .attr("width", size.width)
@@ -156,7 +160,7 @@ D3Charts = {
         
         // pie
         _.each(data, function(d, i) { d.color = opts.colors[i]; });
-        data = _.sortBy(data, function(d) { return d.value; }).reverse();
+        if (opts.sort) data = _.sortBy(data, function(d) { return d.value; }).reverse();
         var values = _.map(data, function(d) { return d.value; })
 
         var aScale = d3.scale.linear()
@@ -188,10 +192,15 @@ D3Charts = {
                 .classed("slice", true)
                 .attr("data-slice", function(d, i) { return i; });
             
-            arcs.append("path")
+            var paths = arcs.append("path")
                 .attr("fill", function(d, i) { return data[i].color; } )
                 .attr("d", arc)
-                .on("mouseover", function(d, i) {
+                .each(function(d, i) {
+                    d3.select(this).classed("slice-" + data[i].key, true);
+                });
+
+            if (opts.show_animation) {
+                paths.on("mouseover", function(d, i) {
                     chart.selectAll('g[data-slice="' + i + '"] path')
                         .attr('transform', 'scale(1.05)');
                     chart.selectAll('g[data-slice="' + i + '"] circle')
@@ -211,6 +220,7 @@ D3Charts = {
                     chart.selectAll('g[data-slice="' + i + '"] text')
                         .style('font-weight', null);
                 });
+            }
 
 
             /* arcs.append("text")
@@ -225,50 +235,56 @@ D3Charts = {
                 .attr('fill', opts.text_color)
                 .style('font', '11px arial,sans-serif'); */
         
-        // legend
-        var legend_x = opts.chart_cx + opts.chart_r + opts.legend_padding;
-        var legend_y = opts.chart_cy - (data.length * opts.row_height / 2);
-        var legend = chart.append("g")
-            .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
-        
-        var sum = d3.sum(values);
-        var legendItems = legend.selectAll("g.legend-item")
-            .data(data)
-            .enter()
-                .append("g")
-                .classed("legend-item", true)
-                .attr("data-slice", function(d, i) { return i; })
-                .attr("transform", function(d, i) { return "translate(0," + ((i + .5) * opts.row_height) + ")"; })
-        
-            legendItems.append("circle")
-                .attr("fill", function(d, i) { return d.color; })
-                .attr("cx", 0)
-                .attr("cy", 0)
-                .attr("r", opts.legend_r);
+        if (opts.show_legend) {
+            // legend
+            var legend_x = opts.chart_cx + opts.chart_r + opts.legend_padding;
+            var legend_y = opts.chart_cy - (data.length * opts.row_height / 2);
+            var legend = chart.append("g")
+                .attr("transform", "translate(" + legend_x + "," + legend_y + ")");
             
-            legendItems.append("text")
-                .attr("y", ".45em") // vertical-align: middle
-                .attr("x", opts.legend_padding)
-                .attr('fill', opts.text_color)
-                .text(function(d, i) { return d.key? d.key + " (" + Math.round(100 * d.value / sum) + "%)" : ""; })
-                .style('font', '11px arial,sans-serif');
+            var sum = d3.sum(values);
+            var legendItems = legend.selectAll("g.legend-item")
+                .data(data)
+                .enter()
+                    .append("g")
+                    .classed("legend-item", true)
+                    .attr("data-slice", function(d, i) { return i; })
+                    .attr("transform", function(d, i) { return "translate(0," + ((i + .5) * opts.row_height) + ")"; })
+            
+                legendItems.append("circle")
+                    .attr("fill", function(d, i) { return d.color; })
+                    .attr("cx", 0)
+                    .attr("cy", 0)
+                    .attr("r", opts.legend_r);
+                
+                legendItems.append("text")
+                    .attr("y", ".45em") // vertical-align: middle
+                    .attr("x", opts.legend_padding)
+                    .attr('fill', opts.text_color)
+                    .text(function(d, i) { return d.key? d.key + " (" + Math.round(100 * d.value / sum) + "%)" : ""; })
+                    .style('font', '11px arial,sans-serif');
+        }
         
-        // amounts
-        var format = d3.format(',.0f');
-        var amounts = chart.selectAll("text.amount")
-            .data(data)
-            .enter()
-                .append("text")
-                .classed("amount", true)
-                .attr("x", opts.chart_cx)
-                .attr("y", opts.chart_cy)
-                .attr("dy", ".5em") // vertical-align: middle
-                .attr('fill', opts.amount_color)
-                .attr('data-slice', function(d, i) { return i; })
-                .text(function(d, i) { return format(d.value); })
-                .style('font', 'bold 12px arial,sans-serif')
-                .style('text-anchor', 'middle')
-                .style('display', 'none');
+        if (opts.show_animation) {
+            // amounts
+            var format = d3.format(',.0f');
+            var amounts = chart.selectAll("text.amount")
+                .data(data)
+                .enter()
+                    .append("text")
+                    .classed("amount", true)
+                    .attr("x", opts.chart_cx)
+                    .attr("y", opts.chart_cy)
+                    .attr("dy", ".5em") // vertical-align: middle
+                    .attr('fill', opts.amount_color)
+                    .attr('data-slice', function(d, i) { return i; })
+                    .text(function(d, i) { return format(d.value); })
+                    .style('font', 'bold 12px arial,sans-serif')
+                    .style('text-anchor', 'middle')
+                    .style('display', 'none');
+        }
+
+        return chart;
     },
     TIMELINE_DEFAULTS: {
         chart_height: 195,
@@ -704,6 +720,35 @@ SpareribCharts = {
         })
         D3Charts.piechart(div, in_data, opts);
     },
+    cluster_colors: {"clustered": "#e9b627", "unclustered": "#579594"},
+    cluster_piechart: function(div, data) {
+        var in_data = []
+
+        var opts = {
+            chart_height: 275,
+            chart_width: 890,
+            chart_r: 70,
+            chart_cx: 445,
+            chart_cy: 120,
+            colors : [],
+            text_color: "#666666",
+            amount_color: '#000000',
+            row_height: 14,
+            legend_padding: 15,
+            legend_r: 5,
+            show_legend: false,
+            show_animation: false,
+            sort: false
+        }
+
+        _.each(data, function(row) {
+            if (row['percentage'] > 0 && row['type'] != 'None') {
+                in_data.push({'key': row['type'].replace('_', ' '), 'value': row['percentage']});
+                opts.colors.push(SpareribCharts.cluster_colors[row['type']]);
+            }
+        })
+        return D3Charts.piechart(div, in_data, opts);
+    },
     timeline_chart: function(div, data, in_opts) {
         var opts = {
             chart_height: 125,
@@ -758,5 +803,62 @@ SpareribCharts = {
         }
 
         D3Charts.timeline_chart(div, data, opts);
+    },
+    brace: function(svg, x, y, width, direction) {
+        var CURVE_R = 15;
+
+        var arm = width / 2;
+        var armf = Math.max(arm - (2 * CURVE_R), 0);
+
+        var transforms = {
+            'down': "",
+            'up': "rotate(180," + x + ", " + y + ")",
+            'left': "rotate(90," + x + ", " + y + ")",
+            'right': "rotate(270," + x + ", " + y + ")"
+        }
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x + "," + y + " " +
+                "a " + CURVE_R + "," + CURVE_R + " 0 0,0 " + CURVE_R + "," + CURVE_R + " " +
+                "l " + armf + ",0 " +
+                "a " + CURVE_R + "," + CURVE_R + " 0 0,1 " + CURVE_R + "," + CURVE_R + " " +
+                "M" + x + "," + y + " " +
+                "a " + CURVE_R + "," + CURVE_R + " 0 0,1 -" + CURVE_R + "," + CURVE_R + " " +
+                "l -" + armf + ",0 " +
+                "a " + CURVE_R + "," + CURVE_R + " 0 0,0 -" + CURVE_R + "," + CURVE_R + " "
+            )
+            .attr("transform", transforms[direction]);
+    },
+    drawHS: function(svg, x1, y1, x2, y2) {
+        var xm = (x1 + x2) / 2;
+        var ym = (y1 + y2) / 2;
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x1 + "," + y1 + " " +
+                "Q" + xm + "," + y1 + " " + xm + "," + ym + " " +
+                "Q" + xm + "," + y2 + " " + x2 + "," + y2
+            );
+    },
+    drawVS: function(svg, x1, y1, x2, y2) {
+        var xm = (x1 + x2) / 2;
+        var ym = (y1 + y2) / 2;
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x1 + "," + y1 + " " +
+                "Q" + x1 + "," + ym + " " + xm + "," + ym + " " +
+                "Q" + x2 + "," + ym + " " + x2 + "," + y2
+            );
     }
 }

@@ -229,7 +229,7 @@ header .sf-link a {
 .banner {
     background: url("../img/bg/banner_bottom.png") repeat-x bottom left;
 }
-.banner-content h2 {
+.banner-content h2, .cluster-summary h2 {
   margin-bottom: 0px;
   margin-top: 8px;
   font-size: 180%;
@@ -764,8 +764,6 @@ table tr.even {
   text-transform: lowercase;
 }
 .overview {
-  font-family: georgia, sans-serif;
-  font-style: italic;
   margin-top: 10px;
   margin-bottom: 10px;
   font-size: 90%;
@@ -1044,15 +1042,38 @@ table tr.even {
 .filter-results { display: none; }
 
 .cluster-map {
-  height: 250px;
-  width: 960px;
+  height: 710px;
+  width: 890px;
+  overflow: visible;
 }
 .cluster-area {
   background: #ffffff;
 }
-.cluster-label {
-  margin-bottom: 14px;
+
+.cluster-summary {
+  position: relative;
+  min-height: 275px;
+  margin-top: 30px;
 }
+.cluster-meta {
+  width: 350px;
+  position: relative;
+  z-index: 1000;
+}
+.cluster-summary .percent {
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-weight: 700;
+  font-size: 125%;
+}
+.cluster-visualization {
+  margin-left: 35px;
+}
+.cluster-visualization h4 {
+  margin-left: 40px;
+  margin-bottom: 8px;
+  visibility: hidden;
+}
+
 .cluster-row-label {
   width: 100px;
   border-right: 1px solid #cccccc;
@@ -1075,13 +1096,14 @@ table tr.even {
   z-index: 1000;
 }
 .cluster-docs {
-  margin-top: 20px;
+  margin-top: 10px;
   margin-bottom: 30px;
   height: 600px;
+  width: 890px;
 }
 .cluster-doc {
   float: right;
-  width: 685px;
+  width: 590px;
   height: 100%;
   position: relative;
   overflow: auto;
@@ -1098,12 +1120,29 @@ table tr.even {
 }
 
 .cluster-doc-contents {
-  font-size: 85%;
+  font-size: 80%;
+}
+.cluster-doc-text {
   padding: 10px;
 }
+.cluster-doc-header, .cluster-doc-link {
+  padding: 10px;
+  background: #eeeeee;
+}
+.cluster-doc-header span {
+  display: block;
+}
+.cluster-doc-header span.cluster-doc-title {
+  font-weight: bold;
+  font-size: 110%;
+}
+.cluster-visualization h2 span {
+  white-space: nowrap;
+}
+
 .cluster-doc-list {
   float: left;
-  width: 260px;
+  width: 220px;
   border: 1px solid #999999;
   height: 100%;
   overflow-x: hidden;
@@ -1180,6 +1219,9 @@ table tr.even {
 }
 .cluster-cutoff .label {
   padding-right: 6px;
+}
+.phrase-box {
+  background: #ffffff;
 }
 
 .loading {
