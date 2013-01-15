@@ -606,11 +606,22 @@ var drawBubbles = function(opts) {
         _.each(clusters, function(cluster) {
             var domId = "#cluster-" + cluster.id + "-" + (cluster.cutoff * 100);
             var element = svg.selectAll(domId);
-            if (!element.classed('group-selected')) return;
-            element
-                .classed('in-chain', true)
-                .style('stroke-width', '2px')
-                .style('stroke', '#e9b627');
+            var formatElement = function() {
+                element
+                    .classed('in-chain', true)
+                    .style('stroke-width', '2px')
+                    .style('stroke', '#e9b627');
+            }
+            if (element.classed('group-selected')) {
+                formatElement();
+            } else {
+                // wait for the animation to complete and check again
+                setTimeout(function() {
+                    if (element.classed('group-selected')) {
+                        formatElement();
+                    }
+                }, 250)
+            }
         })
     };
 
