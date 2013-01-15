@@ -178,9 +178,9 @@ header h1 {
 h1 a {
 text-indent: -9999em;
 display: block;
-background: url(../../static/img/DocketWrench_02.png) top left no-repeat;
-width: 350px;
-height: 50px;
+background: url(../../static/img/docketwrench_logo.png) top left no-repeat;
+width: 397px;
+height: 61px;
 }
 
 header ul#top-menu {
