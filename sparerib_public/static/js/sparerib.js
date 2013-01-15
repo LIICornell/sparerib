@@ -759,6 +759,10 @@ var ClusterView = Backbone.View.extend({
         SpareribCharts.brace(pie, 445, 230, pie.selectAll('.slice-clustered')[0][0].getBoundingClientRect().width, "up");
         SpareribCharts.brace(pie, 445, 240, 885, "down");
         pie.append("line").attr("x1", 445).attr("x2", 445).attr("y1", 230).attr("y2", 240).style("stroke", "#cbc5b9").style("stroke-width", "1px");
+
+        // fill in the breadcrumbs and dates
+        this.$el.find('.breadcrumbs').html('<li><a href="' + stats.agency.url + '">' + stats.agency.name + '</a> &raquo;</li>');
+        this.$el.find('.dates').html(helpers.formatDate(stats.date_range[0]) + " &mdash; " + helpers.formatDate(stats.date_range[1]))
     },
 
     renderDoclistGraphics: function() {
@@ -919,14 +923,30 @@ var ClusterView = Backbone.View.extend({
         this.documentModel.fetch({
             'success': $.proxy(function() {
                 var contents = $("<div class='cluster-doc-contents'>");
-                var pre = $("<div>");
+
+                var meta = this.documentModel.get('metadata')
+                var title = $("<div class='cluster-doc-header'>");
+                title.html("<span class='cluster-doc-title'>" + meta.title + "</span><span class='cluster-doc-submitter'>" + meta.submitter + "</span>");
+                contents.append(title);
+
+                var pre = $("<div>").addClass('cluster-doc-text');
                 contents.append(pre);
+
+                var truncated = this.documentModel.get('truncated');
+                var backlink = $("<div class='cluster-doc-link'>");
+                backlink.html(
+                    "<a href='/document/" + meta.document_id + "'>"
+                    + (truncated ? "Learn more about this submission and see its full text &raquo;" : "Learn more about this submission &raquo;")
+                    + "</a>"
+                );
+                contents.append(backlink);
+
                 var children = docArea.children();
                 docArea.removeClass("loading").removeClass("pseudo-loading").append(contents);
                 if (children.length) {
                     children.remove();
                 }
-                pre.html(this.documentModel.get('frequency_html'));
+                pre.html(this.documentModel.get('frequency_html') + (truncated ? "..." : ""));
             }, this),
             'error': function() {
                 console.log('failed');
