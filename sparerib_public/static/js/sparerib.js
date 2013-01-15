@@ -704,8 +704,12 @@ var ClusterView = Backbone.View.extend({
                 this.renderDoclistGraphics();
 
                 if (hierarchy.length == 0 || hierarchy[0].phrases) {
+                    var _this = this;
                     this.computePhrases();
-                    this.circles.setPhrasesLoading("false");
+                    // add a delay before showing phrases so a circle is selected before we do
+                    setTimeout(function() {
+                        _this.circles.setPhrasesLoading("false");
+                    }, 750);
                 } else {
                     this.model.set("require_summaries", true);
                     this.model.fetch({
