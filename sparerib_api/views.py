@@ -68,7 +68,7 @@ class AggregatedView(DRFView):
                 stats[label] = [{
                     'id': i[0],
                     'count': i[1]
-                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:5]]
+                } for i in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
@@ -78,13 +78,16 @@ class AggregatedView(DRFView):
 
             # stitch this back onto the main records
             for label in ['top_text_entities', 'top_submitter_entities']:
+                filtered_entities = []
                 for entity in stats[label]:
-                    if not entities[entity['id']].td_type:
+                    if not entities[entity['id']].td_type or entities[entity['id']].td_type != 'organization':
                         continue
                     
                     entity['type'] = entities[entity['id']].td_type
                     entity['name'] = entities[entity['id']].aliases[0]
                     entity['url'] = '/%s/%s/%s' % (entity['type'], slugify(entity['name']), entity['id'])
+                    filtered_entities.append(entity)
+                stats[label] = filtered_entities[:5]
 
             out['stats'] = stats
         else:
