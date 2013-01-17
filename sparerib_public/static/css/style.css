@@ -149,28 +149,53 @@ body {
 
 .clear { clear: both; }
 
-.header-content, .main-content, .mail-stripe-inner, .sunlight-stripe {
+.header-content, .main-content, .mail-stripe-inner, .sunlight-stripe, .sunlight-branding-content {
   width: 960px;
   margin-left: auto;
   margin-right: auto;
 }
 
 header {
+  height: 172px;
   background: url("../img/bg/header_bg.png");
   border-bottom: 1px solid #e7e7e7;
+  position: relative;
 
+}
+.sunlight-branding {
+  height: 46px;
+  background: url('../img/bg/sunlight_stripe.png') repeat-x top left;
+  position: relative;
+  z-index: 10;
+}
+.sunlight-branding a {
+  text-indent: -9999em;
+  display: block;
+  background: url(../img/product-of.png) top left no-repeat;
+  width: 218px;
+  height: 29px;
+  float: right;
+  margin-top: 7px;
+  margin-right: 30px;
+}
+
+.header-highlight {
+  position: absolute;
+  width: 960px;
+  left: 50%;
+  margin-left: -480px;
+  height: 172px;
+  background: url('../img/bg/header_highlight.png') no-repeat top left;
 }
 
 .header-content {
   position: relative;
-  height: 130px;
-  border-bottom: 1px solid #b5b5b5;
 }
 
 header h1 {
     float:left;
-  padding-left: 35px;
-  padding-top: 45px;
+  padding-left: 50px;
+  padding-top: 50px;
   margin: 0;
   padding-right:100px;
 }
@@ -179,7 +204,7 @@ h1 a {
 text-indent: -9999em;
 display: block;
 background: url(../../static/img/docketwrench_logo.png) top left no-repeat;
-width: 397px;
+width: 405px;
 height: 61px;
 }
 
@@ -187,7 +212,7 @@ header ul#top-menu {
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 280px;
+  width: 190px;
   float:right;
 
   margin-bottom:0;
@@ -199,15 +224,23 @@ header ul#top-menu li {
   padding: 0;
   margin: 0;
   float: left;
-  border-left: 1px solid #b5b5b5;
   height: 35px;
   line-height: 35px;
-  text-align: center;
-  font-size: 80%;
+  text-align: right;
+  font-size: 100%;
+  width: 60px;
 }
 
 header ul#top-menu li a {
-  color: #8d867f;
+  color: #ffffff;
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  text-decoration: none;
+}
+header ul#top-menu li.social {
+  background: url('../img/fake_social.png') no-repeat 0px 10px;
+  width: 40px;
 }
 
 nav {
@@ -215,8 +248,6 @@ nav {
     margin-bottom:0;
 }
 
-header .about-link { width: 70px; }
-header .contact-link { width: 80px; }
 header .sf-link { width: 105px; height: 40px; border-left: 0 !important;}
 header .sf-link a {
   display: block;
@@ -245,7 +276,10 @@ header .sf-link a {
 
 .mail-stripe {
     background: url("../img/bg/footer.png") repeat-x top left;
-    height: 167px;
+    height: 121px;
+    border-top: 1px solid #cacaca;
+    border-bottom: 1px solid #d6d6d6;
+    color: #ffffff;
 }
 
 .call-to-action {
@@ -255,7 +289,7 @@ header .sf-link a {
   width: 525px;
   height: 60px;
   font-size: 90%;
-  margin-top:40px;
+  margin-top:22px;
   margin-left:30px;
 }
 .call-to-action h4 {
@@ -278,7 +312,7 @@ header .sf-link a {
 .sign-up {
   width: 250px;
   float: right;
-  margin-top:50px;
+  margin-top:30px;
 }
 ul.sign-up {
     list-style: none;
@@ -301,13 +335,13 @@ ul.sign-up {
   -webkit-appearance: none;
   display: inline-block;
   margin-bottom: 8px;
-  width: 150px;
+  width: 175px;
 }
 .sign-up input.email-field {
   width: 220px;
 }
 .sign-up input[type=submit] {
-  color: #475360;
+  color: #ffffff;
   font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-style: normal;
   font-weight: 700;
@@ -865,7 +899,7 @@ table tr.even {
   width: 321px;
   float: right;
   margin-top:0;
-  padding-top:40px;
+  padding-top:22px;
   padding-right:30px;
 }
 #top-search h2, #top-search .result-set {
