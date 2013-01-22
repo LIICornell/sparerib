@@ -269,6 +269,10 @@ var drawBubbles = function(opts) {
                 var duration = 500;
                 var ease = d3.ease("cubic-in-out");
                 d3.timer(function(elapsed) {
+                    // cancel the timer if we've been superceded
+                    if (!d.fixed) return true;
+
+                    // otherwise, animate as planned
                     var _t = elapsed / duration;
                     var t = _.min([1,_t]);
                     var e = ease(t);
@@ -336,6 +340,17 @@ var drawBubbles = function(opts) {
                         borders.transition().duration(100).attr('opacity', 1);
                         group.selectAll('.child-number').transition().duration(100).attr('opacity', 1);
                         
+                        return true;
+                    } else if (!d.fixed) {
+                        // looks like someone else was selected before we finished, so undo our damage and kill the timer
+                        levels.attr('transform', "");
+                        scales.each(function() {
+                            var dthis = d3.select(this);
+                            var sf = dthis.attr('data-scale-factor');
+                            dthis.attr('transform', 'scale(' + sf + ',' + sf + ')');
+                        })
+                        updateLines(circles);
+                        group.selectAll('.level-lines').attr('visibility', 'hidden');
                         return true;
                     }
                 });
