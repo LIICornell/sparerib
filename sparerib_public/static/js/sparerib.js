@@ -421,7 +421,7 @@ var AggregatedDetailView = Backbone.View.extend({
                             });
                         });
                     }
-                    SpareribCharts.timeline_chart('submission-timeline', timeline_data);
+                    if (!window.SIMPLE_JS) SpareribCharts.timeline_chart('submission-timeline', timeline_data);
 
                     var sb_chart = this.$el.find('.submitter-breakdown');
                     var tagged_total = 0;
@@ -453,7 +453,7 @@ var AggregatedDetailView = Backbone.View.extend({
             }
         );
         
-        if (this.model instanceof Docket) {
+        if (this.model instanceof Docket && !window.SIMPLE_JS) {
             this.teaserModel = new ClusterDocketTeaser({id: this.model.id});
             var teaserFetch = this.teaserModel.fetch();
             mainFetch.done($.proxy(function() {
@@ -538,7 +538,7 @@ var DocumentDetailView = Backbone.View.extend({
                             'selected': context.id == doc.id
                         });
                     });
-                    SpareribCharts.tiny_timeline_chart('sidebar-timeline', timeline_data);
+                    if (!window.SIMPLE_JS) SpareribCharts.tiny_timeline_chart('sidebar-timeline', timeline_data);
                     this.$el.find('#sidebar-timeline svg').attr('width', '240');
 
                     $('.main-loading').slideUp('fast');
@@ -645,7 +645,7 @@ var EntityDetailView = Backbone.View.extend({
                                 'timeline': expandMonths(agency.months)
                             }
                         });
-                        SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data, {'show_legend': false});
+                        if (!window.SIMPLE_JS) SpareribCharts.timeline_chart(({'submitter_mentions': 'submission', 'text_mentions': 'mention'})[submission_type] + '-timeline', timeline_data, {'show_legend': false});
                     });
 
                     $('.main-loading').slideUp('fast');
@@ -677,7 +677,7 @@ var ClusterView = Backbone.View.extend({
     template: _.template($('#clusters-tpl').html()),
     render: function() {
         this.$el.html(this.template({'docket_id': this.model.id, 'cutoff': this.model.get('cutoff')}));
-        this.renderMap();
+        if (!window.SIMPLE_JS) this.renderMap();
         return this;
     },
         
@@ -728,7 +728,7 @@ var ClusterView = Backbone.View.extend({
         return this;
     },
 
-    renderSummary: function(stats) {
+    renderSummary: function(stats) {        
         var percentage = Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered));
 
         var pie = SpareribCharts.cluster_piechart(this.$el.find(".cluster-breakdown").get(0), [{"type": "unclustered", "percentage": 100 - percentage}, {"type": "clustered", "percentage": percentage}]);
@@ -1083,6 +1083,7 @@ var AppRouter = Backbone.Router.extend({
  
 var app = new AppRouter();
 window.app = app;
+window.SIMPLE_JS = false;
 
 Backbone.history.start({pushState: true});
 
