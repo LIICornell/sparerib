@@ -1,0 +1,12 @@
+{
+  "name": "sparerib-node",
+  "version": "0.1.0",
+  "description": "Server-side rendering for sparerib",
+  "author": "Andrew Pendleton <apendleton@sunlightfoundation.com>",
+  "dependencies": {
+    "express": "*",
+    "http-proxy": "*",
+    "zombie": "*"
+  },
+  "engine": "node 0.8.18"
+}

@@ -2,3 +2,4 @@ local_settings.py
 *.pyc
 prof.out
 analysis
+sparerib_node/node_modules
