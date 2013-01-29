@@ -129,6 +129,16 @@ class DocketView(AggregatedView):
                     else:
                         doc['stats'] = {'count': 0, 'comments_open': False}
                         doc['summary'] = None
+
+                # remove duplicates, if any
+                tmp = stats['doc_info']['fr_docs']
+                included = set()
+                stats['doc_info']['fr_docs'] = []
+                for doc in tmp:
+                    if doc['id'] not in included:
+                        stats['doc_info']['fr_docs'].append(doc)
+                        included.add(doc['id'])
+            
             summary_text = "\n".join(summaries)
             if summary_text:
                 similar_dockets = get_similar_dockets(summary_text, kwargs[self.aggregation_field])[:3]
