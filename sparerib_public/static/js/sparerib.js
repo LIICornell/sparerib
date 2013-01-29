@@ -187,7 +187,13 @@ var StaticView = Backbone.View.extend({
     render: function() {
         $.get('/static/content/' + this.id + '.mt.html').done($.proxy(function(content) {
             var template = _.template(content);
-            this.$el.html(template({}));            
+            this.$el.html(template({}));
+            this.$el.find('a.jump').click(function(evt) {
+                console.log($(evt.target).attr('href'));
+                var top = $($(evt.target).attr('href')).offset().top;
+                $(window).scrollTop(top);
+                return false;
+            })
         }, this));
         return this;
     }

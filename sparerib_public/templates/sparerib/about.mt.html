@@ -6,12 +6,48 @@
     </div>
     <div class="main-content no-sidebar">
         <div class="landing-top">
-        <p >You probably haven't heard of them williamsburg pour-over chillwave tumblr sustainable. Etsy lomo vegan swag sustainable, small batch 3 wolf moon high life four loko marfa single-origin coffee yr messenger bag brooklyn. Echo park kale chips blog VHS salvia wayfarers, tofu hoodie single-origin coffee american apparel wolf master cleanse beard +1 semiotics. Jean shorts before they sold out terry richardson, odd future small batch gastropub quinoa farm-to-table narwhal ethnic yr. Carles chillwave tumblr hoodie blog. You probably haven't heard of them art party messenger bag DIY ethnic, umami next level street art cardigan. Kogi brooklyn salvia vinyl food truck.</p>
-        <p>Williamsburg typewriter food truck tattooed craft beer mustache. Flexitarian put a bird on it thundercats small batch godard vegan lomo viral vinyl, ethnic gluten-free post-ironic. Echo park viral sartorial, letterpress forage stumptown trust fund pinterest blog. Messenger bag artisan beard, leggings cosby sweater sustainable fingerstache locavore gentrify dreamcatcher helvetica PBR odd future. Ennui sustainable mcsweeney's synth. Chambray quinoa sriracha gentrify, fixie ethnic next level narwhal PBR pitchfork gluten-free etsy lomo tattooed thundercats. Next level fanny pack stumptown wayfarers bespoke typewriter keytar locavore.</p>
+            <p>Public policy doesn’t stop when Congress passes a bill and the president signs it. Laws include rules and regulations that become the responsibility of agencies within the executive branch to write. The Department of Energy, the FDA and the ATF are among the 300 federal agencies tasked with dictating these finer points of public policy.</p>
+
+            <p>The Sunlight Foundation’s Docket Wrench helps you at this stage of policy making.</p>
+
+            <p>Before an agency finalizes a proposed rule, there is a period of public commenting, which many special interests in Washington use to wield their influence beyond the halls of Congress. (Individuals can submit comments, too.) However, this exertion of influence in the rulemaking process has, for the most part, taken place outside the public eye.</p>
+
+            <p>Until now.</p>
+
+            <p>Docket Wrench makes following this influence easier by providing a suite of tools to help researchers and members of the public delve into regulatory comments. Users can search more than 3.5 million regulatory documents to see how companies, interest groups and NGOs submit public comments on proposed rules, with many also linked to their profile on Sunlight’s Influence Explorer. Docket Wrench’s visualization feature groups textually similar documents together to help find evidence of form letter campaigns by these groups.</p>
+
+            <p>Read further for information about the <a href="#data-section" class="jump">data</a>, <a href="#methodology-section" class="jump">methodology</a> and <a href="#code-section" class="jump">code</a> that powers Docket Wrench.</p>
+
+            <p>Thank you to the Hewlett Foundation who generously supported the development of Docket Wrench. The Ford Foundation also supported some of the project’s initial data collection. Additional thanks to the EPA eRulemaking team, which runs Regulations.gov, and was tremendously helpful in providing access to federal regulatory data.</p>
+
+            <!-- <p>Watch a brief tutorial on how to use Docket Wrench at Sunlight Academy [LINK + VIDEO EMBED].</p> -->
         </div>
-        <h3>Subheading #1</h3>
-        <p>Lomo occupy artisan, semiotics truffaut DIY pitchfork mlkshk umami chillwave locavore vegan farm-to-table blog selvage. Raw denim Austin pop-up before they sold out, irony VHS you probably haven't heard of them hella selvage. PBR iphone tofu messenger bag cred freegan. Typewriter pour-over raw denim DIY godard, jean shorts mcsweeney's. Messenger bag marfa mustache DIY. Mumblecore cosby sweater terry richardson PBR squid quinoa. Single-origin coffee narwhal authentic, polaroid cardigan tumblr organic you probably haven't heard of them.</p>
-        <h3>Subheading #2</h3>
-        <p>Leggings artisan wayfarers tumblr 3 wolf moon tofu cray, next level ethical biodiesel williamsburg. Williamsburg high life irony fixie vegan food truck 8-bit. Blog vice keytar art party pork belly, hella typewriter gluten-free mumblecore craft beer wayfarers. Raw denim farm-to-table mixtape, tumblr next level wayfarers lo-fi high life street art skateboard pickled etsy post-ironic vinyl odd future. Fap flexitarian mixtape bespoke, biodiesel semiotics small batch trust fund Austin. Austin master cleanse pour-over ethical farm-to-table +1. Single-origin coffee kogi umami echo park irony, VHS cray retro ennui put a bird on it american apparel master cleanse gluten-free narwhal.</p>
+        <h3 id="data-section">Data</h3>
+        <p>Docket Wrench draws its rules and comments from Regulations.gov, a U.S. government clearinghouse for federal regulatory data. Included in the data we collect are all notices, rules and proposed rules published in the Federal Register. We also collect public comments and supplemental material from the subset of agencies that use the Regulations.gov platform for public participation (approximately 175 agencies, called “participating agencies” by the Regulations.gov team). Dockets from agencies outside this subset (called “non-participating agencies”) may or may not include comments, depending on the agency and the docket.</p>
+        <!-- <p>Here are the agencies included on Docket Wrench:</p> -->
+        <h3 id="methodology-section">Methodology</h3>
+        <p>Docket Wrench collects documents from Regulations.gov’s API via nightly batch processes. Based on results of these API responses, source documents are then downloaded from the Regulations.gov servers and a variety of tools such as pdftotext and catdoc are used to extract text from these documents where possible. (Some submissions are scanned from paper copies and may not have undergone OCR processing, making text extraction impossible.) Both the metadata and text are searched for references to any organizations tracked in Sunlight’s Influence Explorer [LINK], and exact matches to either the name of the organization or an any aliases for that organization identified by Sunlight are used to compute statistics. As we previously noted, however, this process is somewhat error-prone and will continue to be, absent the use of real corporate identifiers in influence data.</p>
+        <p>Docket Wrench also subjects the text of comments for which text extraction was successful to text similarity and clustering analyses to power our comment similarity visualization. The Sunlight Labs team developed this technology in house. This process is computationally intensive, and some or all of the analysis may not be visible for very large dockets; this remains an active area of development within Labs.</p>
+        <h3 id="code-section">Code</h3>
+        <p>
+            This project, as with most of Sunlight Labs’ work, is open source, and its source code is available to the public. Various constituent parts of Docket Wrench are housed in the following libraries:</p>
+            <ul>
+                <li>regulations-scraper: the scraping and text extraction infrastructure of Docket Wrench</li>
+                <li>sparerib: the Docket Wrench web application</li>
+                <li>regs-models: data models shared by various Docket Wrench components</li>
+                <li>regs-ac: components that contribute to the Docket Wrench search interface</li>
+                <li>cluster-explorer: data-processing components responsible for the computation behind the comment similarity visualization</li>
+            </ul>
+        <p>
+            Additionally, we take advantage of the following third-party open source projects:
+            <ul>
+                <li>Django</li>
+                <li>MongoDB</li>
+                <li>ElasticSearch</li>
+                <li>Backbone.js</li>
+                <li>PostgreSQL</li>
+            </ul>
+        </p>
+        <p>See all of Sunlight Lab’s open source offerings on <a href="https://github.com/sunlightlabs/">GitHub</a>.</p>
     </div>
 </div>
