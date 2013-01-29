@@ -1,0 +1,5 @@
+{
+    "proxyHost": "localhost",
+    "proxyPort": 8005,
+    "port": 3000
+}

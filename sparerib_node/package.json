@@ -6,7 +6,8 @@
   "dependencies": {
     "express": "*",
     "http-proxy": "*",
-    "zombie": "*"
+    "zombie": "*",
+    "underscore": "*"
   },
   "engine": "node 0.8.18"
 }
