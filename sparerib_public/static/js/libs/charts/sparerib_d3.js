@@ -860,5 +860,30 @@ SpareribCharts = {
                 "Q" + x1 + "," + ym + " " + xm + "," + ym + " " +
                 "Q" + x2 + "," + ym + " " + x2 + "," + y2
             );
+    },
+    drawVSR: function(svg, x1, y1, x2, y2) {
+        var A = 100;
+        var xm = (x1 + x2) / 2;
+        var ym = (y1 + y2) / 2;
+
+        if (y2 > y1) {
+            var a = Math.min(A, ym - y1);
+            var yr = y1 + a;
+            var ys = y2 - a;
+        } else {
+            var a = Math.min(A, ym - y2);
+            var yr = y1 - a;
+            var ys = y2 + a;
+        }
+
+        return svg.append("path")
+            .style("stroke", "#cbc5b9")
+            .style("stroke-width", "1px")
+            .style("fill", "none")
+            .attr("d",
+                "M" + x1 + "," + y1 + " " +
+                "Q" + x1 + "," + yr + " " + xm + "," + ym + " " +
+                "Q" + x2 + "," + ys + " " + x2 + "," + y2
+            );
     }
 }

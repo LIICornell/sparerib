@@ -1170,6 +1170,23 @@ table tr.even {
   font-weight: bold;
   font-size: 110%;
 }
+.cluster-doc-key {
+  padding: 10px;
+  padding-bottom: 0px;
+  text-align: right;
+  color: #666666;
+  text-transform: uppercase;
+  font-size: 90%;
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+}
+.cluster-doc-key span {
+  display: inline-block;
+  height: 10px;
+  width: 50px;
+  background: url("../img/sim_key.png") no-repeat top left;
+  margin-left: 4px;
+  margin-right: 4px;
+}
 .cluster-visualization h2 span {
   white-space: nowrap;
 }

@@ -544,7 +544,7 @@ var drawBubbles = function(opts) {
 
         var circleBounds = getBounds(circle);
         var center = {'x': circleBounds.left + (circleBounds.width / 2), 'y': circleBounds.top + (circleBounds.height / 2)};
-        var vs = SpareribCharts.drawVS(cel.docsGroup, x, PHRASE_CIRCLE_R, docsBraceCoords.x - (center.x - svgRect.left), docsBraceCoords.y - (center.y - svgRect.top));
+        var vs = SpareribCharts.drawVSR(cel.docsGroup, x, PHRASE_CIRCLE_R, docsBraceCoords.x - (center.x - svgRect.left), docsBraceCoords.y - (center.y - svgRect.top));
         vs
             .style("stroke", "#89827b")
             .style("stroke-width", "2px")
