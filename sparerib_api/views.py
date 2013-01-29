@@ -140,6 +140,9 @@ class DocketView(AggregatedView):
                     } for docket in similar_dockets]
 
         agency = self.item.agency
+        if not agency:
+            agency = re.split("[-_]", self.item.id)[0]
+        
         if agency:
             agency_meta = list(Agency.objects(id=agency).only("name"))
             if agency_meta:
