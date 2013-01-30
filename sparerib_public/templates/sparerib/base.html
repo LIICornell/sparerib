@@ -60,9 +60,9 @@
                     <p>Join the Sunlight Foundation's open government community to learn more.</p>
                 </div>
                 <ul class="sign-up">
-                    <form name="list-sign-up">
-                        <li><input class="email-field" type="text" value="Email Address" /></li>
-                        <li><input class="zip-field" type="text" value="Zip Code" /><input type="submit" value="Sign Up" /></li>
+                    <form name="list-sign-up" id="signupForm" action="" method="post">
+                        <li><input id="id_email" class="email-field" type="text" placeholder="Email Address" name="email" /></li>
+                        <li><input id="id_zip" class="zip-field" type="text" placeholder="Your zip code" name="zipcode" /><input type="submit" value="Sign Up" /></li>
                     </form>
                 </ul>
             </div>
@@ -124,6 +124,41 @@
 
     <script>
     AC_URL = "{{ AC_URL|safe }}";
+    </script>
+
+    <script>
+    $(function() {
+        $('#signupForm').submit(function(ev) {
+            var $form = $(this);
+            var email = $form.find('input[name=email]').val(),
+                zipcode = $form.find('input[name=zipcode]').val(),
+                url = 'http://sunlightfoundation.com/mailinglist/subscribe/';
+            var data = {
+                response: 'json',
+                email: email,
+                zipcode: zipcode
+            };
+            var params = {
+              type: 'POST',
+              url: url,
+              data: data
+            };
+            // Add preflight request if the url is on a different domain
+            if(url.match(/^http/) && !url.match(new RegExp('^https?:\/\/' + location.host.replace('.', '\\.')))){
+              params['headers'] = {
+                'Access-Control-Allow-Headers': 'x-requested-with, x-requested-by'
+              };
+            }
+            $.ajax(params).success(function(resp) {
+                var $p = $('<p>').text(resp.message).hide();
+                $form.slideUp('fast', function() {
+                    $form.after($p);
+                    $p.slideDown();
+                });
+            });
+            ev.preventDefault();
+        });
+    });
     </script>
 </body>
 </html>
