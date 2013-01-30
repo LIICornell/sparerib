@@ -351,6 +351,9 @@ ul.sign-up {
   background: none;
   border: none;
 }
+.sign-up input[type=submit]:hover {
+  color: #eaeaea;
+}
 
 .sunlight-stripe {
   width: 860px;
@@ -761,7 +764,7 @@ ul.agency-name{
 }
 
 table tr.even {
-  background-color: rgba(211,204,191,0.54);
+  background-color: rgba(106,113,111,0.15);
 }
 
 .double-chart {
@@ -912,11 +915,11 @@ table tr.even {
   display: block;
   float: left;
   width: 53px;
-  height: 34px;
+  height: 40px;
   margin: 1px 0 0 10px;
   padding: 0;
   border: 0;
-  background: transparent url("../img/regs_search.png") no-repeat center bottom;
+  background: transparent url("../img/regs_search.png") no-repeat top right;
   text-indent: -9999em;
   cursor: pointer;
 
@@ -927,11 +930,17 @@ table tr.even {
   -webkit-box-shadow: 2px 2px 4px #999;
   box-shadow: 2px 2px 4px #999;
 }
+
+#top-search input[type=submit]:hover, .main-content .search input[type=submit]:hover {
+  background: transparent url("../img/regs_search.png") no-repeat bottom right;
+}
+
 .main-content .search input[type=submit] {
   margin-top: 5px;
 }
 #top-search .ui-intertag {
   width: 250px;
+  height: 34px;
 
   border: 4px solid #dddcda;
   -moz-border-radius: 6px;
@@ -1468,17 +1477,24 @@ table tr.even {
 }
 
 #landing ul{
-    list-style-type: none;
-    padding-left: 0;
+    list-style-type: circle outside;
+    padding-left: 15px;
     line-height: 30px;
     padding-top:0;
     margin-top:7px;
+    color: #EAB600;
+}
+
+#landing li {
+    margin-bottom: 10px;
+    padding-left: 5px;
 }
 
 #landing li a{
     font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
     font-weight: 400;
-    font-size: 13px;
+    font-size: 15px;
+    margin-bottom: 30px;
 }
 #landing li .submitter-info {
   display: block;
@@ -1487,6 +1503,7 @@ table tr.even {
   font-size: 11px;
   font-style: italic;
   line-height: 6px;
+  color: #473f3d;
 }
 
 #landing .threecol img{
