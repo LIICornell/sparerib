@@ -50,7 +50,7 @@ if (cluster.isMaster) {
             browser.window.SIMPLE_JS = true;
             browser.window.Backbone.history.navigate(req.path, true);
             browser.wait(function() {
-                browser.window.$('script').remove();
+                browser.window.$('script[data-remove!=false]').remove();
                 res.send(browser.html());
             })
         })
