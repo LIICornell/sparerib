@@ -706,7 +706,7 @@ var drawBubbles = function(opts) {
         .style("stroke-width", "2px")
         .style("fill", "none");
 
-    var phraseText = "<strong>Distinguishing phrases of selected comment group:</strong>";
+    var phraseText = "<div class='phrase-title'>Distinguishing phrases of selected comment group:</div>";
     var $phraseDiv = $("<div>")
         .css({
             'position': 'absolute',
@@ -717,7 +717,6 @@ var drawBubbles = function(opts) {
             'border': "1px solid #cbc5b9",
             'font-family': "helvetica, sans-serif",
             'font-size': '12px',
-            'padding': '15px',
             'overflow-y': 'auto'
         })
         .addClass("phrase-box")

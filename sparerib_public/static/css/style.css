@@ -1167,17 +1167,15 @@ table tr.even {
   display: block;
 }
 .cluster-doc-header span.cluster-doc-title {
-  font-weight: bold;
-  font-size: 110%;
+  background: none repeat scroll 0 0 #EEEEEE;
+  font-family: "gnuolane","Franklin Gothic Bold",Impact,Haettenschweiler,"Helvetica Inserat","Arial Black",sans-serif;
+  font-size: 145%;
+  font-weight: 400;
 }
 .cluster-doc-key {
-  padding: 10px;
-  padding-bottom: 0px;
-  text-align: right;
   color: #666666;
-  text-transform: uppercase;
   font-size: 90%;
-  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  margin-top: 8px;
 }
 .cluster-doc-key span {
   display: inline-block;
@@ -1273,6 +1271,34 @@ table tr.even {
 }
 .phrase-box {
   background: #ffffff;
+}
+.phrase-box ul {
+  padding: 10px;
+  margin: 0;
+  list-style: none;
+}
+.phrase-box ul li {
+  list-style: none;
+  margin-top: 5px;
+  margin-bottom: 12px;
+  line-height: 16px;
+  clear: both;
+  padding-left: 10px;
+  background: url('../img/icons/lquo.png') no-repeat left 3px;
+}
+.phrase-box ul li:after {
+  content: "";
+  display: inline-block;
+  height: 12px;
+  width: 9px;
+  background: url('../img/icons/rquo.png') no-repeat right 3px;
+}
+.phrase-box .phrase-title {
+  padding: 10px;
+  background: #eeeeee;
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-weight: 400;
+  font-size: 145%;
 }
 
 .loading {

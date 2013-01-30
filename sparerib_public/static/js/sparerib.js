@@ -940,8 +940,8 @@ var ClusterView = Backbone.View.extend({
                 contents.append(title);
 
                 var key = $("<div class='cluster-doc-key'>");
-                key.html("Least Common <span></span> Most Common");
-                contents.append(key);
+                key.html("Least Common Phrases <span></span> Most Common Phrases");
+                title.append(key);
 
                 var pre = $("<div>").addClass('cluster-doc-text');
                 contents.append(pre);
