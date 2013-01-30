@@ -195,6 +195,7 @@ var StaticView = Backbone.View.extend({
                 return false;
             })
         }, this));
+        setMeta({'pageTitle': helpers.capitalize(this.id)});
         return this;
     }
 });
@@ -376,6 +377,7 @@ var ResultsView = Backbone.View.extend({
                 }
             );
         }, this));
+        setMeta({'pageTitle': 'Search'});
         return this;
     },
 
@@ -452,6 +454,12 @@ var AggregatedDetailView = Backbone.View.extend({
 
                     $('.main-loading').slideUp('fast');
                     this.$el.slideDown('fast');
+
+                    if (type == 'docket') {
+                        setMeta({'pageTitle': 'Docket: ' + this.model.get('title')});
+                    } else {
+                        setMeta({'pageTitle': 'Agency: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name') });
+                    }
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -485,6 +493,7 @@ var AggregatedDetailView = Backbone.View.extend({
             }, this));
         }
         
+        setMeta({'pageTitle': this.model instanceof Docket ? 'Docket: ' + this.model.id : 'Agency: ' + this.model.id});
         return this;
     }
 })
@@ -587,6 +596,7 @@ var DocumentDetailView = Backbone.View.extend({
             })
         }, this));
 
+        setMeta({'pageTitle': 'Document: ' + this.model.id});
         return this;
     },
 
@@ -656,12 +666,14 @@ var EntityDetailView = Backbone.View.extend({
 
                     $('.main-loading').slideUp('fast');
                     this.$el.slideDown('fast');
+                    setMeta({'pageTitle': 'Organization: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name') });
                 }, this),
                 'error': function() {
                     console.log('failed');
                 }
             }
         );
+        setMeta({'pageTitle': 'Organization'});
         return this;
     }
 })
@@ -684,6 +696,7 @@ var ClusterView = Backbone.View.extend({
     render: function() {
         this.$el.html(this.template({'docket_id': this.model.id, 'cutoff': this.model.get('cutoff')}));
         if (!window.SIMPLE_JS) this.renderMap();
+        setMeta({'pageTitle': 'Comment Similarity for ' + this.model.id, 'pageDesc': 'Visualize federal rulemaking comments with Docket Wrench.' });
         return this;
     },
         
@@ -982,6 +995,22 @@ var ClusterView = Backbone.View.extend({
     }
 })
 
+var DEFAULT_META = {
+    siteTitle: 'Docket Wrench',
+    pageTitle: '',
+    pageDesc: 'Use Docket Wrench to see how businesses and organizations shape federal regulations.'
+};
+var meta_fragment = '';
+var setMeta = function(meta) {
+    var m = _.extend({}, DEFAULT_META, meta);
+    m.title = m.siteTitle + (m.pageTitle ? " - " + m.pageTitle : "");
+    var head = $('head');
+    head.find('title').html(m.title);
+    head.find('meta[name=og\\:title]').attr('content', m.title);
+    head.find('meta[name=og\\:description]').attr('content', m.pageDesc);
+    meta_fragment = Backbone.history.getFragment()
+    head.find('meta[name=og\\:url]').attr('content', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+}
 // Router
 var AppRouter = Backbone.Router.extend({   
     initialize: function() {
@@ -1022,6 +1051,7 @@ var AppRouter = Backbone.Router.extend({
     home: function() {
         var homeView = new HomeView({});
         $('#main').html(homeView.render().el);
+        setMeta({'pageTitle': 'Home'});
     },
 
     defaultSearchResults: function(query, page) {
@@ -1103,7 +1133,12 @@ window.SIMPLE_JS = false;
 
 app.bind("all", function(route, router) {
     var url;  
-    url = Backbone.history.getFragment();  
+    url = Backbone.history.getFragment();
+
+    if (url != meta_fragment) {
+        setMeta({});
+    }
+
     window._gaq.push(['_trackPageview', "/" + url]);
 });
 
