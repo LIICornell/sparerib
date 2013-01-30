@@ -1498,13 +1498,35 @@ table tr.even {
 
 /*  About page  */
 
-#about p, #about ul{
+#about p, #about ul, #about th{
     font-size: 80%;
     width: 66%;
 }
 
 #about h3{
     padding-top:30px;
+}
+
+#about td {
+  width: 50%;
+  border: 1px solid #dddddd;
+  border-top: none;
+}
+#about table {
+  border-collapse: collapse;
+  width: 100%;
+}
+#about th {
+  width: 50%;
+  text-align: left;
+  background: #eeeeee;
+  padding: 8px;
+  padding-left: 16px;
+  border: 1px solid #dddddd;
+  border-bottom: 0px;
+}
+#about td p {
+  margin-left: 40px;
 }
 
 
