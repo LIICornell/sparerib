@@ -1545,6 +1545,19 @@ table tr.even {
   margin-left: 40px;
 }
 
+/* COMMENT SIMILARITY */
+
+.similarityIcon {
+    background: url('../img/CommentSimilarityIcon.png') no-repeat top right;
+    height: 99px;
+    width: 161px;
+    padding-bottom: 20px;
+}
+.similarityLink {
+    font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+    font-weight: 400;
+    font-size: 145%;
+    }
 
 /* style dummy links */
 a[href=\#] {
