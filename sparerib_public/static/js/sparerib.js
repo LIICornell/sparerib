@@ -1034,7 +1034,7 @@ var setMeta = function(meta) {
         twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
         twLink.attr('data-text', m.twDesc);
 
-        var fbLink = $('<a class="socialite facebook-share" href="http://facebook.com/sharer/sharer.php?" data-image="http://assets.sunlightfoundation.com.s3.amazonaws.com/site/4.0/images/icons/16/facebook.png">Facebook</a>');
+        var fbLink = $('<a class="socialite facebook-like" href="http://facebook.com/sharer/sharer.php?" data-layout="button_count">Facebook</a>');
         fbLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
         fbLink.attr('data-text', m.pageDesc);
         

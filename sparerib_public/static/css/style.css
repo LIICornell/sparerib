@@ -243,14 +243,14 @@ header ul#top-menu li a:hover {
 }
 header div.social {
   position: absolute;
-  left: 725px;
-  top: 8px;
+  left: 665px;
+  top: 7px;
 }
 header div.social div.socialite {
   display: inline-block;
   vertical-align: middle;
 }
-header div.social .facebook-share img {
+header div.social .facebook-like {
   display: block;
   margin-right: 6px;
   position: relative;
