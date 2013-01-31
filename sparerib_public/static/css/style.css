@@ -1022,6 +1022,9 @@ table tr.even {
 .main-content .search .ui-intertag .ui-intertag-tags {
   margin-top: 2px;
 }
+.ui-intertag input.ui-autocomplete-loading {
+  background: url('../img/loading_mini.gif') no-repeat right center;
+}
 .sidebar .search {
   position: relative;
 }
