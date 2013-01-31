@@ -1005,6 +1005,7 @@ var DEFAULT_META = {
 };
 var meta_fragment = '';
 var social = $('header .social');
+var doSocial = window.navigator.userAgent.search(/Zombie/) == -1;
 var setMeta = function(meta) {
     var m = _.extend({}, DEFAULT_META, meta);
     m.title = m.siteTitle + (m.pageTitle ? " - " + m.pageTitle : "");
@@ -1018,20 +1019,21 @@ var setMeta = function(meta) {
     if (!m.twDesc) m.twDesc = m.pageDesc;
     m.twDesc = m.twDesc + " #opengov";
 
-    /* build the social media buttons */
-    var twLink = $('<a class="socialite twitter-share" href="http://twitter.com/share">Share on Twitter</a>')
-    twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
-    twLink.attr('data-text', m.twDesc);
+    if (doSocial) {
+        var twLink = $('<a class="socialite twitter-share" href="http://twitter.com/share">Share on Twitter</a>')
+        twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+        twLink.attr('data-text', m.twDesc);
 
-    var fbLink = $('<a class="socialite facebook-share" href="http://facebook.com/sharer/sharer.php?" data-image="http://assets.sunlightfoundation.com.s3.amazonaws.com/site/4.0/images/icons/16/facebook.png">Facebook</a>');
-    twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
-    twLink.attr('data-text', m.pageDesc);
-    
-    social.html('');
-    social.append(fbLink);
-    social.append(twLink);
+        var fbLink = $('<a class="socialite facebook-share" href="http://facebook.com/sharer/sharer.php?" data-image="http://assets.sunlightfoundation.com.s3.amazonaws.com/site/4.0/images/icons/16/facebook.png">Facebook</a>');
+        fbLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+        fbLink.attr('data-text', m.pageDesc);
+        
+        social.html('');
+        social.append(fbLink);
+        social.append(twLink);
 
-    Socialite.load(social);
+        Socialite.load(social);
+    }
 }
 // Router
 var AppRouter = Backbone.Router.extend({   
