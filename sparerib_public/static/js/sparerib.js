@@ -460,7 +460,7 @@ var AggregatedDetailView = Backbone.View.extend({
                     if (type == 'docket') {
                         setMeta({'pageTitle': 'Docket: ' + this.model.get('title')});
                     } else {
-                        setMeta({'pageTitle': 'Agency: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name') });
+                        setMeta({'pageTitle': 'Agency: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name'), 'twDesc': "View the regulatory history of " + this.model.get('name') + " on Docket Wrench" });
                     }
                 }, this),
                 'error': function() {
@@ -668,7 +668,7 @@ var EntityDetailView = Backbone.View.extend({
 
                     $('.main-loading').slideUp('fast');
                     this.$el.slideDown('fast');
-                    setMeta({'pageTitle': 'Organization: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name') });
+                    setMeta({'pageTitle': 'Organization: ' + this.model.get('name'), 'pageDesc': DEFAULT_META.pageDesc + " View the regulatory history of " + this.model.get('name'), 'twDesc': "View the regulatory history of " + this.model.get('name') + " on Docket Wrench" });
                 }, this),
                 'error': function() {
                     console.log('failed');
@@ -698,7 +698,7 @@ var ClusterView = Backbone.View.extend({
     render: function() {
         this.$el.html(this.template({'docket_id': this.model.id, 'cutoff': this.model.get('cutoff')}));
         if (!window.SIMPLE_JS) this.renderMap();
-        setMeta({'pageTitle': 'Comment Similarity for ' + this.model.id, 'pageDesc': 'Visualize federal rulemaking comments with Docket Wrench.' });
+        setMeta({'pageTitle': 'Comment Similarity for ' + this.model.id, 'pageDesc': 'Visualize federal rulemaking comments with Docket Wrench.', 'twDesc': 'Visualize federal rulemaking comments with Docket Wrench #dataviz' });
         return this;
     },
         
@@ -1000,9 +1000,11 @@ var ClusterView = Backbone.View.extend({
 var DEFAULT_META = {
     siteTitle: 'Docket Wrench',
     pageTitle: '',
-    pageDesc: 'Use Docket Wrench to see how businesses and organizations shape federal regulations.'
+    pageDesc: 'Use Docket Wrench to see how businesses and organizations shape federal regulations.',
+    twDesc: null
 };
 var meta_fragment = '';
+var social = $('header .social');
 var setMeta = function(meta) {
     var m = _.extend({}, DEFAULT_META, meta);
     m.title = m.siteTitle + (m.pageTitle ? " - " + m.pageTitle : "");
@@ -1010,8 +1012,26 @@ var setMeta = function(meta) {
     head.find('title').html(m.title);
     head.find('meta[name=og\\:title]').attr('content', m.title);
     head.find('meta[name=og\\:description]').attr('content', m.pageDesc);
-    meta_fragment = Backbone.history.getFragment()
+    meta_fragment = Backbone.history.getFragment();
     head.find('meta[name=og\\:url]').attr('content', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+
+    if (!m.twDesc) m.twDesc = m.pageDesc;
+    m.twDesc = m.twDesc + " #opengov";
+
+    /* build the social media buttons */
+    var twLink = $('<a class="socialite twitter-share" href="http://twitter.com/share">Share on Twitter</a>')
+    twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+    twLink.attr('data-text', m.twDesc);
+
+    var fbLink = $('<a class="socialite facebook-share" href="http://facebook.com/sharer/sharer.php?" data-image="http://assets.sunlightfoundation.com.s3.amazonaws.com/site/4.0/images/icons/16/facebook.png">Facebook</a>');
+    twLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
+    twLink.attr('data-text', m.pageDesc);
+    
+    social.html('');
+    social.append(fbLink);
+    social.append(twLink);
+
+    Socialite.load(social);
 }
 // Router
 var AppRouter = Backbone.Router.extend({   

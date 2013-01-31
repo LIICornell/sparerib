@@ -212,7 +212,7 @@ header ul#top-menu {
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 190px;
+  width: 150px;
   float:right;
 
   margin-bottom:0;
@@ -241,8 +241,23 @@ header ul#top-menu li a {
 header ul#top-menu li a:hover {
   color: #eaeaea;
 }
-header ul#top-menu li.social {
-  width: 40px;
+header div.social {
+  position: absolute;
+  left: 725px;
+  top: 8px;
+}
+header div.social div.socialite {
+  display: inline-block;
+}
+header div.social .facebook-share img {
+  display: block;
+  margin-right: 6px;
+  position: relative;
+  top: -2px;
+}
+header div.social .twitter-share {
+  width: 85px;
+  overflow: hidden;
 }
 
 nav {
