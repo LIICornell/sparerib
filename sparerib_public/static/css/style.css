@@ -622,6 +622,8 @@ h4.summary-title {
 }
 p.summary-contents {
     margin-top:0;
+    word-wrap: break-word;
+    overflow: hidden;
 }
 dd.document-date {
   border-bottom: 1px solid #a8a8a8;
@@ -907,6 +909,8 @@ table tr.even {
   padding-left:5px;
   margin-left:0;
   width:145px;
+  word-wrap: break-word;
+  overflow: hidden;
 }
 
 .summary-table tr:last-child {
