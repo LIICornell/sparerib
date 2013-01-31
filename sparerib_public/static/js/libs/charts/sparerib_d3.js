@@ -752,10 +752,10 @@ SpareribCharts = {
     timeline_chart: function(div, data, in_opts) {
         var opts = {
             chart_height: 125,
-            chart_width: 515,
-            chart_x: 40,
+            chart_width: 505,
+            chart_x: 45,
             chart_y: 5,
-            right_gutter: 5,
+            right_gutter: 10,
             label_padding: 10,
             legend_padding: 15,
             legend_r: 5,
