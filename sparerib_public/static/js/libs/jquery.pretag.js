@@ -35,7 +35,8 @@
                 'getText': function(text) {
                     var input = container.find("input").eq(0);
                     return input.val();
-                }
+                },
+                'placeholder': null
             }, options);
 
             var container = $('<div>').addClass('ui-intertag');
@@ -64,6 +65,14 @@
 
                 tags_width = tags.width() - parseInt($input.css('padding-left'));
                 $input.width(container.width() - tags.width() - parseInt($input.css('padding-left')) - 1);
+
+                if (options.placeholder) {
+                    if (tags.find('.ui-tag').length == 0) {
+                        $input.attr('placeholder', options.placeholder);
+                    } else {
+                        $input.attr('placeholder', null);
+                    }
+                }
             }
             container.on('tagschanged', resize_input);
 

@@ -958,6 +958,25 @@ table tr.even {
   display: block;
   float: left;
 }
+
+/* all the colors */
+#top-search .ui-intertag input[type=text]::-webkit-input-placeholder { /* WebKit */
+  font-size: 90%;
+  font-style: italic;
+}
+#top-search .ui-intertag input[type=text]:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+  font-size: 90%;
+  font-style: italic;
+}
+#top-search .ui-intertag input[type=text]::-moz-placeholder { /* Mozilla Firefox 19+ */
+  font-size: 90%;
+  font-style: italic;
+}
+#top-search .ui-intertag input[type=text]:-ms-input-placeholder { /* Internet Explorer 10+ */
+  font-size: 90%;
+  font-style: italic;
+}
+
 .main-content .search .ui-intertag {
   width: 250px;
 

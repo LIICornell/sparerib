@@ -274,6 +274,8 @@ var SearchView = Backbone.View.extend({
                     }
                 }
             });
+        } else {
+            options.placeholder = 'Search or filter by keyword, agency or submitter';
         }
         this.$el.find("input[type=text]").intertag(options);
         return this;
