@@ -786,7 +786,7 @@ var ClusterView = Backbone.View.extend({
         pie.append("line").attr("x1", 445).attr("x2", 445).attr("y1", 230).attr("y2", 240).style("stroke", "#cbc5b9").style("stroke-width", "1px");
 
         // fill in the breadcrumbs and dates
-        this.$el.find('.breadcrumbs').html('<li><a href="' + stats.agency.url + '">' + stats.agency.name + '</a> &raquo;</li>');
+        this.$el.find('.breadcrumbs').html('<li><a href="' + stats.agency.url + '">' + stats.agency.name + '</a> &raquo;&nbsp;</li><li><a href="/docket/' + this.model.id + '">' + this.model.id + '</a> &raquo;</li>');
         this.$el.find('.dates').html(helpers.formatDate(stats.date_range[0]) + " &mdash; " + helpers.formatDate(stats.date_range[1]))
     },
 
