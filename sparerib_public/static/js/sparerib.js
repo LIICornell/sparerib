@@ -1001,6 +1001,7 @@ var DEFAULT_META = {
     siteTitle: 'Docket Wrench',
     pageTitle: '',
     pageDesc: 'Use Docket Wrench to see how businesses and organizations shape federal regulations.',
+    altDesc: 'Docket Wrench makes it simple for researchers and members of the public to delve into regulatory comments.',
     twDesc: null
 };
 var meta_fragment = '';
@@ -1009,10 +1010,19 @@ var doSocial = window.navigator.userAgent.search(/Zombie/) == -1;
 var setMeta = function(meta) {
     var m = _.extend({}, DEFAULT_META, meta);
     m.title = m.siteTitle + (m.pageTitle ? " - " + m.pageTitle : "");
+
     var head = $('head');
     head.find('title').html(m.title);
-    head.find('meta[name=og\\:title]').attr('content', m.title);
-    head.find('meta[name=og\\:description]').attr('content', m.pageDesc);
+
+    if (_.contains(["Home", "About", "Search"], m.pageTitle)) {
+        head.find('meta[name=og\\:title]').attr('content', m.pageDesc);
+        head.find('meta[name=og\\:description]').attr('content', m.altDesc);
+    } else {
+        head.find('meta[name=og\\:title]').attr('content', m.title);
+        head.find('meta[name=og\\:description]').attr('content', m.pageDesc);
+    }
+    
+
     meta_fragment = Backbone.history.getFragment();
     head.find('meta[name=og\\:url]').attr('content', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
 
