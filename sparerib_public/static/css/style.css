@@ -248,6 +248,7 @@ header div.social {
 }
 header div.social div.socialite {
   display: inline-block;
+  vertical-align: middle;
 }
 header div.social .facebook-share img {
   display: block;
