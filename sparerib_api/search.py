@@ -1,8 +1,6 @@
-from djangorestframework.mixins import PaginatorMixin
-from djangorestframework.views import View as DRFView
-from djangorestframework.renderers import DEFAULT_RENDERERS
-from djangorestframework.response import Response, ErrorResponse
-from djangorestframework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 from django.views.generic import View
 from django.core.urlresolvers import reverse
@@ -21,12 +19,25 @@ from regs_models import *
 
 ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
-class SearchResultsView(DRFView):
+class SearchResultsView(APIView):
     aggregation_level = None
 
     def get(self, request, query):
         self.set_query(query)
-        return self.get_results()
+
+        page_num = int(self.request.GET.get('page', '1'))
+
+        limit = self.get_limit()
+
+        start = (page_num - 1) * self.get_limit()
+        end = start + self.get_limit()
+
+        all_results = self.get_results()
+        results = list(all_results[start:end])
+        serialized_page_info = self.serialize_page_info(page_num, len(all_results))
+
+        serialized_page_info['results'] = results
+        return Response(serialized_page_info)
 
     def set_query(self, query):
         parsed = parse_query(query)
@@ -115,25 +126,6 @@ class SearchResultsView(DRFView):
             return min(limit, self.max_limit)
         except ValueError:
             return self.limit
-
-    def filter_response(self, obj):
-        # We don't want to paginate responses for anything other than GET requests
-        if self.method.upper() != 'GET':
-            return self._resource.filter_response(obj)
-
-        page_num = int(self.request.GET.get('page', '1'))
-
-        limit = self.get_limit()
-
-        start = (page_num - 1) * self.get_limit()
-        end = start + self.get_limit()
-
-        results = list(obj[start:end])
-        serialized_page_info = self.serialize_page_info(page_num, len(obj))
-
-        serialized_page_info['results'] = results
-
-        return serialized_page_info
 
 class DocumentSearchResults(object):
     def __init__(self, query):
@@ -277,7 +269,7 @@ class AgencySearchResultsView(AggregatedSearchResultsView):
     aggregation_field = 'agency'
     aggregation_collection = 'agencies'
 
-class DefaultSearchResultsView(DRFView):
+class DefaultSearchResultsView(APIView):
     def get(self, request, query):
         parsed = parse_query(query)
         if any([f for f in parsed['filters'] if f[0] == 'docket']):
@@ -289,7 +281,7 @@ class DefaultSearchResultsView(DRFView):
         if request.META['QUERY_STRING']:
             new_url += "?" + request.META['QUERY_STRING']
 
-        raise ErrorResponse(status.HTTP_302_FOUND, headers={'Location': new_url})
+        return Response(status=status.HTTP_302_FOUND, headers={'Location': new_url})
 
 def get_similar_dockets(text, exclude_docket):
     es = pyes.ES(settings.ES_SETTINGS)

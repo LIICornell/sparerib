@@ -42,7 +42,7 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'django.contrib.staticfiles',
-    'djangorestframework',
+    'rest_framework',
     'sparerib_api',
     'sparerib_public',
     'analysis'

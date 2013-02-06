@@ -1,4 +1,5 @@
-from djangorestframework.views import View as DRFView
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from analysis.corpus import get_dual_corpora_by_metadata, find_doc_in_hierarchy, trace_doc_in_hierarchy
 from analysis.utils import profile
 from django.conf import settings
@@ -19,7 +20,7 @@ from regs_models import *
 DEFAULT_CUTOFF = getattr(settings, 'DEFAULT_CLUSTER_CUTOFF', 0.9)
 
 
-class CommonClusterView(DRFView):
+class CommonClusterView(APIView):
     _cutoff = None
     _clusters = None
     _corpus = None
@@ -27,8 +28,8 @@ class CommonClusterView(DRFView):
     @property
     def cutoff(self):
         if self._cutoff is None:
-            if 'cutoff' in self.PARAMS:
-                self._cutoff = float(self.PARAMS['cutoff'])
+            if 'cutoff' in self.request.QUERY_PARAMS:
+                self._cutoff = float(self.request.QUERY_PARAMS['cutoff'])
             else:
                 self._cutoff = DEFAULT_CUTOFF
         return self._cutoff
@@ -104,7 +105,7 @@ class DocketHierarchyView(CommonClusterView):
 
         remove_members(out['cluster_hierarchy'])
 
-        return out
+        return Response(out)
 
 def remove_members(hierarchy):
     """Remove doc IDs from cluster hierarchy.
@@ -151,7 +152,7 @@ class HierarchyTeaserView(CommonClusterView):
                     if cluster08:
                         out['document_teaser']['0.8'] = {'count': cluster08['size'], 'id': doc_id}
 
-        return out
+        return Response(out)
 
     def _count_clusters(self, hierarchy, cutoff):
         count = 0
@@ -176,14 +177,14 @@ class SingleClusterView(CommonClusterView):
 
         metadatas = dict(self.corpus.doc_metadatas(cluster['members']))
 
-        return {
+        return Response({
             'id': cluster['name'],
             'documents': [{
                 'id': doc_id,
                 'title': metadatas[doc_id]['title'],
                 'submitter': ', '.join([metadatas[doc_id][field] for field in ['submitter_name', 'submitter_organization'] if field in metadatas[doc_id] and metadatas[doc_id][field]])
             } for doc_id in cluster['members']]
-        }
+        })
 
 
 class DocumentClusterView(CommonClusterView):
@@ -215,7 +216,7 @@ class DocumentClusterView(CommonClusterView):
 
         html = ''.join(['<span style="background-color:rgba(160,211,216,%s)">%s</span>' % (round(p[0]/cluster_size, 2), p[1]) for p in components])
         html = html.replace("\n", "<br />")
-        return {
+        return Response({
             'metadata': {
                 'title': doc['metadata'].get('title', None),
                 'submitter': ', '.join([doc['metadata'][field] for field in ['submitter_name', 'submitter_organization'] if field in doc['metadata'] and doc['metadata'][field]]),
@@ -223,7 +224,7 @@ class DocumentClusterView(CommonClusterView):
             },
             'frequency_html': html,
             'truncated': len(doc['text']) == 10000
-        }
+        })
 
 class DocumentClusterChainView(CommonClusterView):
     @profile
@@ -232,11 +233,11 @@ class DocumentClusterChainView(CommonClusterView):
 
         h = self.corpus.hierarchy()
 
-        return {
+        return Response({
             'clusters': [{
                 'cutoff': round(entry[0], 2),
                 'id': entry[1],
                 'size': entry[2]
             } for entry in trace_doc_in_hierarchy(h, document_id)]
-        }
+        })
 

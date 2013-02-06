@@ -1,8 +1,6 @@
-from djangorestframework.mixins import ResponseMixin
-from djangorestframework.renderers import DEFAULT_RENDERERS
-from djangorestframework.response import Response, ErrorResponse
-from djangorestframework.views import View as DRFView
-from djangorestframework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
 
 from django.http import HttpResponse, Http404
 
@@ -24,17 +22,15 @@ import pyes
 
 import re, datetime, calendar
 
-class AggregatedView(DRFView):
+class AggregatedView(APIView):
     "Regulations.gov docket view"
-
-    renderers = DEFAULT_RENDERERS
 
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov dockets."
 
         results = list(self.aggregation_class.objects(id=kwargs[self.aggregation_field]))
         if not results:
-            return self.render(Response(status.HTTP_404_NOT_FOUND, '%s not found.' % self.aggregation_level.title()))
+            raise Http404('%s not found.' % self.aggregation_level.title())
 
         self.item = item = results[0]
 
@@ -93,7 +89,7 @@ class AggregatedView(DRFView):
         else:
             out['stats'] = {'count': 0}
 
-        return out
+        return Response(out)
 
 class DocketView(AggregatedView):
     aggregation_level = 'docket'
@@ -101,7 +97,7 @@ class DocketView(AggregatedView):
     aggregation_class = Docket
 
     def get(self, request, *args, **kwargs):
-        out = super(DocketView, self).get(request, *args, **kwargs)
+        out = super(DocketView, self).get(request, *args, **kwargs).data
 
         stats = out['stats']
         stats['similar_dockets'] = []
@@ -138,7 +134,7 @@ class DocketView(AggregatedView):
                     if doc['id'] not in included:
                         stats['doc_info']['fr_docs'].append(doc)
                         included.add(doc['id'])
-            
+
             summary_text = "\n".join(summaries)
             if summary_text:
                 similar_dockets = get_similar_dockets(summary_text, kwargs[self.aggregation_field])[:3]
@@ -167,7 +163,7 @@ class DocketView(AggregatedView):
         if not agency:
             out['agency'] = None
 
-        return out
+        return Response(out)
 
 class AgencyView(AggregatedView):
     aggregation_level = 'agency'
@@ -175,7 +171,7 @@ class AgencyView(AggregatedView):
     aggregation_class = Agency
 
     def get(self, request, *args, **kwargs):
-        out = super(AgencyView, self).get(request, *args, **kwargs)
+        out = super(AgencyView, self).get(request, *args, **kwargs).data
 
         agency = self.item.id
 
@@ -189,18 +185,16 @@ class AgencyView(AggregatedView):
                 'id': docket.id
             } for docket in dockets]
 
-        return out
+        return Response(out)
 
-class DocumentView(DRFView):
+class DocumentView(APIView):
     "Regulations.gov document view"
-
-    renderers = DEFAULT_RENDERERS
 
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
         results = list(Doc.objects(id=kwargs['document_id']))
         if not results:
-            return self.render(Response(status.HTTP_404_NOT_FOUND, 'Document not found.'))
+            raise Http404('Document not found.')
 
         document = results[0]
 
@@ -376,18 +370,16 @@ class DocumentView(DRFView):
             ('Additional Details', dtls(*details.items()))
         )
 
-        return out
+        return Response(out)
 
-class EntityView(ResponseMixin, View):
+class EntityView(APIView):
     "TD entity view"
-
-    renderers = DEFAULT_RENDERERS
 
     def get(self, request, *args, **kwargs):
         "Access aggregate information about entities as they occur in regulations.gov data."
         results = Entity.objects(id=kwargs['entity_id'])
         if not results:
-            return self.render(Response(status.HTTP_404_NOT_FOUND, 'Docket not found.'))
+            raise Http404('Docket not found.')
 
         entity = results[0]
 
@@ -477,7 +469,7 @@ class EntityView(ResponseMixin, View):
         else:
             out['stats'] = {'count': 0}
 
-        return self.render(Response(200, out))
+        return Response(out)
 
 class RawTextView(View):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
@@ -493,6 +485,6 @@ class RawTextView(View):
         else:
             return HttpResponse(view.as_html(), content_type='text/html')
 
-class NotFoundView(DRFView):
+class NotFoundView(APIView):
     def get(self, request):
-        raise ErrorResponse(404, {})
+        return Response(status=404)
