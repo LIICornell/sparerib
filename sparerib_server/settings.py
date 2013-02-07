@@ -53,7 +53,7 @@ try:
     import psycopg2
 except ImportError:
     # we're running in pypy
-    from psycopg2ct import compat
+    from psycopg2cffi import compat
     compat.register()
     
     import numpypy
