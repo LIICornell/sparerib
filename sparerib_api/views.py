@@ -176,7 +176,7 @@ class AgencyView(AggregatedView):
         agency = self.item.id
 
         for label, order in [('recent_dockets', '-stats.date_range.0'), ('popular_dockets', '-stats.count')]:
-            dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.count').limit(5)
+            dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.type_breakdown', 'stats.count').limit(5)
             out[label] = [{
                 'date_range': docket.stats['date_range'],
                 'count': docket.stats['count'],
