@@ -15,3 +15,6 @@ thrift
 pyparsing
 -e git+https://github.com/sunlightlabs/regs-models.git#egg=regs_models
 python-memcached
+redis
+django-redis
+boto
