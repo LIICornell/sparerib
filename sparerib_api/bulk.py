@@ -4,46 +4,86 @@ from boto.s3.key import Key
 import tempfile
 import os, datetime
 from regs_models import Doc
-from django.core import cache
+from django.core.cache import cache
 import hashlib, json
+import uuid
 
 TEN_MINUTES = datetime.timedelta(minutes=10)
+BULK_VERBOSE = True
 
 class DeferredExporter(object):
+    def __init__(self):
+        self._check_data = None
+        self.uuid = str(uuid.uuid4()).replace("-","")
+
     def get_check_data(self):
+        if (self._check_data):
+            if BULK_VERBOSE: print "Using cached check_data"
+            return self._check_data
+        if BULK_VERBOSE: print "Building check_data"
         ids = [doc.id for doc in self.qs.only("id")]
         count = len(ids)
-        checksum = hashlib.md5(json.dumps(sorted(d))).hexdigest()
+        checksum = hashlib.md5(json.dumps(sorted(ids))).hexdigest()
 
-        return {'count': count, 'checksum': checksum}
+        self._check_data = {'count': count, 'checksum': checksum}
+        return self._check_data
 
     def confirm_check_data(self, to_confirm):
         check_data = self.get_check_data()
-        for key, value in check_data:
+        for key, value in check_data.items():
             if key not in to_confirm or to_confirm[key] != value:
                 return False
         return True
 
-    def get_bulk(self):
+    def get_status(self):
         hit = cache.get(self.cache_key)
         if hit is not None:
-            if (hit['status'] == 'done') or (hit['status'] == 'working' and datetime.datetime.now() - hit['created'] < TEN_MINUTES):
+            if BULK_VERBOSE: print "Main cache hit"
+            if (hit['status'] == 'done') or (hit['status'] in ['deferred', 'working'] and datetime.datetime.now() - hit['timestamp'] < TEN_MINUTES):
                 if self.confirm_check_data(hit):
+                    if BULK_VERBOSE: print "Using cache"
                     return hit
-        return self.defer_bulk()
+        if BULK_VERBOSE: print "Deferring"
+        return self.defer()
 
-    def _get_bulk(self):
+    def get_status_info(self):
         data = self.get_check_data()
-        data['url'] = self.upload_to_s3()
-        data['status'] = done
         data['bulk_type'] = self.bulk_type
-        for key, value in self.get_extra_metadata():
+        data['uuid'] = self.uuid
+        data['timestamp'] = datetime.datetime.now()
+        for key, value in self.get_extra_metadata().items():
             data[key] = value
+        return data
+
+    def do_task(self):
+        data = self.get_status_info()
+        data['status'] = 'working'
+        if BULK_VERBOSE: print "Setting cache to working"
+        cache.set(self.cache_key, data)
+
+        data['url'] = self.upload_to_s3()
+        if BULK_VERBOSE: print "Setting cache to done"
+        data['status'] = 'done'
+        cache.set(self.cache_key, data)
+
+        return data
+
+    def defer(self):
+        data = self.get_status_info()
+        data['status'] = 'deferred'
+        cache.set(self.cache_key, data)
+
+        cache.set("sparerib_api.deferred.defer-" + self.uuid, self)
+
+        # TODO: queue execution
 
         return data
 
     def upload_to_s3(self):
         return upload_qs_to_s3(self.qs, name=self.s3name)
+
+    def get_extra_metadata(self):
+        return {}
 
 
 class DocketExporter(DeferredExporter):
@@ -51,9 +91,16 @@ class DocketExporter(DeferredExporter):
     def __init__(self, docket_id):
         super(DocketExporter, self).__init__()
         self.docket_id = docket_id
-        self.qs = Doc.objects(docket_id=docket_id)
         self.cache_key = "sparerib_api.bulk.get_bulk-docket-" + docket_id
         self.s3name = docket_id + ".zip"
+
+    @property
+    def qs(self):
+        return Doc.objects(docket_id=self.docket_id)
+
+    def get_extra_metadata(self):
+        return {'docket_id': self.docket_id}
+
 
 def upload_qs_to_s3(qs, name="export.zip"):
     tfile, tname = tempfile.mkstemp(suffix=".zip")
@@ -75,3 +122,11 @@ def upload_qs_to_s3(qs, name="export.zip"):
     os.unlink(tname)
 
     return "http://" + settings.AWS_BUCKET_URL + "/" + full_name
+
+def run_deferred(uuid):
+    deferred = cache.get("sparerib_api.deferred.defer-" + uuid)
+    return deferred.do_task()
+
+def get_status(uuid):
+    deferred = cache.get("sparerib_api.deferred.defer-" + uuid)
+    return deferred.get_status()
