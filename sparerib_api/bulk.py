@@ -10,21 +10,21 @@ import hashlib, json
 TEN_MINUTES = datetime.timedelta(minutes=10)
 
 class DeferredExporter(object):
-    def get_check_data():
+    def get_check_data(self):
         ids = [doc.id for doc in self.qs.only("id")]
         count = len(ids)
         checksum = hashlib.md5(json.dumps(sorted(d))).hexdigest()
 
         return {'count': count, 'checksum': checksum}
 
-    def confirm_check_data(to_confirm):
+    def confirm_check_data(self, to_confirm):
         check_data = self.get_check_data()
         for key, value in check_data:
             if key not in to_confirm or to_confirm[key] != value:
                 return False
         return True
 
-    def get_bulk():
+    def get_bulk(self):
         hit = cache.get(self.cache_key)
         if hit is not None:
             if (hit['status'] == 'done') or (hit['status'] == 'working' and datetime.datetime.now() - hit['created'] < TEN_MINUTES):
@@ -32,7 +32,7 @@ class DeferredExporter(object):
                     return hit
         return self.defer_bulk()
 
-    def _get_bulk():
+    def _get_bulk(self):
         data = self.get_check_data()
         data['url'] = self.upload_to_s3()
         data['status'] = done
@@ -42,13 +42,13 @@ class DeferredExporter(object):
 
         return data
 
-    def upload_to_s3():
+    def upload_to_s3(self):
         return upload_qs_to_s3(self.qs, name=self.s3name)
 
 
 class DocketExporter(DeferredExporter):
     bulk_type = 'docket'
-    def __init__(docket_id):
+    def __init__(self, docket_id):
         super(DocketExporter, self).__init__()
         self.docket_id = docket_id
         self.qs = Doc.objects(docket_id=docket_id)
