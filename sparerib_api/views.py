@@ -472,6 +472,30 @@ class EntityView(APIView):
 
         return Response(out)
 
+class EntityDocketView(APIView):
+    "TD/Docket join view"
+
+    def get(self, request, entity_id, docket_id, document_type):
+        docs = Doc
+            .objects(Q(attachments__views__entities="b77ef4c0d2c249f994d7019c48c9c60c") | Q(views__entities="b77ef4c0d2c249f994d7019c48c9c60c"), docket_id="ED-2010-OPE-0012")
+            .only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted')
+            .limit(11)
+
+        return {
+            'documents': [{
+                'title': doc.title,
+                'id': doc.id,
+                'date_posted': doc.details['Date_Posted'],
+                'type': doc.type,
+                'files': [{
+                    'object_id': view.object_id,
+                    'file_type': view.file_type,
+                    'url': view.url.replace("inline", "attachment")
+                } for view in doc.views]
+            } for doc in docs[:10]],
+            'has_more': len(docs) > 10
+        }
+
 class RawTextView(View):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
         doc = Doc.objects.get(id=document_id)
