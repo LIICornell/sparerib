@@ -18,3 +18,4 @@ python-memcached
 redis
 django-redis
 boto
+huey
