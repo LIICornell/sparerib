@@ -420,7 +420,7 @@ class EntityView(APIView):
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
-            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type')
+            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type', 'agency')
             dockets = dict([(docket.id, docket) for docket in dockets_search])
 
             # stitch this back onto the main records
@@ -431,7 +431,8 @@ class EntityView(APIView):
                         'title': rdocket.title,
                         'url': reverse('docket-view', kwargs={'docket_id': rdocket.id}),
                         'year': rdocket.year,
-                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking'
+                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking',
+                        'agency': rdocket.agency
                     })
 
             # repeat for agencies
