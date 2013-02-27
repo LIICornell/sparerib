@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.settings import api_settings
+from rest_framework.renderers import JSONPRenderer
 
 from django.http import HttpResponse, Http404
 
@@ -11,6 +13,7 @@ from util import *
 from search import get_similar_dockets
 
 from regs_models import Doc, Docket, Agency, Entity
+from mongoengine import Q
 
 from collections import defaultdict
 import itertools, isoweek
@@ -20,7 +23,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re, datetime, calendar
+import re, datetime, calendar, urllib, itertools
 
 class AggregatedView(APIView):
     "Regulations.gov docket view"
@@ -418,6 +421,8 @@ class EntityView(APIView):
                 } for item in dockets]
                 del stats[mention_type]['dockets']
 
+                stats[mention_type]['docket_search_url'] = "/search-docket/" + urllib.quote(":".join(["mentioned" if mention_type == "text_mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]]))
+
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
             dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type', 'agency')
@@ -474,27 +479,62 @@ class EntityView(APIView):
 
 class EntityDocketView(APIView):
     "TD/Docket join view"
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [JSONPRenderer]
 
-    def get(self, request, entity_id, docket_id, document_type):
-        docs = Doc
-            .objects(Q(attachments__views__entities="b77ef4c0d2c249f994d7019c48c9c60c") | Q(views__entities="b77ef4c0d2c249f994d7019c48c9c60c"), docket_id="ED-2010-OPE-0012")
-            .only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted')
-            .limit(11)
+    def get(self, request, entity_id, docket_id, document_type, entity_type):
+        dkt_results = list(Docket.objects(id=docket_id).only('id', 'title'))
+        ent_results = list(Entity.objects(id=entity_id).only('id', 'aliases'))
+        if not dkt_results or not ent_results:
+            raise Http404('Not found.')
 
-        return {
-            'documents': [{
+        docket = dkt_results[0]
+        entity = ent_results[0]
+
+        if document_type == 'mentions':
+            docs_q = Doc.objects(Q(attachments__views__entities=entity_id) | Q(views__entities=entity_id), docket_id=docket_id)
+        else:
+            docs_q = Doc.objects(submitter_entities=entity_id, docket_id=docket_id) \
+
+        docs_q = docs_q.only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted').hint([("docket_id", 1)])
+        docs = sorted(list(docs_q), key=lambda doc: doc.details.get('Date_Posted', datetime.datetime(1900,1,1)), reverse=True)
+
+        get_views = lambda doc: [{
+            'object_id': view.object_id,
+            'file_type': view.type,
+            'url': view.url.replace('inline', 'attachment')
+        } for view in doc.views if entity_id in view.entities]
+
+        out_docs = []
+        for doc in docs[:10]:
+            out_doc = {
                 'title': doc.title,
                 'id': doc.id,
                 'date_posted': doc.details['Date_Posted'],
                 'type': doc.type,
-                'files': [{
-                    'object_id': view.object_id,
-                    'file_type': view.file_type,
-                    'url': view.url.replace("inline", "attachment")
-                } for view in doc.views]
-            } for doc in docs[:10]],
-            'has_more': len(docs) > 10
-        }
+                'url': '/document/' + doc.id
+            }
+            if document_type == 'mentions':
+                out_doc['files'] = get_views(doc) + list(itertools.chain.from_iterable([get_views(attachment) for attachment in doc.attachments]))
+
+            out_docs.append(out_doc)
+
+        return Response({
+            'documents': out_docs,
+            'has_more': len(docs) > 10,
+            'count': len(docs),
+            'document_search_url': "/search-document/" + \
+                urllib.quote(":".join(["mentioned" if document_type == "mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]])) + \
+                urllib.quote(":".join(["docket", docket.id, '"%s"' % docket.title])),
+            'docket': {
+                'id': docket.id,
+                'title': docket.title,
+            },
+            'entity': {
+                'id': entity.id,
+                'name': entity.aliases[0]
+            },
+            'filter_type': document_type
+        })
 
 class RawTextView(View):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
