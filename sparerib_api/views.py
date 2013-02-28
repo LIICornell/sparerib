@@ -424,6 +424,8 @@ class EntityView(APIView):
                     'id': item[0],
                     'count': item[1]
                 } for item in dockets]
+
+                stats[mention_type]['docket_count'] = len(docket_list)
                 del stats[mention_type]['dockets']
 
                 stats[mention_type]['docket_search_url'] = "/search-docket/" + urllib.quote(":".join(["mentioned" if mention_type == "text_mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]]))
