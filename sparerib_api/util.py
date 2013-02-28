@@ -1,7 +1,7 @@
 from django.conf import settings
 import pymongo
 
-import datetime, calendar
+import datetime, calendar, re
 
 ISO_DATE = '%Y-%m-%d'
 
@@ -60,6 +60,14 @@ def prettify_months(months, expand=False):
     out.append(ranged[-1])
 
     return out
+
+DOCKET_YEAR_FINDER = re.compile("[_-](\d{4})[_-]")
+def get_docket_year(docket_id):
+    year_match = DOCKET_YEAR_FINDER.search(docket_id)
+    if year_match and year_match.groups():
+        return year_match.groups()[0]
+    else:
+        return None
 
 def uniq(seq):
     seen = set()

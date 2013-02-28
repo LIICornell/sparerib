@@ -196,7 +196,7 @@ class DocumentView(APIView):
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
         results = list(Doc.objects(id=kwargs['document_id']))
-        if not results:
+        if not results or results[0].deleted:
             raise Http404('Document not found.')
 
         document = results[0]
@@ -413,7 +413,12 @@ class EntityView(APIView):
                 } for item in agencies]
                 del stats[mention_type]['agencies'], stats[mention_type]['agencies_by_month']
 
-                dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
+                docket_list = stats[mention_type]['dockets'].items()
+                years = request.GET.get('years', None)
+                if years:
+                    year_set = set(years.split(","))
+                    docket_list = [item for item in docket_list if get_docket_year(item[0]) in year_set]
+                dockets = sorted(docket_list, key=lambda x: x[1], reverse=True)[:10]
 
                 stats[mention_type]['top_dockets'] = [{
                     'id': item[0],
@@ -495,8 +500,8 @@ class EntityDocketView(APIView):
         else:
             docs_q = Doc.objects(submitter_entities=entity_id, docket_id=docket_id) \
 
-        docs_q = docs_q.only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted').hint([("docket_id", 1)])
-        docs = sorted(list(docs_q), key=lambda doc: doc.details.get('Date_Posted', datetime.datetime(1900,1,1)), reverse=True)
+        docs_q = docs_q.only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted', 'deleted').hint([("docket_id", 1)])
+        docs = filter(lambda d: not d.deleted, sorted(list(docs_q), key=lambda doc: doc.details.get('Date_Posted', datetime.datetime(1900,1,1)), reverse=True))
 
         get_views = lambda doc: [{
             'object_id': view.object_id,
