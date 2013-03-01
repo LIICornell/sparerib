@@ -428,7 +428,7 @@ class EntityView(APIView):
                 stats[mention_type]['docket_count'] = len(docket_list)
                 del stats[mention_type]['dockets']
 
-                stats[mention_type]['docket_search_url'] = "/search-docket/" + urllib.quote(":".join(["mentioned" if mention_type == "text_mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]]))
+                stats[mention_type]['docket_search_url'] = "/search-docket/" + url_quote(":".join(["mentioned" if mention_type == "text_mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]]))
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
@@ -530,8 +530,8 @@ class EntityDocketView(APIView):
             'has_more': len(docs) > 10,
             'count': len(docs),
             'document_search_url': "/search-document/" + \
-                urllib.quote(":".join(["mentioned" if document_type == "mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]])) + \
-                urllib.quote(":".join(["docket", docket.id, '"%s"' % docket.title])),
+                url_quote(":".join(["mentioned" if document_type == "mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]])) + \
+                url_quote(":".join(["docket", docket.id, '"%s"' % docket.title])),
             'docket': {
                 'id': docket.id,
                 'title': docket.title,

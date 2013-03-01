@@ -1,7 +1,7 @@
 from django.conf import settings
 import pymongo
 
-import datetime, calendar, re
+import datetime, calendar, re, urllib
 
 ISO_DATE = '%Y-%m-%d'
 
@@ -68,6 +68,11 @@ def get_docket_year(docket_id):
         return year_match.groups()[0]
     else:
         return None
+
+def url_quote(s):
+    if type(s) == unicode:
+        s = s.encode('utf-8', errors='ignore')
+    return urllib.quote(s)
 
 def uniq(seq):
     seen = set()
