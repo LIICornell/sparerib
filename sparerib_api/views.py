@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.settings import api_settings
+from rest_framework.renderers import JSONPRenderer
 
 from django.http import HttpResponse, Http404
 
@@ -11,6 +13,7 @@ from util import *
 from search import get_similar_dockets
 
 from regs_models import Doc, Docket, Agency, Entity
+from mongoengine import Q
 
 from collections import defaultdict
 import itertools, isoweek
@@ -20,7 +23,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re, datetime, calendar
+import re, datetime, calendar, urllib, itertools
 
 class AggregatedView(APIView):
     "Regulations.gov docket view"
@@ -193,7 +196,7 @@ class DocumentView(APIView):
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
         results = list(Doc.objects(id=kwargs['document_id']))
-        if not results:
+        if not results or results[0].deleted:
             raise Http404('Document not found.')
 
         document = results[0]
@@ -410,17 +413,26 @@ class EntityView(APIView):
                 } for item in agencies]
                 del stats[mention_type]['agencies'], stats[mention_type]['agencies_by_month']
 
-                dockets = sorted(stats[mention_type]['dockets'].items(), key=lambda x: x[1], reverse=True)[:10]
+                docket_list = stats[mention_type]['dockets'].items()
+                years = request.GET.get('years', None)
+                if years:
+                    year_set = set(years.split(","))
+                    docket_list = [item for item in docket_list if get_docket_year(item[0]) in year_set]
+                dockets = sorted(docket_list, key=lambda x: x[1], reverse=True)[:10]
 
                 stats[mention_type]['top_dockets'] = [{
                     'id': item[0],
                     'count': item[1]
                 } for item in dockets]
+
+                stats[mention_type]['docket_count'] = len(docket_list)
                 del stats[mention_type]['dockets']
+
+                stats[mention_type]['docket_search_url'] = "/search-docket/" + url_quote(":".join(["mentioned" if mention_type == "text_mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]]))
 
             # grab additional docket metadata
             ids = list(set([record['id'] for record in stats['submitter_mentions']['top_dockets']] + [record['id'] for record in stats['text_mentions']['top_dockets']]))
-            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type')
+            dockets_search = Docket.objects(id__in=ids).only('id', 'title', 'year', 'details.dk_type', 'agency')
             dockets = dict([(docket.id, docket) for docket in dockets_search])
 
             # stitch this back onto the main records
@@ -431,7 +443,8 @@ class EntityView(APIView):
                         'title': rdocket.title,
                         'url': reverse('docket-view', kwargs={'docket_id': rdocket.id}),
                         'year': rdocket.year,
-                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking'
+                        'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking',
+                        'agency': rdocket.agency
                     })
 
             # repeat for agencies
@@ -470,6 +483,65 @@ class EntityView(APIView):
             out['stats'] = {'count': 0}
 
         return Response(out)
+
+class EntityDocketView(APIView):
+    "TD/Docket join view"
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [JSONPRenderer]
+
+    def get(self, request, entity_id, docket_id, document_type, entity_type):
+        dkt_results = list(Docket.objects(id=docket_id).only('id', 'title'))
+        ent_results = list(Entity.objects(id=entity_id).only('id', 'aliases'))
+        if not dkt_results or not ent_results:
+            raise Http404('Not found.')
+
+        docket = dkt_results[0]
+        entity = ent_results[0]
+
+        if document_type == 'mentions':
+            docs_q = Doc.objects(Q(attachments__views__entities=entity_id) | Q(views__entities=entity_id), docket_id=docket_id)
+        else:
+            docs_q = Doc.objects(submitter_entities=entity_id, docket_id=docket_id) \
+
+        docs_q = docs_q.only('type', 'title', 'id', 'views', 'attachments.views', 'details.Date_Posted', 'deleted').hint([("docket_id", 1)])
+        docs = filter(lambda d: not d.deleted, sorted(list(docs_q), key=lambda doc: doc.details.get('Date_Posted', datetime.datetime(1900,1,1)), reverse=True))
+
+        get_views = lambda doc: [{
+            'object_id': view.object_id,
+            'file_type': view.type,
+            'url': view.url.replace('inline', 'attachment')
+        } for view in doc.views if entity_id in view.entities]
+
+        out_docs = []
+        for doc in docs[:10]:
+            out_doc = {
+                'title': doc.title,
+                'id': doc.id,
+                'date_posted': doc.details['Date_Posted'],
+                'type': doc.type,
+                'url': '/document/' + doc.id
+            }
+            if document_type == 'mentions':
+                out_doc['files'] = get_views(doc) + list(itertools.chain.from_iterable([get_views(attachment) for attachment in doc.attachments]))
+
+            out_docs.append(out_doc)
+
+        return Response({
+            'documents': out_docs,
+            'has_more': len(docs) > 10,
+            'count': len(docs),
+            'document_search_url': "/search-document/" + \
+                url_quote(":".join(["mentioned" if document_type == "mentions" else "submitter", entity.id, '"%s"' % entity.aliases[0]])) + \
+                url_quote(":".join(["docket", docket.id, '"%s"' % docket.title])),
+            'docket': {
+                'id': docket.id,
+                'title': docket.title,
+            },
+            'entity': {
+                'id': entity.id,
+                'name': entity.aliases[0]
+            },
+            'filter_type': document_type
+        })
 
 class RawTextView(View):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):

@@ -58,7 +58,7 @@
     <div class="main-column">
         <% if (depth == "deep") { %>
             <div class="result-set result-set-deep">
-                <h3><%=capitalize(({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
+                <h3><%=capitalize(({'docket': 'docket', 'document': 'document', 'document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
 
                 <div class="search-results-wrapper">
                     <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
