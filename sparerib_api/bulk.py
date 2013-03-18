@@ -7,8 +7,10 @@ from regs_models import Doc
 from django.core.cache import cache
 import hashlib, json
 import uuid
+from huey.djhuey.decorators import queue_command
 
 TEN_MINUTES = datetime.timedelta(minutes=10)
+THIRTY_DAYS = 60 * 60 * 24 * 30
 BULK_VERBOSE = True
 
 class DeferredExporter(object):
@@ -26,7 +28,7 @@ class DeferredExporter(object):
         checksum = hashlib.md5(json.dumps(sorted(ids))).hexdigest()
 
         self._check_data = {'count': count, 'checksum': checksum}
-        return self._check_data
+        return self._check_data.copy()
 
     def confirm_check_data(self, to_confirm):
         check_data = self.get_check_data()
@@ -37,6 +39,7 @@ class DeferredExporter(object):
 
     def get_status(self):
         hit = cache.get(self.cache_key)
+        print hit
         if hit is not None:
             if BULK_VERBOSE: print "Main cache hit"
             if (hit['status'] == 'done') or (hit['status'] in ['deferred', 'working'] and datetime.datetime.now() - hit['timestamp'] < TEN_MINUTES):
@@ -59,23 +62,23 @@ class DeferredExporter(object):
         data = self.get_status_info()
         data['status'] = 'working'
         if BULK_VERBOSE: print "Setting cache to working"
-        cache.set(self.cache_key, data)
+        cache.set(self.cache_key, data, timeout=THIRTY_DAYS)
 
         data['url'] = self.upload_to_s3()
         if BULK_VERBOSE: print "Setting cache to done"
         data['status'] = 'done'
-        cache.set(self.cache_key, data)
+        cache.set(self.cache_key, data, timeout=THIRTY_DAYS)
 
         return data
 
     def defer(self):
         data = self.get_status_info()
         data['status'] = 'deferred'
-        cache.set(self.cache_key, data)
+        cache.set(self.cache_key, data, timeout=THIRTY_DAYS)
 
-        cache.set("sparerib_api.deferred.defer-" + self.uuid, self)
+        cache.set("sparerib_api.deferred.defer-" + self.uuid, self, timeout=THIRTY_DAYS)
 
-        # TODO: queue execution
+        queue_deferred(self.uuid)
 
         return data
 
@@ -123,10 +126,21 @@ def upload_qs_to_s3(qs, name="export.zip"):
 
     return "http://" + settings.AWS_BUCKET_URL + "/" + full_name
 
+def get_deferred_by_uuid(uuid):
+    return cache.get("sparerib_api.deferred.defer-" + uuid)
+
 def run_deferred(uuid):
-    deferred = cache.get("sparerib_api.deferred.defer-" + uuid)
+    deferred = get_deferred_by_uuid(uuid)
+    if not deferred:
+        return None
     return deferred.do_task()
 
 def get_status(uuid):
-    deferred = cache.get("sparerib_api.deferred.defer-" + uuid)
+    deferred = get_deferred_by_uuid(uuid)
+    if not deferred:
+        return None
     return deferred.get_status()
+
+@queue_command
+def queue_deferred(uuid):
+    run_deferred(uuid)

@@ -45,7 +45,8 @@ INSTALLED_APPS = (
     'rest_framework',
     'sparerib_api',
     'sparerib_public',
-    'analysis'
+    'analysis',
+    'huey.djhuey'
 )
 
 # hacks to make everything work in pypy

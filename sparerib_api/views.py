@@ -10,6 +10,7 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 
 from util import *
+from bulk import DocketExporter, get_deferred_by_uuid
 from search import get_similar_dockets
 
 from regs_models import Doc, Docket, Agency, Entity
@@ -560,3 +561,23 @@ class RawTextView(View):
 class NotFoundView(APIView):
     def get(self, request):
         return Response(status=404)
+
+class BulkView(APIView):
+    def get(self, request, lookup_type, bulk_id):
+        if lookup_type == "docket":
+            # confirm that the docket is real
+            if Docket.objects(id=bulk_id).count() == 0:
+                raise Http404('Docket not found.')
+
+            # create the deferred
+            bulk_deferred = DocketExporter(bulk_id)
+
+        elif lookup_type == "uuid":
+            bulk_deferred = get_deferred_by_uuid(bulk_id)
+            if not bulk_deferred:
+                raise Http404('Deferred not found.')
+
+        else:
+            raise Http404('Bulk type not found.')
+
+        return Response(bulk_deferred.get_status())
