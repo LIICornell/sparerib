@@ -42,7 +42,7 @@ class DeferredExporter(object):
         print hit
         if hit is not None:
             if BULK_VERBOSE: print "Main cache hit"
-            if (hit['status'] == 'done') or (hit['status'] in ['deferred', 'working'] and datetime.datetime.now() - hit['timestamp'] < TEN_MINUTES):
+            if (hit['status'] == 'done') or (hit['status'] in ['deferred', 'working', 'failed'] and datetime.datetime.now() - hit['timestamp'] < TEN_MINUTES):
                 if self.confirm_check_data(hit):
                     if BULK_VERBOSE: print "Using cache"
                     return hit
@@ -64,9 +64,13 @@ class DeferredExporter(object):
         if BULK_VERBOSE: print "Setting cache to working"
         cache.set(self.cache_key, data, timeout=THIRTY_DAYS)
 
-        data['url'] = self.upload_to_s3()
-        if BULK_VERBOSE: print "Setting cache to done"
-        data['status'] = 'done'
+        try:
+            data['url'] = self.upload_to_s3()
+            if BULK_VERBOSE: print "Setting cache to done"
+            data['status'] = 'done'
+        except:
+            if BULK_VERBOSE: print "Setting cache to failed"
+            data['status'] = 'failed'
         cache.set(self.cache_key, data, timeout=THIRTY_DAYS)
 
         return data

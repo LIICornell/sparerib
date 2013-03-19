@@ -587,6 +587,18 @@ ul.submitter-name{
   margin-top: 4px;
 }
 
+.main-content a.external, .main-content a.download {
+  padding-left: 22px;
+  min-height: 16px;
+  display: inline-block;
+}
+.main-content a.external {
+  background: url('../img/icons/regulations-external.png') no-repeat left center;
+}
+.main-content a.download {
+  background: url('../img/icons/regulations-download.png') no-repeat left center;
+}
+
 .main-column-item h4 a, .document-title {
   color: #529594;
   text-decoration: none;
@@ -849,8 +861,6 @@ table tr.even {
   display: none;
 }
 .attachment .type-selection {
-  font-family: georgia, serif;
-  font-style: italic;
   text-align: right;
   font-size: 80%;
 }
