@@ -397,12 +397,15 @@ var ResultsView = Backbone.View.extend({
 
 var AggregatedDetailView = Backbone.View.extend({
     tagName: 'div',
-    id: 'docket-view',
+    className: 'aggregated-view',
 
     template: _.template($('#aggregated-tpl').html()),
     teaserTemplate: _.template($('#docket-teaser-tpl').html()),
 
     render: function() {
+        var modelType = this.model instanceof Docket ? "docket" : "agency";
+        this.$el.addClass(modelType + "-view").attr("id", modelType + "-" + this.model.id);
+
         $(".main-loading").slideDown('fast');
         var mainFetch = this.model.fetch(
             {
@@ -676,6 +679,17 @@ var EntityDetailView = Backbone.View.extend({
             }
         );
         setMeta({'pageTitle': 'Organization'});
+        return this;
+    }
+});
+
+var DownloadView = Backbone.ModalView.extend({
+    template: _.template($('#download-tpl').html()),
+    initialize: function() {
+        this.defaultOptions = _.extend({}, this.defaultOptions, {css: {}});
+    },
+    render: function() {
+        this.$el.html(this.template());
         return this;
     }
 })
@@ -1067,6 +1081,9 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id/similarity/cutoff-:cutoff", "docketClusters");
         this.route("docket/:id/similarity/cutoff-:cutoff/document-:docId", "docketClusters");
 
+        // downloads
+        this.route("docket/:id/download", "docketDownload");
+
         // static stuff
         this.route("", "home");
         this.route("about", "about");
@@ -1147,6 +1164,17 @@ var AppRouter = Backbone.Router.extend({
         window.clusters = clusters;
         var clusterView = new ClusterView({model: clusters});
         $('#main').html(clusterView.render().el);
+    },
+
+    docketDownload: function(id) {
+        var current = $("#main").children().eq(0);
+        if (!(current && current.hasClass("docket-view") && current.attr("id") == "docket-" + id)) {
+            console.log("not already there");
+            this.docketDetail(id);
+        }
+
+        var view = new DownloadView();
+        view.render().showModal();
     },
 
     about: function() {

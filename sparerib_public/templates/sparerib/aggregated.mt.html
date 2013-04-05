@@ -150,7 +150,9 @@
             </div>
         </div>
 
-        <% if (type === "docket" && stats.similar_dockets.length) { %>
+        <% if (type === "docket") {
+            if (stats.similar_dockets.length) { %>
+        
         <div class="sidebar-item">
             <h4>View Similar Dockets</h4>
             <ul class="document-list">
@@ -159,10 +161,14 @@
                 <% }); %>
             </ul>
         </div>
-        <% } %>
+        
+            <% } %>
 
         <div class="sidebar-item last">
             <a class="external" href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this docket on Regulations.gov &raquo;</a>
+            <a class="download" href="/docket/<%=id%>/download">Download this docket's contents &raquo;</a>
         </div>
+
+        <% } %>
     </div>
 </div>
