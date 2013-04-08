@@ -1,5 +1,5 @@
-local_settings.py
-local_settings.json
+local_settings*
+_test*
 *.pyc
 prof.out
 analysis
