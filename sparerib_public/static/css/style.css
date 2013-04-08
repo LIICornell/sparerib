@@ -1570,6 +1570,25 @@ table tr.even {
   -moz-box-shadow: 0px 0px 15px 4px rgba(0, 0, 0, 0.5);
   box-shadow: 0px 0px 15px 4px rgba(0, 0, 0, 0.5);
 }
+.downloading-modal {
+  padding-left: 100px;
+  background: #e9e9e9;
+}
+.downloading-modal .downloading-status {
+  background: #ffffff;
+  padding: 15px;
+  width: 300px;
+  min-height: 60px;
+}
+.downloading-working .downloading-modal {
+  background: #e9e9e9 url("../img/loading.gif") no-repeat 35px center;
+}
+.downloading-done .downloading-modal {
+  background: #e9e9e9 url("../img/icons/regulations-check-large.png") no-repeat 34px center;
+}
+.downloading-failed .downloading-modal {
+  background: #e9e9e9 url("../img/icons/regulations-error-large.png") no-repeat 34px center;
+}
 
 
 
@@ -1622,9 +1641,13 @@ table tr.even {
 
 /* style dummy links */
 a[href=\#] {
-    opacity: 0.5;
-    display:none;
+  display:none;
 }
+/* except not in modals */
+#modalContainer a[href=\#] {
+  display: block;
+}
+
 
 /* end author styles */
 

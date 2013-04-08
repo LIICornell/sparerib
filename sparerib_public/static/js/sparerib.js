@@ -685,12 +685,70 @@ var EntityDetailView = Backbone.View.extend({
 
 var DownloadView = Backbone.ModalView.extend({
     template: _.template($('#download-tpl').html()),
+
     initialize: function() {
-        this.defaultOptions = _.extend({}, this.defaultOptions, {css: {}});
+        this.defaultOptions = _.extend({}, this.defaultOptions, {
+            css: {},
+            closeImageUrl: "/static/img/icons/regulations-ex-large.png",
+            closeImageHoverUrl: "/static/img/icons/regulations-ex-large.png",
+            backgroundClickClosesModal: false
+        });
+        this.on('closeModalWindow', this.handleClose);
+        this.statuses = {
+            'started': {'icon': 'working', 'message': 'Requesting your data...'},
+            'deferred': {'icon': 'working', 'message': 'Preparing your data...'},
+            'working': {'icon': 'working', 'message': 'Uploading your data...'},
+            'done': {'icon': 'done', 'message': 'Your data is ready.<br /><a href="#">Download it here.</a>'},
+            'failed': {'icon': 'failed', 'message': 'Preparation of your data failed. Please try again later.'}
+        };
+        this.icons = ['working', 'done', 'failed'];
     },
     render: function() {
         this.$el.html(this.template());
+        this.setState('started');
+        var _this = this;
+        _.each(['deferred', 'working', 'done'], function(item, i) {
+            setTimeout(function() {
+                _this.setState(item);
+            }, (i + 1) * 1000);
+        });
         return this;
+    },
+    showModal: function() {
+        var _this = this;
+        var _showModal = function() {
+            Backbone.ModalView.prototype.showModal.call(_this);
+            $("body").css({"height":"100%", "overflow": "hidden"});
+        };
+
+        /* scroll us up to the top before showing the dialog */
+        if (window.scrollY == 0) {
+            _showModal();
+        } else {
+            if ($.browser.mozilla) {
+                $('html').animate({'scrollTop': 0}, 100, 'swing', _showModal);
+            } else if ($.browser.webkit) {
+                $('body').animate({'scrollTop': 0}, 100, 'swing', _showModal);
+            } else {
+                window.scrollY = 0;
+                _showModal();
+            }
+        }
+    },
+    handleClose: function() {
+        $("body").css({"height":"", "overflow": ""});
+        app.navigate(Backbone.history.fragment.replace(/\/download$/, ''));
+    },
+    setState: function(state) {
+        var s = this.statuses[state];
+        var style = "downloading-" + s.icon;
+        if (!this.$el.hasClass(style)) {
+            for (var i = 0; i < this.icons.length; i++) {
+                this.$el.removeClass("downloading-" + this.icons[i]);
+            }
+            this.$el.addClass(style);
+        }
+        this.$el.find(".downloading-status").html(s.message);
     }
 })
 
