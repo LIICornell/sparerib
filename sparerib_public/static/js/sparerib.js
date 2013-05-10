@@ -58,6 +58,13 @@ var ClusterChain = Backbone.Model.extend({ url: function() { return "/api/1.0/do
 var ClusterDocketTeaser = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id + "/hierarchy_teaser"; } });
 var ClusterDocumentTeaser = Backbone.Model.extend({ url: function() { return "/api/1.0/document/" + this.id + "/hierarchy_teaser"; } });
 
+/* Download-related models */
+var DeferredModel = Backbone.Model.extend({
+    fetch: function(handlers) {
+        var state = 'started';
+    }
+})
+
 // Template helpers
 var helpers = {
     'formatDate': function(iso_date) {
@@ -698,7 +705,7 @@ var DownloadView = Backbone.ModalView.extend({
             'started': {'icon': 'working', 'message': 'Requesting your data...'},
             'deferred': {'icon': 'working', 'message': 'Preparing your data...'},
             'working': {'icon': 'working', 'message': 'Uploading your data...'},
-            'done': {'icon': 'done', 'message': 'Your data is ready.<br /><a href="#">Download it here.</a>'},
+            'done': {'icon': 'done', 'message': 'Your data is ready.<br /><a class="dl-url" href="#">Download it here.</a>'},
             'failed': {'icon': 'failed', 'message': 'Preparation of your data failed. Please try again later.'}
         };
         this.icons = ['working', 'done', 'failed'];
@@ -707,11 +714,18 @@ var DownloadView = Backbone.ModalView.extend({
         this.$el.html(this.template());
         this.setState('started');
         var _this = this;
-        _.each(['deferred', 'working', 'done'], function(item, i) {
-            setTimeout(function() {
-                _this.setState(item);
-            }, (i + 1) * 1000);
-        });
+
+        var handleResponse = function(response) {
+            _this.setState(response.status);
+            if (response.status == "done") {
+                _this.$el.find(".dl-url").attr('href', response.url);
+            } else {
+                setTimeout(function() {
+                    $.getJSON("/api/1.0/bulk/uuid/" + response.uuid).done(handleResponse);
+                }, 2000)
+            }
+        }
+        $.getJSON("/api/1.0/bulk/docket/" + this.options.docket_id).done(handleResponse);
         return this;
     },
     showModal: function() {
@@ -1231,7 +1245,7 @@ var AppRouter = Backbone.Router.extend({
             this.docketDetail(id);
         }
 
-        var view = new DownloadView();
+        var view = new DownloadView({'docket_id': id});
         view.render().showModal();
     },
 
