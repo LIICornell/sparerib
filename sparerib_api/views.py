@@ -333,7 +333,7 @@ class DocumentView(APIView):
                 ('Organization', dp('Organization_Name')),
                 ('Location', combine(dp('Mailing_Address'), dp('Mailing_Address_'), dp('City'), expand_state(dp('State_or_Province')), dp('Postal_Code'), dp('Country'), sep=", ")),
                 ('Email Address', dp('Email_Address')),
-                ('Phone_Number', dp('Phone_Number')),
+                ('Phone Number', dp('Phone_Number')),
                 ('Fax Number', dp('Fax_Number')),
                 ("Submitter's Representative", dp('Submitter_s_Representative'))
             )),
@@ -341,7 +341,7 @@ class DocumentView(APIView):
             ('Dates and Times', dtls(
                 ('Document Date', dp('Document_Date')), # rarely-used
                 ('Date Received', dp('Received_Date')),
-                ('Postmark_Date', dp('Postmark_Date', dp('Post_Mark_Date'))),
+                ('Postmark Date', dp('Postmark_Date', dp('Post_Mark_Date'))),
                 ('Date Posted', dp('Date_Posted')),
                 (None, dp('Date')), # Swallow this one, since it's always the same as Date_Posted,
                 ('Comment Period', combine(
