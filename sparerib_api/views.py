@@ -219,6 +219,26 @@ class DocumentView(APIView):
             'details': document.details if document.details else {}
         }
 
+        # comment-on metadata
+        if document.comment_on:
+            out['comment_on'] = {
+                "fr_doc": document.comment_on.get('fr_doc', False),  
+                "type": document.comment_on.get('type', None), 
+                "id": document.comment_on['document_id'],
+                'url': reverse('document-view', kwargs={'document_id': document.comment_on['document_id']}),
+                "title": document.comment_on['title']
+            }
+            if document.comment_on['agency'] == out['agency']['id'] or not document.comment_on['agency']:
+                out['comment_on']['agency'] = out['agency']
+            else:
+                out['comment_on']['agency'] = {
+                    'id': document.comment_on['agency'],
+                    'url': reverse('agency-view', kwargs={'agency': document.comment_on['agency']}),
+                    'name': Agency.objects(id=document.comment_on['agency']).only("name")[0].name
+                }
+        else:
+            out['comment_on'] = {}
+
         # docket metadata
         docket = Docket.objects(id=document.docket_id)[0]
         out['docket'] = {
