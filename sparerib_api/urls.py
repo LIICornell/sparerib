@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, RawTextView, NotFoundView, BulkView
+from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView, BulkView
 
 from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
@@ -11,8 +11,9 @@ urlpatterns = patterns('',
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+$)', DocketView.as_view(), name='docket-view'),
     url(r'^document/(?P<document_id>[A-Z0-9_-]+$)', DocumentView.as_view(), name='document-view'),
     url(r'^(?P<type>organization|individual|politician|entity)/(?P<entity_id>[a-f0-9-]+$)', EntityView.as_view(), name='entity-view'),
-    # brisket-specific entity endpoint
+    # brisket-specific entity endpoints
     url(r'^(?P<entity_type>organization|individual|politician|entity)/(?P<entity_id>[a-f0-9-]+)/(?P<document_type>mentions|submissions)_in_docket/(?P<docket_id>[A-Z0-9_-]+$)', EntityDocketView.as_view(), name='entity-docket-view'),
+    url(r'^entity_list$', EntitySummaryView.as_view(), name='entity-list'),
     
     # search
     url(r'^search/document/(?P<query>.*$)', DocumentSearchResultsView.as_view(), name='search-documents-view'),
