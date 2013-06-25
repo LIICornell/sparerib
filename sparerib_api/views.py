@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.settings import api_settings
-from rest_framework.renderers import JSONPRenderer
+from rest_framework.renderers import JSONPRenderer, BaseRenderer
 
 from django.http import HttpResponse, Http404
 
@@ -23,7 +23,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re, datetime, calendar, urllib, itertools
+import re, datetime, calendar, urllib, itertools, struct, uuid
 
 class AggregatedView(APIView):
     "Regulations.gov docket view"
@@ -562,6 +562,25 @@ class EntityDocketView(APIView):
             },
             'filter_type': document_type
         })
+
+class BinaryEntityRenderer(BaseRenderer):
+    media_type = 'application/octet-stream'
+    format = 'binary'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        max_int64 = 0xFFFFFFFFFFFFFFFF
+        entities = data['entities']
+        def to_structs():
+            for e in entities:
+                iid = int(e, 16)
+                yield struct.pack('>QQ', (iid >> 64) & max_int64, iid & max_int64)
+        return "".join(to_structs())
+
+class EntitySummaryView(APIView):
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [BinaryEntityRenderer]
+    def get(self, request):
+        entities = Entity.objects(__raw__={'td_type': 'organization', '$or':[{'stats.submitter_mentions.count':{'$gte':1}}, {'stats.text_mentions.count':{'$gte':1}}]}).only('id')
+        return Response({'entities': [e.id for e in entities]})
 
 class RawTextView(View):
     def get(self, request, document_id, file_type, output_format, view_type, object_id=None):
