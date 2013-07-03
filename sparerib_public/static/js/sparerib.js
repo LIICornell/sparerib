@@ -572,7 +572,8 @@ var DocumentDetailView = Backbone.View.extend({
                     this.$el.slideDown('fast');
                 }, this),
                 'error': function() {
-                    console.log('failed');
+                    $('.main-loading').slideUp('fast');
+                    app.navigate("/404", {trigger: true, replace: true});
                 }
             }
         );
@@ -1159,6 +1160,7 @@ var AppRouter = Backbone.Router.extend({
         // static stuff
         this.route("", "home");
         this.route("about", "about");
+        this.route("404", "notFound");
 
         // load the upper search box at the beginning
         var topSearchView = new SearchView({'el': $('#top-search .search').get(0), 'type': null, 'filters': 'simple'});
@@ -1251,6 +1253,11 @@ var AppRouter = Backbone.Router.extend({
 
     about: function() {
         var view = new StaticView({id: 'about'});
+        $('#main').html(view.render().el);
+    },
+
+    notFound: function() {
+        var view = new StaticView({id: '404'});
         $('#main').html(view.render().el);
     }
 });
