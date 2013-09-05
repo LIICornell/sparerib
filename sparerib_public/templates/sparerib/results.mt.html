@@ -32,7 +32,7 @@
         <% if (depth == 'deep' && typeof result.highlight !== "undefined") { %>
         <tr>
             <td colspan="4" class="snippet">
-                <%=result.highlight['files.text'].join(" &hellip; ")%>
+                <%=result.highlight.join(" &hellip; ")%>
             </td>
         </tr>
         <% } %>
@@ -53,7 +53,7 @@
         <% if (depth == 'deep' && typeof result.highlight !== "undefined") { %>
         <tr>
             <td colspan="5" class="snippet">
-                <%=result.highlight['files.text'].join(" &hellip; ")%>
+                <%=result.highlight.join(" &hellip; ")%>
             </td>
         </tr>
         <% } %>

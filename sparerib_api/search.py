@@ -8,7 +8,7 @@ from django.conf import settings
 
 from util import *
 
-import math, json
+import math, json, operator
 
 import pyes
 from query_parse import parse_query
@@ -115,7 +115,7 @@ class SearchResultsView(APIView):
     def get_es_text_query(self):
         return {
             'query_string': {
-                'fields': ['files.text', 'title^2'],
+                'fields': ['files.text', 'title^2', 'identifiers^4'],
                 'query': self.text_query,
                 'use_dis_max': True
             }
@@ -151,6 +151,15 @@ class DocumentSearchResults(object):
 
         def stitch_record(match):
             match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
+
+            if match['highlight']:
+                # munge the highlights so the frontend doesn't have to care what field they came from
+                ordered = sorted(match['highlight'].items(), key=lambda x: ['identifiers', 'title', 'files.text'].index(x[0]))
+                collated = [[(row[0], snippet) for snippet in row[1]] for row in ordered]
+                collapsed = reduce(operator.add, collated)
+                formatted = ["<strong>ID:</strong> %s" % item[1] if item[0] == 'identifiers' else item[1] for item in collapsed]
+                match['highlight'] = formatted
+            
             return match
 
         return map(stitch_record, self._results['hits']['hits'])
