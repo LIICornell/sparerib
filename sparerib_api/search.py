@@ -204,7 +204,6 @@ class AggregatedSearchResults(list):
 
     def __getslice__(self, start, end):
         s = super(AggregatedSearchResults, self).__getslice__(start, end)
-        print json.dumps(s, indent=4)
 
         db = Doc._get_db()
 
