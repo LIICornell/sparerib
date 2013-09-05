@@ -31,7 +31,7 @@
         </tr>
         <% if (depth == 'deep' && typeof result.highlight !== "undefined") { %>
         <tr>
-            <td colspan="5" class="snippet">
+            <td colspan="4" class="snippet">
                 <%=result.highlight['files.text'].join(" &hellip; ")%>
             </td>
         </tr>
@@ -43,13 +43,20 @@
         </tr>
         
         <% _.each(results, function(result, idx) { %>
-        <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
+        <tr class="<%=(idx % 2 == 0 || depth == 'deep' ? 'even': 'odd')%>">
             <td class="title"><a href="/document/<%=result._id%>"><%=result.fields.title%></a></td>
             <td><%=capitalize(result.fields.document_type.split('_').join(' '))%></t>
             <td><%=result.fields.agency%></td>
             <td><%=result.fields.docket_id%>
             <td><%=shortFormatDate(result.fields.posted_date)%></td>
         </tr>
+        <% if (depth == 'deep' && typeof result.highlight !== "undefined") { %>
+        <tr>
+            <td colspan="5" class="snippet">
+                <%=result.highlight['files.text'].join(" &hellip; ")%>
+            </td>
+        </tr>
+        <% } %>
         <% }); %>
     <% } else if (search.search_type == "entity-agency") { %>
         <tr>

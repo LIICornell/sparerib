@@ -113,7 +113,13 @@ class SearchResultsView(APIView):
             return {'and': term_list}
 
     def get_es_text_query(self):
-        return {'text': {'files.text': self.text_query}} if self.text_query else {'match_all': {}}
+        return {
+            'query_string': {
+                'fields': ['files.text', 'title^2'],
+                'query': self.text_query,
+                'use_dis_max': True
+            }
+        } if self.text_query else {'match_all': {}}
 
     # slight tweak to how this was done in the original - this will be the default
     limit = 10
@@ -166,8 +172,8 @@ class DocumentSearchResultsView(SearchResultsView):
 
         if text_query:
             query['query'] = text_query
-            if 'text' in text_query:
-                query['highlight'] = {'fields': dict([(key, {}) for key in text_query['text'].keys()])}
+            if 'query_string' in text_query:
+                query['highlight'] = {'fields': dict([(field.split('^')[0], {}) for field in text_query['query_string']['fields']])}
 
         query['fields'] = ['document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
@@ -198,6 +204,7 @@ class AggregatedSearchResults(list):
 
     def __getslice__(self, start, end):
         s = super(AggregatedSearchResults, self).__getslice__(start, end)
+        print json.dumps(s, indent=4)
 
         db = Doc._get_db()
 
