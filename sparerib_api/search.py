@@ -8,7 +8,7 @@ from django.conf import settings
 
 from util import *
 
-import math, json, operator
+import math, json, operator, copy
 
 import pyes
 from query_parse import parse_query
@@ -19,7 +19,7 @@ from regs_models import *
 
 ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
-class SearchResultsView(APIView):
+class ESSearchResultsView(APIView):
     aggregation_level = None
 
     def get(self, request, query):
@@ -133,7 +133,10 @@ class SearchResultsView(APIView):
         except ValueError:
             return self.limit
 
-class DocumentSearchResults(object):
+class ESSearchResults(object):
+    indicies = "regulations"
+    doc_types = None
+
     def __init__(self, query):
         self.query = query
         self._results = None
@@ -146,8 +149,19 @@ class DocumentSearchResults(object):
             self.query['size'] = end - start
             
             es = pyes.ES(settings.ES_SETTINGS)
-            self._results = es.search_raw(self.query)
+            self._results = es.search_raw(self.query, indicies=self.indicies, doc_types=self.doc_types)
             self._count = self._results['hits']['total']
+
+        return self._results['hits']['hits']
+
+    def __len__(self):
+        return self._count
+
+class DocumentSearchResults(ESSearchResults):
+    doc_types = ["document"]
+
+    def __getslice__(self, start, end):
+        s = super(DocumentSearchResults, self).__getslice__(start, end)
 
         def stitch_record(match):
             match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
@@ -162,12 +176,9 @@ class DocumentSearchResults(object):
             
             return match
 
-        return map(stitch_record, self._results['hits']['hits'])
+        return map(stitch_record, s)
 
-    def __len__(self):
-        return self._count
-
-class DocumentSearchResultsView(SearchResultsView):
+class DocumentSearchResultsView(ESSearchResultsView):
     aggregation_level = 'document'
 
     def get_results(self):
@@ -204,85 +215,73 @@ class NonFRSearchResultsView(DocumentSearchResultsView):
 
         return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
-class AggregatedSearchResults(list):
-    def __init__(self, items, aggregation_level, aggregation_field, aggregation_collection):
-        super(AggregatedSearchResults, self).__init__(items)
-        self.aggregation_level = aggregation_level
-        self.aggregation_field = aggregation_field
-        self.aggregation_collection = aggregation_collection
+class DocketSearchResultsView(ESSearchResultsView):
+    aggregation_level = 'docket'
+
+    def get_results(self):
+        query = {}
+        
+        filters = self.get_es_filters()
+        text_query = self.get_es_text_query()
+
+        if filters:
+            query['filter'] = filters
+
+        if text_query:
+            title_query = copy.deepcopy(text_query)
+            title_query['query_string']['boost'] = 10
+            title_query['query_string']['fields'] = ['title']
+
+            query['query'] = {
+                'dis_max': {
+                    'queries': [
+                        title_query,
+                        {
+                            'has_child': {
+                                'type': 'document',
+                                'query': text_query.copy(),
+                                'score_type': 'sum'
+                            }
+                        }
+                    ]
+                }
+            }
+
+        query['fields'] = ['_id', 'title', 'agency']
+        
+        return DocketSearchResults(query)
+
+class DocketSearchResults(ESSearchResults):
+    doc_types = ["docket"]
 
     def __getslice__(self, start, end):
-        s = super(AggregatedSearchResults, self).__getslice__(start, end)
+        s = super(DocketSearchResults, self).__getslice__(start, end)
 
         db = Doc._get_db()
 
-        ids = [match['term'] for match in s]
-        agg_search = db[self.aggregation_collection].find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
+        ids = [match['_id'] for match in s]
+        agg_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
         agg_map = dict([(result['_id'], result) for result in agg_search])
 
         def stitch_record(match):
-            out = {
-                '_type': self.aggregation_level,
-                '_index': 'regulations',
-                'fields': {},
-                '_score': match['total'],
-                '_id': match['term'],
-                'matched': match['count'],
-                'url': reverse(self.aggregation_level + '-view', kwargs={self.aggregation_field: match['term']})
-            }
-            if match['term'] in agg_map:
-                agg_data = agg_map[match['term']]
-                out['fields'] = {
-                    self.aggregation_field: agg_map[match['term']]['_id'],
+            match['url'] = reverse('docket-view', kwargs={'docket_id': match['_id']})
+
+            if match['_id'] in agg_map and 'stats' in agg_map[match['_id']]:
+                agg_data = agg_map[match['_id']]
+                match['fields'].update({
+                    'docket_id': agg_map[match['_id']]['_id'],
                     'date_range': agg_data['stats']['date_range'],
                     'count': agg_data['stats']['count']
-                }
-                for label in ['name', 'title', 'agency', 'year']:
-                    if label in agg_data:
-                        out['fields'][label] = agg_data[label]
+                })
+                if 'year' in agg_data:
+                    match['fields']['year'] = agg_data['year']
                 
                 rulemaking_field = agg_data.get('details', {}).get('dk_type', None)
                 if rulemaking_field:
                     out['fields']['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
-            return out
+            return match
 
         return map(stitch_record, s)
-
-class AggregatedSearchResultsView(SearchResultsView):
-    def get_results(self):
-        query = {
-            'query': self.get_es_text_query(),
-            'facets': {
-                self.aggregation_level: {
-                    'terms_stats': {
-                        'key_field': self.aggregation_field,
-                        'value_script': 'doc.score',
-                        'size': 1000000,
-                        'order': 'total'
-                    }
-                }
-            },
-            'size': 0
-        }
-
-        filters = self.get_es_filters()
-        if filters:
-            query['facets'][self.aggregation_level]['facet_filter'] = filters
-
-        es = pyes.ES(settings.ES_SETTINGS)
-        results = es.search_raw(query)
-
-        return AggregatedSearchResults(results['facets'][self.aggregation_level]['terms'], self.aggregation_level, self.aggregation_field, self.aggregation_collection)
-
-class DocketSearchResultsView(AggregatedSearchResultsView):
-    aggregation_level = 'docket'
-    aggregation_field = 'docket_id'
-    aggregation_collection = 'dockets'
-
-class AgencySearchResultsView(AggregatedSearchResultsView):
-    aggregation_level = 'agency'
-    aggregation_field = 'agency'
-    aggregation_collection = 'agencies'
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):
