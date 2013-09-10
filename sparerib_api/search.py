@@ -11,7 +11,7 @@ from util import *
 import math, json, operator, copy
 
 import pyes
-from query_parse import parse_query
+from query_parse import parse_query, parse_query_for_mongo
 
 from collections import defaultdict
 
@@ -19,7 +19,9 @@ from regs_models import *
 
 ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
-class ESSearchResultsView(APIView):
+### Base search classes ###
+
+class SearchResultsView(APIView):
     aggregation_level = None
 
     def get(self, request, query):
@@ -80,6 +82,19 @@ class ESSearchResultsView(APIView):
 
         return out
 
+    # slight tweak to how this was done in the original - this will be the default
+    limit = 10
+    # and this will be the max
+    max_limit = 50
+
+    def get_limit(self):
+        try:
+            limit = int(self.request.GET.get('limit', self.limit))
+            return min(limit, self.max_limit)
+        except ValueError:
+            return self.limit
+
+class ESSearchResultsView(SearchResultsView):
     def get_es_filters(self, extra_terms={}):
         terms = defaultdict(list)
         terms.update(extra_terms)
@@ -121,18 +136,6 @@ class ESSearchResultsView(APIView):
             }
         } if self.text_query else {'match_all': {}}
 
-    # slight tweak to how this was done in the original - this will be the default
-    limit = 10
-    # and this will be the max
-    max_limit = 50
-
-    def get_limit(self):
-        try:
-            limit = int(self.request.GET.get('limit', self.limit))
-            return min(limit, self.max_limit)
-        except ValueError:
-            return self.limit
-
 class ESSearchResults(object):
     indicies = "regulations"
     doc_types = None
@@ -156,6 +159,73 @@ class ESSearchResults(object):
 
     def __len__(self):
         return self._count
+
+class MongoSearchResultsView(SearchResultsView):
+    def set_query(self, query):
+        parsed = parse_query_for_mongo(query)
+        self.raw_query = query
+        self.text_query = parsed['text']
+        self.mongo_query = parsed['quoted_text']
+        self.filters = parsed['filters']
+
+class MongoSearchResults(object):
+    def __init__(self, model, query, extra_ids=[]):
+        self.model = model
+        self.query = query
+        self.extra_ids = extra_ids
+        self._results = None
+        self._count = -1
+
+    def __getslice__(self, start, end):
+        model = self.model
+
+        do_full_search = True
+        initial = []
+        actual = []
+        
+        if start < len(self.extra_ids):
+            # some of the results will be faked
+            initial_ids = self.extra_ids[start:end]
+
+            # grab them from the database
+            initial = list(model._get_collection().find({'_id': {'$in': initial_ids}}, self.query['project']))
+
+            if len(initial) >= (end - start):
+                # we can satisfy the whole query with fake things
+                do_full_search = False
+
+        if do_full_search:
+            self._results = model._get_db().command("text", model._get_collection_name(), **self.query)
+            actual = self._results['results'][start - len(self.extra_ids) + len(initial):end - len(self.extra_ids)]
+
+        self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
+        
+        initial_fmt = [{
+            '_id': match['_id'],
+            '_type': model._class_name.lower(),
+            '_index': 'regulations',
+            '_score': 100, # arbitrary but high, since they come first
+            '_from_filter': True,
+            'url': reverse('entity-view', kwargs={'entity_id': match['_id'], 'type': match['td_type']}),
+            'fields': {'name': match['aliases'][0], 'type': match['td_type']}
+        } for match in initial]
+        
+        actual_fmt = [{
+            '_id': match['obj']['_id'],
+            '_type': model._class_name.lower(),
+            '_index': 'regulations',
+            '_score': match['score'],
+            '_from_filter': False,
+            'url': reverse('entity-view', kwargs={'entity_id': match['obj']['_id'], 'type': match['obj']['td_type']}),
+            'fields': {'name': match['obj']['aliases'][0], 'type': match['obj']['td_type']}
+        } for match in actual]
+
+        return initial_fmt + actual_fmt
+
+    def __len__(self):
+        return self._count
+
+### Implementations ###
 
 class DocumentSearchResults(ESSearchResults):
     doc_types = ["document"]
@@ -282,6 +352,20 @@ class DocketSearchResults(ESSearchResults):
             return match
 
         return map(stitch_record, s)
+
+class EntitySearchResultsView(MongoSearchResultsView):
+    aggregation_level = 'entity'
+
+    def get_results(self):
+        extra_ids = [f[1] for f in self.filters if f[0] in ('submitter', 'mentioned')]
+        
+        mongo_filter = {'searchable': True}
+        if extra_ids:
+            mongo_filter['_id'] = {'$nin': extra_ids}
+
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'aliases': 1, 'td_type': 1}, 'limit': 50000}
+
+        return MongoSearchResults(Entity, query, extra_ids)
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):
