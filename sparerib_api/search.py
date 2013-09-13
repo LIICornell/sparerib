@@ -168,8 +168,9 @@ class MongoSearchResultsView(SearchResultsView):
         self.filters = parsed['filters']
 
 class MongoSearchResults(object):
-    def __init__(self, model, query, extra_ids=[], alternative_sort=("_id", 1)):
-        self.model = model
+    model = None
+
+    def __init__(self, query, extra_ids=[], alternative_sort=("_id", 1)):
         self.query = query
         self.extra_ids = extra_ids
         self._results = None
@@ -210,8 +211,8 @@ class MongoSearchResults(object):
                     '_index': 'regulations',
                     '_score': match['score'],
                     '_from_filter': False,
-                    'url': reverse('entity-view', kwargs={'entity_id': match['obj']['_id'], 'type': match['obj']['td_type']}),
-                    'fields': {'name': match['obj']['aliases'][0], 'type': match['obj']['td_type']}
+                    'url': self.get_result_url(match['obj']),
+                    'fields': self.get_result_fields(match['obj'])
                 } for match in actual]
 
                 self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
@@ -233,8 +234,8 @@ class MongoSearchResults(object):
                     '_index': 'regulations',
                     '_score': 99, # arbitrary but high, since they come first
                     '_from_filter': False,
-                    'url': reverse('entity-view', kwargs={'entity_id': match['_id'], 'type': match['td_type']}),
-                    'fields': {'name': match['aliases'][0], 'type': match['td_type']}
+                    'url': self.get_result_url(match),
+                    'fields': self.get_result_fields(match)
                 } for match in actual]
         
         initial_fmt = [{
@@ -243,14 +244,20 @@ class MongoSearchResults(object):
             '_index': 'regulations',
             '_score': 100, # arbitrary but high, since they come first
             '_from_filter': True,
-            'url': reverse('entity-view', kwargs={'entity_id': match['_id'], 'type': match['td_type']}),
-            'fields': {'name': match['aliases'][0], 'type': match['td_type']}
+            'url': self.get_result_url(match),
+            'fields': self.get_result_fields(match)
         } for match in initial]
 
         return initial_fmt + actual_fmt
 
     def __len__(self):
         return self._count
+
+    def get_result_fields(self, match_object):
+        return {}
+
+    def get_result_url(self, match_object):
+        return ""
 
 ### Implementations ###
 
@@ -407,7 +414,44 @@ class EntitySearchResultsView(MongoSearchResultsView):
 
         query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'aliases': 1, 'td_type': 1}, 'limit': 50000}
 
-        return MongoSearchResults(Entity, query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None))
+        return EntitySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None))
+
+class EntitySearchResults(MongoSearchResults):
+    model = Entity
+
+    def get_result_url(self, match_object):
+        return reverse('entity-view', kwargs={'entity_id': match_object['_id'], 'type': match_object['td_type']})
+
+    def get_result_fields(self, match_object):
+        return {'name': match_object['aliases'][0], 'type': match_object['td_type']}
+
+class AgencySearchResultsView(MongoSearchResultsView):
+    aggregation_level = 'agency'
+
+    # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
+    # unadorned 'agency' and 'docket' filter entities by submission to that agency/docket, and with '_mentioned', filter by mention in that agency/docket
+    allowed_filters = ['agency']
+
+    def get_results(self):
+        mongo_filter = {}
+
+        extra_ids = [f[1] for f in self.filters if f[0] == 'agency']
+
+        if extra_ids:
+            mongo_filter['_id'] = {'$nin': extra_ids}
+
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'name': 1}, 'limit': 50000}
+
+        return AgencySearchResults(query, extra_ids)
+
+class AgencySearchResults(MongoSearchResults):
+    model = Agency
+
+    def get_result_url(self, match_object):
+        return reverse('agency-view', kwargs={'agency': match_object['_id']})
+
+    def get_result_fields(self, match_object):
+        return {'name': match_object['name']}
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):
