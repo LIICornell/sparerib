@@ -17,12 +17,11 @@ from collections import defaultdict
 
 from regs_models import *
 
-ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
-
 ### Base search classes ###
 
 class SearchResultsView(APIView):
     aggregation_level = None
+    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
     def get(self, request, query):
         self.set_query(query)
@@ -73,7 +72,7 @@ class SearchResultsView(APIView):
                     'type': f[0],
                     'value': f[1],
                     'label': f[2] if len(f) > 2 else f[1]
-                } for f in self.filters if f[0] in ALLOWED_FILTERS],
+                } for f in self.filters if f[0] in self.allowed_filters],
                 'raw_query': self.raw_query,
                 'aggregation_level': self.aggregation_level,
                 'search_type': getattr(self, 'search_type', self.aggregation_level)
@@ -169,12 +168,13 @@ class MongoSearchResultsView(SearchResultsView):
         self.filters = parsed['filters']
 
 class MongoSearchResults(object):
-    def __init__(self, model, query, extra_ids=[]):
+    def __init__(self, model, query, extra_ids=[], alternative_sort=("_id", 1)):
         self.model = model
         self.query = query
         self.extra_ids = extra_ids
         self._results = None
         self._count = -1
+        self.alternative_sort = alternative_sort
 
     def __getslice__(self, start, end):
         model = self.model
@@ -195,10 +195,47 @@ class MongoSearchResults(object):
                 do_full_search = False
 
         if do_full_search:
-            self._results = model._get_db().command("text", model._get_collection_name(), **self.query)
-            actual = self._results['results'][start - len(self.extra_ids) + len(initial):end - len(self.extra_ids)]
+            # calcualte the actual offsets in light of how much fake stuff we're shoving in at the beginning
+            actual_start = start - len(self.extra_ids) + len(initial)
+            actual_end = end - len(self.extra_ids)
 
-        self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
+            # this might be a text search or a regular query, depending on whether things besides filters are supplied
+            if self.query['search']:
+                self._results = model._get_db().command("text", model._get_collection_name(), **self.query)
+                actual = self._results['results'][actual_start:actual_end]
+
+                actual_fmt = [{
+                    '_id': match['obj']['_id'],
+                    '_type': model._class_name.lower(),
+                    '_index': 'regulations',
+                    '_score': match['score'],
+                    '_from_filter': False,
+                    'url': reverse('entity-view', kwargs={'entity_id': match['obj']['_id'], 'type': match['obj']['td_type']}),
+                    'fields': {'name': match['obj']['aliases'][0], 'type': match['obj']['td_type']}
+                } for match in actual]
+
+                self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
+            else:
+                # build query
+                print self.query['filter']
+                cursor = model._get_collection().find(self.query['filter']).sort(*self.alternative_sort)
+                
+                # get full count
+                self._count = cursor.count()
+
+                # fetch subset of results
+                self._results = cursor.skip(actual_start).limit(actual_end - actual_start)
+                actual = list(self._results)
+
+                actual_fmt = [{
+                    '_id': match['_id'],
+                    '_type': model._class_name.lower(),
+                    '_index': 'regulations',
+                    '_score': 99, # arbitrary but high, since they come first
+                    '_from_filter': False,
+                    'url': reverse('entity-view', kwargs={'entity_id': match['_id'], 'type': match['td_type']}),
+                    'fields': {'name': match['aliases'][0], 'type': match['td_type']}
+                } for match in actual]
         
         initial_fmt = [{
             '_id': match['_id'],
@@ -209,16 +246,6 @@ class MongoSearchResults(object):
             'url': reverse('entity-view', kwargs={'entity_id': match['_id'], 'type': match['td_type']}),
             'fields': {'name': match['aliases'][0], 'type': match['td_type']}
         } for match in initial]
-        
-        actual_fmt = [{
-            '_id': match['obj']['_id'],
-            '_type': model._class_name.lower(),
-            '_index': 'regulations',
-            '_score': match['score'],
-            '_from_filter': False,
-            'url': reverse('entity-view', kwargs={'entity_id': match['obj']['_id'], 'type': match['obj']['td_type']}),
-            'fields': {'name': match['obj']['aliases'][0], 'type': match['obj']['td_type']}
-        } for match in actual]
 
         return initial_fmt + actual_fmt
 
@@ -356,16 +383,31 @@ class DocketSearchResults(ESSearchResults):
 class EntitySearchResultsView(MongoSearchResultsView):
     aggregation_level = 'entity'
 
+    # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
+    # unadorned 'agency' and 'docket' filter entities by submission to that agency/docket, and with '_mentioned', filter by mention in that agency/docket
+    allowed_filters = ['agency', 'agency_mentioned', 'docket', 'docket_mentioned', 'submitter', 'mentioned']
+
     def get_results(self):
-        extra_ids = [f[1] for f in self.filters if f[0] in ('submitter', 'mentioned')]
-        
+        extra_ids = []
         mongo_filter = {'searchable': True}
+        candidate_sorts = []
+
+        for f in self.filters:
+            if f[0] in ('submitter', 'mentioned'):
+                extra_ids.append(f[1])
+            elif f[0].startswith('agency') or f[0].startswith('docket'):
+                filter_key = 'stats.' +\
+                    ('text_mentions' if f[0].endswith('_mentioned') else 'submitter_mentions') +\
+                    '.%s.%s' % ('agencies' if f[0].startswith('agency') else 'dockets', f[1])
+                mongo_filter[filter_key] = {'$gte': 1}
+                candidate_sorts.append((filter_key, -1))
+
         if extra_ids:
             mongo_filter['_id'] = {'$nin': extra_ids}
 
         query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'aliases': 1, 'td_type': 1}, 'limit': 50000}
 
-        return MongoSearchResults(Entity, query, extra_ids)
+        return MongoSearchResults(Entity, query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None))
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):
