@@ -58,7 +58,7 @@
     <div class="main-column">
         <% if (depth == "deep") { %>
             <div class="result-set result-set-deep">
-                <h3><%=capitalize(({'docket': 'docket', 'document': 'document', 'document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
+                <h3><%=capitalize(({'docket': 'docket', 'document': 'document', 'document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other', 'entity': 'organization', 'agency': 'agency'})[level])%> results</h3>
 
                 <div class="search-results-wrapper">
                     <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
@@ -67,7 +67,7 @@
             </div>
         <% } else { %>
             <div class="result-set result-set-shallow">
-                <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
+                <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr'], ['Organizations', 'entity'], ['Agencies', 'agency']], function(agg_type) { %>
                 <h3><%=agg_type[0]%></h3>
 
                 <div class="search-results-wrapper">

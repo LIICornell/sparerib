@@ -1,11 +1,17 @@
 <% if (total == 0) { %>
 <div class="notice">We didn't find any search results for this term.</div>
 <% } else { %>
+
+<% if (depth == 'shallow') { %>
 <div class="result-count">(<%=results.length%> of <%=total%> <%=pluralize(total, "result")%>)</div>
+<% } else { %>
+<div class="result-count">(<%=((page - 1) * per_page + 1)%> &ndash; <%=((page - 1) * per_page + results.length)%> of <%=total%> <%=pluralize(total, "result")%>)</div>
+<% } %>
+
 <table class="results">
     <% if (search.search_type == "docket") { %>
         <tr>
-            <th>Title</th><th>Agency</th><th>Date Range</th><th>Matching Comments</th><th>Total Comments</th>
+            <th>Title</th><th>Agency</th><th>Date Range</th><th>Total Comments</th>
         </tr>
         
         <% _.each(results, function(result, idx) { %>
@@ -13,7 +19,6 @@
             <td class="title"><a href="/docket/<%=result.fields.docket_id%>"><%=result.fields.title%></a></td>
             <td><%=result.fields.agency%></td>
             <td><% if (result.fields.date_range) { %><%=shortFormatDate(result.fields.date_range[0])%> &ndash; <%=shortFormatDate(result.fields.date_range[1])%><% } %></td>
-            <td><%=result.matched%></td>
             <td><%=result.fields.count%></td>
         </tr>
         <% }); %>
@@ -58,30 +63,36 @@
         </tr>
         <% } %>
         <% }); %>
-    <% } else if (search.search_type == "entity-agency") { %>
+    <% } else if (search.search_type == "entity") { %>
         <tr>
-            <th>Name</th><th>Type</th>
+            <th>Name</th>
         </tr>
         
         <% _.each(results, function(result, idx) { %>
         <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
-            <td class="title"><a href="/<%=result._type%>/<%=(result._type == 'organization' ? slugify(result.fields.name) + '/' : '')%><%=result._id%>"><%=result.fields.name%></a></td>
-            <td><%=capitalize(result._type)%></td>
+            <td class="title"><a href="/<%=result._type%>/<%=(slugify(result.fields.name) + '/')%><%=result._id%>"><%=result.fields.name%></a></td>
+        </tr>
+        <% }); %>
+    <% } else if (search.search_type == "agency") { %>
+        <tr>
+            <th>Name</th>
+        </tr>
+        
+        <% _.each(results, function(result, idx) { %>
+        <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
+            <td class="title"><a href="/<%=result._type%>/<%=result._id%>"><%=result.fields.name%></a></td>
         </tr>
         <% }); %>
     <% } %>
 </table>
 
-<% if (search.search_type != 'entity-agency') { %>
-    <% if (depth == 'shallow') { %>
-    <br /><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) %>">View more <%=({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[search.search_type]%> results &raquo;</a>
-    <% } else { %>
-    <div class="pagination">
-        <% if (previous) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
-        <div class="clear"></div>
-    </div>
-    <% } %>
+<% if (depth == 'shallow') { %>
+<br /><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) %>">View more <%=({'docket': 'docket','document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[search.search_type]%> results &raquo;</a>
+<% } else { %>
+<div class="pagination">
+    <% if (previous) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page - 1)%>" class="prev">&laquo; previous</a><% }; if (next) { %><a href="<%='/search-' + search.search_type + '/' + encodeURIComponent(search.raw_query) + '/' + (page + 1)%>" class="next">next &raquo;</a><% } %>
+    <div class="clear"></div>
+</div>
 <% } %>
-
 
 <% } %>

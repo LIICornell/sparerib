@@ -66,9 +66,13 @@ var helpers = {
         return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
     },
     'shortFormatDate': function(iso_date) {
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        var date = new Date(iso_date);
-        return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+        if (iso_date) {
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var date = new Date(iso_date);
+            return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+        } else {
+            return "&mdash;";
+        }
     },
     'capitalize': function(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -1071,7 +1075,7 @@ var AppRouter = Backbone.Router.extend({
 
         if (type == null) {
             // are we on a search page?
-            var models = _.map(['docket', 'document-fr', 'document-non-fr'], function(type) {
+            var models = _.map(['docket', 'document-fr', 'document-non-fr', 'entity', 'agency'], function(type) {
                 return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
             });
             var depth = 'shallow';
