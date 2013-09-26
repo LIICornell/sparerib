@@ -377,10 +377,11 @@ var ResultsView = Backbone.View.extend({
                         $el.find('.search-results-' + model.get('level')).html(this.templates.complete(context)).slideDown("fast");
                         $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
-                        // populate the search input if necessary
-                        if (!searchPopulated) {
-                            // show the filters we're supposed to, and hide the others
+                        // populate the search input if necessary, but only use responses from docket, document-fr, or document-non-fr, since they support all the filters in the 'all' type
+                        if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document-fr', 'document-non-fr'], model.get('level')))) {
                             var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
+                            
+                            // show the filters we're supposed to, and hide the others
                             $searchFilters.filter('.search-filter-magic,.search-filter-editable').removeClass('search-filter-magic').removeClass('search-filter-visible').filter(":visible").addClass("previously-visible");
                             _.each(['editable', 'magic'], function(filterClass) {
                                 _.each(view.allowedFilters[filterSet][filterClass], function(filterType) {

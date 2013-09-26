@@ -170,12 +170,13 @@ class MongoSearchResultsView(SearchResultsView):
 class MongoSearchResults(object):
     model = None
 
-    def __init__(self, query, extra_ids=[], alternative_sort=("_id", 1)):
+    def __init__(self, query, extra_ids=[], alternative_sort=("_id", 1), is_filtered=False):
         self.query = query
         self.extra_ids = extra_ids
         self._results = None
         self._count = -1
-        self.alternative_sort = alternative_sort
+        self.alternative_sort = alternative_sort if alternative_sort else ("_id", 1)
+        self.is_filtered = is_filtered
 
     def __getslice__(self, start, end):
         model = self.model
@@ -194,8 +195,15 @@ class MongoSearchResults(object):
             if len(initial) >= (end - start):
                 # we can satisfy the whole query with fake things
                 do_full_search = False
+        
+        # check and see if there's actually any querying going on (either search terms or filters)
+        if not (self.query['search'] or self.is_filtered):
+            do_full_search = False
+
+        self._count = len(self.extra_ids)
 
         if do_full_search:
+            print 'doing full query'
             # calcualte the actual offsets in light of how much fake stuff we're shoving in at the beginning
             actual_start = start - len(self.extra_ids) + len(initial)
             actual_end = end - len(self.extra_ids)
@@ -219,10 +227,10 @@ class MongoSearchResults(object):
             else:
                 # build query
                 print self.query['filter']
-                cursor = model._get_collection().find(self.query['filter']).sort(*self.alternative_sort)
+                cursor = model._get_collection().find(__raw__=self.query['filter']).sort(*self.alternative_sort)
                 
                 # get full count
-                self._count = cursor.count()
+                self._count = len(self.extra_ids) + cursor.count()
 
                 # fetch subset of results
                 self._results = cursor.skip(actual_start).limit(actual_end - actual_start)
@@ -237,6 +245,9 @@ class MongoSearchResults(object):
                     'url': self.get_result_url(match),
                     'fields': self.get_result_fields(match)
                 } for match in actual]
+        else:
+            print 'not doing full query'
+            actual_fmt = []
         
         initial_fmt = [{
             '_id': match['_id'],
@@ -357,7 +368,7 @@ class DocketSearchResultsView(ESSearchResultsView):
         }
 
         query['fields'] = ['_id', 'title', 'agency']
-                
+
         return DocketSearchResults(query)
 
 class DocketSearchResults(ESSearchResults):
@@ -401,13 +412,16 @@ class EntitySearchResultsView(MongoSearchResultsView):
 
     def get_results(self):
         extra_ids = []
-        mongo_filter = {'searchable': True}
+        mongo_filter = {'searchable': True, 'td_type': 'organization'}
+        has_real_filters = False
         candidate_sorts = []
 
         for f in self.filters:
             if f[0] in ('submitter', 'mentioned'):
                 extra_ids.append(f[1])
             elif f[0].startswith('agency') or f[0].startswith('docket'):
+                has_real_filters = True
+
                 filter_key = 'stats.' +\
                     ('text_mentions' if f[0].endswith('_mentioned') else 'submitter_mentions') +\
                     '.%s.%s' % ('agencies' if f[0].startswith('agency') else 'dockets', f[1])
@@ -419,7 +433,7 @@ class EntitySearchResultsView(MongoSearchResultsView):
 
         query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'aliases': 1, 'td_type': 1}, 'limit': 50000}
 
-        return EntitySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None))
+        return EntitySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None), is_filtered=has_real_filters)
 
 class EntitySearchResults(MongoSearchResults):
     model = Entity
