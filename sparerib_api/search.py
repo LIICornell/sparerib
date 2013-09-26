@@ -270,7 +270,7 @@ class DocumentSearchResults(ESSearchResults):
         def stitch_record(match):
             match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
 
-            if match['highlight']:
+            if match.get('highlight', None):
                 # munge the highlights so the frontend doesn't have to care what field they came from
                 ordered = sorted(match['highlight'].items(), key=lambda x: ['identifiers', 'title', 'files.text'].index(x[0]))
                 collated = [[(row[0], snippet) for snippet in row[1]] for row in ordered]
