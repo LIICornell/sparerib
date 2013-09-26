@@ -1421,7 +1421,10 @@ table tr.even {
 .search-tag:last-child {
   border: 0;
 }
-.search-filter-magic {
+.search-filter {
+  display: none;
+}
+.search-filter-magic .search {
   display: none;
 }
 

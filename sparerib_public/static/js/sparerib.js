@@ -333,9 +333,41 @@ var ResultsView = Backbone.View.extend({
         'deep': _.template($('#deep-working-results-tpl').html()),
         'complete': _.template($('#results-tpl').html())
     },
+
+    allowedFilters: {
+        'all': {
+            'editable': ['keyword', 'agency', 'submitter'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'docket': {
+            'editable': ['keyword', 'agency', 'submitter'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'document-fr': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'document-non-fr': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'entity': {
+            'editable': ['keyword'],
+            'magic': ['submitter', 'mentioned', 'agency', 'docket', 'agency_mentioned', 'docket_mentioned']
+        },
+        'agency': {
+            'editable': ['keyword'],
+            'magic': ['agency']
+        }
+    },
+
     render: function() {
         var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
-        var search_populated = false;
+        var view = this;
+        var $searchFilters = $el.find('.search-filter');
+        SF = $searchFilters;
+
+        var searchPopulated = false;
         _.each(this.options.models, $.proxy(function(_model) {
             var model = _model.model;
             model.fetch(
@@ -346,9 +378,24 @@ var ResultsView = Backbone.View.extend({
                         $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
                         // populate the search input if necessary
-                        if (!search_populated) {
+                        if (!searchPopulated) {
+                            // show the filters we're supposed to, and hide the others
+                            var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
+                            $searchFilters.filter('.search-filter-magic,.search-filter-editable').removeClass('search-filter-magic').removeClass('search-filter-visible').filter(":visible").addClass("previously-visible");
+                            _.each(['editable', 'magic'], function(filterClass) {
+                                _.each(view.allowedFilters[filterSet][filterClass], function(filterType) {
+                                    console.log(filterClass, filterType);
+                                    $searchFilters.filter("[data-filter-type=" + filterType + "]").addClass("search-filter-" + filterClass);
+                                });
+                            });
+                            $searchFilters.filter(".search-filter-editable,.search-filter-magic").removeClass("previously-visible");
+                            $searchFilters.filter(".search-filter-editable:hidden").slideDown("fast");
+                            $searchFilters.filter(".previously-visible").removeClass("previously-visible").slideUp("fast");
+                            $searchFilters.filter(".search-filter-magic:visible").slideUp("fast");
+
+                            // populate the search fields
                             $('.main-content .search form .ui-intertag').eq(0).val({'tags': context.search.filters, 'text': context.search.text_query});
-                            search_populated = true;
+                            searchPopulated = true;
                         }
                     }, this),
                     'error': function() {

@@ -328,31 +328,36 @@ class DocketSearchResultsView(ESSearchResultsView):
         filters = self.get_es_filters()
         text_query = self.get_es_text_query()
 
+        subqueries = [{
+            'has_child': {
+                'type': 'document',
+                'query': text_query.copy(),
+                'score_type': 'sum'
+            }
+        }]
+
         if filters:
-            query['filter'] = filters
-
-        if text_query:
-            title_query = copy.deepcopy(text_query)
-            title_query['query_string']['boost'] = 10
-            title_query['query_string']['fields'] = ['title']
-
-            query['query'] = {
-                'dis_max': {
-                    'queries': [
-                        title_query,
-                        {
-                            'has_child': {
-                                'type': 'document',
-                                'query': text_query.copy(),
-                                'score_type': 'sum'
-                            }
-                        }
-                    ]
+            query['filter'] = {
+                'has_child': {
+                    'type': 'document',
+                    'filter': filters
                 }
             }
 
+        if text_query and 'query_string' in text_query:
+            title_query = copy.deepcopy(text_query)
+            title_query['query_string']['boost'] = 10
+            title_query['query_string']['fields'] = ['title']
+            subqueries.append(title_query)
+
+        query['query'] = {
+            'dis_max': {
+                'queries': subqueries
+            }
+        }
+
         query['fields'] = ['_id', 'title', 'agency']
-        
+                
         return DocketSearchResults(query)
 
 class DocketSearchResults(ESSearchResults):
