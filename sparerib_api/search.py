@@ -209,7 +209,6 @@ class MongoSearchResults(object):
         self._count = len(self.extra_ids)
 
         if do_full_search:
-            print 'doing full query'
             # calcualte the actual offsets in light of how much fake stuff we're shoving in at the beginning
             actual_start = start - len(self.extra_ids) + len(initial)
             actual_end = end - len(self.extra_ids)
@@ -232,7 +231,6 @@ class MongoSearchResults(object):
                 self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
             else:
                 # build query
-                print self.query['filter']
                 cursor = model._get_collection().find(__raw__=self.query['filter']).sort(*self.alternative_sort)
                 
                 # get full count
@@ -252,7 +250,6 @@ class MongoSearchResults(object):
                     'fields': self.get_result_fields(match)
                 } for match in actual]
         else:
-            print 'not doing full query'
             actual_fmt = []
         
         initial_fmt = [{
@@ -416,10 +413,8 @@ class DocketSearchResults(ESSearchResults):
             else:
                 count_query['facets']['dockets']['facet_filter'] = hp_filter
 
-            print json.dumps(count_query, indent=4)
             child_results = self.es.search_raw(count_query, indices=self.indices, doc_types=['document'])
             child_counts = dict([(term['term'], term['count']) for term in child_results['facets']['dockets']['terms']])
-            #print json.dumps(child_results, indent=4)
         else:
             child_counts = {}
 
