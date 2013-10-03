@@ -11,7 +11,7 @@
 <table class="results">
     <% if (search.search_type == "docket") { %>
         <tr>
-            <th>Title</th><th>Agency</th><th>Date Range</th><th>Total Comments</th>
+            <th>Title</th><th>Agency</th><th>Date Range</th><th>Matching Documents</th><th>Total Documents</th>
         </tr>
         
         <% _.each(results, function(result, idx) { %>
@@ -19,6 +19,7 @@
             <td class="title"><a href="/docket/<%=result.fields.docket_id%>"><%=result.fields.title%></a></td>
             <td><%=result.fields.agency%></td>
             <td><% if (result.fields.date_range) { %><%=shortFormatDate(result.fields.date_range[0])%> &ndash; <%=shortFormatDate(result.fields.date_range[1])%><% } %></td>
+            <td><%=result.fields.matched%></td>
             <td><%=result.fields.count%></td>
         </tr>
         <% }); %>

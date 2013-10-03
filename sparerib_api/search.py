@@ -136,8 +136,9 @@ class ESSearchResultsView(SearchResultsView):
         } if self.text_query else {'match_all': {}}
 
 class ESSearchResults(object):
-    indicies = "regulations"
+    indices = "regulations"
     doc_types = None
+    _es = None
 
     def __init__(self, query):
         self.query = query
@@ -145,13 +146,18 @@ class ESSearchResults(object):
         # paginator wants the count before we know what slice we want, so add some indirection hackery to avoid having to do two queries
         self._count = -1
 
+    @property
+    def es(self):
+        if not self._es:
+            self._es = es = pyes.ES(settings.ES_SETTINGS)
+        return self._es
+
     def __getslice__(self, start, end):
         if not self._results:
             self.query['from'] = start
             self.query['size'] = end - start
             
-            es = pyes.ES(settings.ES_SETTINGS)
-            self._results = es.search_raw(self.query, indicies=self.indicies, doc_types=self.doc_types)
+            self._results = self.es.search_raw(self.query, indices=self.indices, doc_types=self.doc_types)
             self._count = self._results['hits']['total']
 
         return self._results['hits']['hits']
@@ -377,11 +383,45 @@ class DocketSearchResults(ESSearchResults):
     def __getslice__(self, start, end):
         s = super(DocketSearchResults, self).__getslice__(start, end)
 
+        # get some extra info from Mongo
         db = Doc._get_db()
 
         ids = [match['_id'] for match in s]
         agg_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
         agg_map = dict([(result['_id'], result) for result in agg_search])
+
+        # get some extra info from ES
+        if ids:
+            count_query = {
+                'query': [query for query in self.query['query']['dis_max']['queries'] if 'has_child' in query][0]['has_child']['query'],
+                'facets': {'dockets': {'terms': {'field': 'docket_id', 'size': len(ids)}}},
+                'size': 0
+            }
+            
+            hp_filter = {
+                'has_parent': {
+                    'type': 'docket',
+                    'filter': {
+                        'ids': {'values': ids}
+                    }
+                }
+            }
+            if 'filter' in self.query:
+                count_query['facets']['dockets']['facet_filter'] = {
+                    'and': [
+                        self.query['filter']['has_child']['filter'],
+                        hp_filter
+                    ]
+                }
+            else:
+                count_query['facets']['dockets']['facet_filter'] = hp_filter
+
+            print json.dumps(count_query, indent=4)
+            child_results = self.es.search_raw(count_query, indices=self.indices, doc_types=['document'])
+            child_counts = dict([(term['term'], term['count']) for term in child_results['facets']['dockets']['terms']])
+            #print json.dumps(child_results, indent=4)
+        else:
+            child_counts = {}
 
         def stitch_record(match):
             match['url'] = reverse('docket-view', kwargs={'docket_id': match['_id']})
@@ -399,6 +439,9 @@ class DocketSearchResults(ESSearchResults):
                 rulemaking_field = agg_data.get('details', {}).get('dk_type', None)
                 if rulemaking_field:
                     out['fields']['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
+
+            match['fields']['matched'] = child_counts.get(match['_id'], 0)
+            
             return match
 
         return map(stitch_record, s)
