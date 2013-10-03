@@ -19,8 +19,8 @@
             <td class="title"><a href="/docket/<%=result.fields.docket_id%>"><%=result.fields.title%></a></td>
             <td><%=result.fields.agency%></td>
             <td><% if (result.fields.date_range) { %><%=shortFormatDate(result.fields.date_range[0])%> &ndash; <%=shortFormatDate(result.fields.date_range[1])%><% } %></td>
-            <td><%=result.fields.matched%></td>
-            <td><%=result.fields.count%></td>
+            <td><a href="/search-document/<%=encodeURIComponent(search.raw_query + ' docket:' + result.fields.docket_id + ':' + JSON.stringify(result.fields.title))%>"><%=result.fields.matched%> &raquo;</a></td>
+            <td><a href="/search-document/<%=encodeURIComponent('docket:' + result.fields.docket_id + ':' + JSON.stringify(result.fields.title))%>"><%=result.fields.count%> &raquo;</a></td>
         </tr>
         <% }); %>
     <% } else if (search.search_type == "document-fr") { %>
@@ -49,7 +49,7 @@
         </tr>
         
         <% _.each(results, function(result, idx) { %>
-        <tr class="<%=(idx % 2 == 0 || depth == 'deep' ? 'even': 'odd')%>">
+        <tr class="<%=(idx % 2 == 0 || (depth == 'deep' && typeof result.highlight !== "undefined") ? 'even': 'odd')%>">
             <td class="title"><a href="/document/<%=result._id%>"><%=result.fields.title%></a></td>
             <td><%=capitalize(result.fields.document_type.split('_').join(' '))%></t>
             <td><%=result.fields.agency%></td>

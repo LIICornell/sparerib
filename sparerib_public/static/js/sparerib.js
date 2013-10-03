@@ -343,6 +343,10 @@ var ResultsView = Backbone.View.extend({
             'editable': ['keyword', 'agency', 'submitter'],
             'magic': ['mentioned', 'docket', 'type']
         },
+        'document': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
         'document-fr': {
             'editable': ['keyword', 'agency', 'submitter', 'date'],
             'magic': ['mentioned', 'docket', 'type']
@@ -378,7 +382,7 @@ var ResultsView = Backbone.View.extend({
                         $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
                         // populate the search input if necessary, but only use responses from docket, document-fr, or document-non-fr, since they support all the filters in the 'all' type
-                        if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document-fr', 'document-non-fr'], model.get('level')))) {
+                        if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document', 'document-fr', 'document-non-fr'], model.get('level')))) {
                             var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
                             
                             // show the filters we're supposed to, and hide the others
