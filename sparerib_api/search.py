@@ -9,6 +9,7 @@ from django.conf import settings
 from util import *
 
 import math, json, operator, copy
+import dateutil, dateutil.parser
 
 import pyes
 from query_parse import parse_query, parse_query_for_mongo
@@ -16,6 +17,11 @@ from query_parse import parse_query, parse_query_for_mongo
 from collections import defaultdict
 
 from regs_models import *
+
+### Constants ###
+
+EASTERN = dateutil.tz.gettz("US/Eastern")
+UTC = dateutil.tz.tzutc()
 
 ### Base search classes ###
 
@@ -98,7 +104,12 @@ class ESSearchResultsView(SearchResultsView):
         terms = defaultdict(list)
         terms.update(extra_terms)
 
+        filter_list = []
+        date_rules = {}
         for f in self.filters:
+            if f[0] not in self.allowed_filters:
+                continue
+            
             if f[0] == 'agency':
                 terms['agency'] += [f[1]]
             elif f[0] == 'docket':
@@ -115,16 +126,43 @@ class ESSearchResultsView(SearchResultsView):
                     if f[1] not in extra_terms['document_type']:
                         continue
                 terms['document_type'] += [f[1]]
-        count = len(terms.values())
+            elif f[0] == 'date':
+                # only documents support date filters, but it's easier to handle here than elsewhere
+                date_parts = f[1].split("=")
+                if len(date_parts) != 2: continue
+                
+                date_type, date_str = date_parts
+                try:
+                    date = dateutil.parser.parse(date_str)
+                except:
+                    continue
+
+                if not date.tzinfo:
+                    date = date.replace(tzinfo=EASTERN)
+
+                if date_type == "from":
+                    date_rules['gte'] = date.astimezone(UTC).isoformat()
+                elif date_type == "through":
+                    date_rules['lte'] = date.astimezone(UTC).isoformat()
+                elif date_type == "on":
+                    date_rules['gte'] = date.astimezone(UTC).isoformat()
+                    date_rules['lte'] = (date + datetime.timedelta(days=1)).astimezone(UTC).isoformat()
+
+        # move term filters into the filter list
+        for key, value in terms.iteritems():
+            filter_list.append({'terms': {key: value}})
+
+        # move date rules, if any, to the filter list
+        if date_rules:
+            filter_list.append({'range': {'posted_date': date_rules}})
+
+        count = len(filter_list)
         if count == 0:
             return None
         elif count == 1:
-            return {'terms': terms}
+            return filter_list[0]
         else:
-            term_list = []
-            for key, value in terms.iteritems():
-                term_list.append({'terms': {key: value}})
-            return {'and': term_list}
+            return {'and': filter_list}
 
     def get_es_text_query(self):
         return {
@@ -298,6 +336,7 @@ class DocumentSearchResults(ESSearchResults):
 
 class DocumentSearchResultsView(ESSearchResultsView):
     aggregation_level = 'document'
+    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type', 'date']
 
     def get_results(self):
         query = {}
