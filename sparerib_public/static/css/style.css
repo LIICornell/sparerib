@@ -1016,6 +1016,15 @@ table tr.even {
 .main-content .search-filter-keyword .search .ui-intertag {
   width: 225px !important;
 }
+
+.main-content .search-filter-date .search .ui-intertag {
+  width: 100px !important;
+}
+.main-content .search-filter-date .search select {
+  float: left;
+  margin: 2px 4px 2px 0;
+}
+
 .main-content .search .ui-intertag .ui-intertag-subinput {
   padding-top: 4px;
   padding-bottom: 4px;

@@ -193,7 +193,6 @@ var StaticView = Backbone.View.extend({
             var template = _.template(content);
             this.$el.html(template({}));
             this.$el.find('a.jump').click(function(evt) {
-                console.log($(evt.target).attr('href'));
                 var top = $($(evt.target).attr('href')).offset().top;
                 $(window).scrollTop(top);
                 return false;
@@ -210,7 +209,8 @@ var SearchView = Backbone.View.extend({
 
     events: {
         'submit form': 'search',
-        'click .ui-icon-plus': 'add_keyword'
+        'click .add-keyword': 'add_keyword',
+        'click .add-date-filter': 'add_date_filter'
     },
 
     intertag: function() {
@@ -268,7 +268,7 @@ var SearchView = Backbone.View.extend({
                 },
                 'source': function(request, response) {
                     var filterType = $(this.element[0]).closest('.search-filter').data('filter-type');
-                    if (request.term.length == 0 || filterType == "keyword") {
+                    if (request.term.length == 0 || filterType == "keyword" || filterType == "date") {
                         response([]);
                     } else {
                         var tf = {'agency': 'a', 'submitter': 'o'};
@@ -282,6 +282,11 @@ var SearchView = Backbone.View.extend({
             options.placeholder = 'Search or filter by keyword, agency or submitter';
         }
         this.$el.find("input[type=text]").intertag(options);
+
+        if (this.$el.find('select.date-type').length) {
+            this.$el.find("input[type=text]").pikaday();
+        }
+        
         return this;
     },
 
@@ -313,6 +318,23 @@ var SearchView = Backbone.View.extend({
                 type: 'keyword',
                 label: val,
                 value: val
+            }, true);
+            input.val("");
+        }
+    },
+
+    add_date_filter: function(evt) {
+        var itg = this.$el.find('.ui-intertag');
+        var select = this.$el.find('select');
+        var input = this.$el.find('input[type=text]');
+        var dateVal = input.val();
+        var typeVal = select.val();
+        if (dateVal && typeVal) {
+            var m = moment(dateVal);
+            itg.data('intertagOptions').addTag({
+                type: 'date',
+                label: "<em>" + helpers.capitalize(typeVal) + "</em> " + m.format("LL"),
+                value: typeVal + "=" + m.format("YYYY-MM-DD")
             }, true);
             input.val("");
         }
@@ -389,7 +411,6 @@ var ResultsView = Backbone.View.extend({
                             $searchFilters.filter('.search-filter-magic,.search-filter-editable').removeClass('search-filter-magic').removeClass('search-filter-visible').filter(":visible").addClass("previously-visible");
                             _.each(['editable', 'magic'], function(filterClass) {
                                 _.each(view.allowedFilters[filterSet][filterClass], function(filterType) {
-                                    console.log(filterClass, filterType);
                                     $searchFilters.filter("[data-filter-type=" + filterType + "]").addClass("search-filter-" + filterClass);
                                 });
                             });
@@ -421,7 +442,10 @@ var ResultsView = Backbone.View.extend({
             container.closest('.sidebar-item').slideUp("fast");
         }
 
-        container.closest('.search-filter').find('form').trigger('submit');
+        var form = container.closest('.search-filter').find('form');
+        if (!form.length) form = container.closest('.sidebar').find('form').eq(0);
+
+        form.trigger('submit');
     }
 })
 
