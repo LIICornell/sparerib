@@ -68,17 +68,17 @@
                 </tr>
                 <% }); %>
             </table>
-            <a href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
+            <a class="view-more" href="/search-document-non-fr/<%=encodeURIComponent('submitter:' + id + ":" + JSON.stringify(name))%>">View more comments &raquo;</a>
         </div>
 
         <div class="sidebar-item">
             <h4>Top dockets mentioning <%=name%></h4>
             <ul class="document-list">
                 <% _.each(stats.text_mentions.top_dockets.slice(0, 3), function(docket, idx) { %>
-                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> (<%=docket.count%> mentions)</li>
+                <li><a href="/docket/<%=docket.id%>"><%=docket.title%></a> (<a href="/search-document/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name) + " docket:" + docket.id + ":" + JSON.stringify(docket.title))%>"><%=docket.count%> mentions</a>)</li>
                 <% }); %>
             </ul>
-            <a href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more mentions &raquo;</a>
+            <a class="view-more" href="/search-docket/<%=encodeURIComponent('mentioned:' + id + ":" + JSON.stringify(name))%>">View more dockets &raquo;</a>
         </div>
 
         <div class="sidebar-item last">
