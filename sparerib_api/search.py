@@ -126,8 +126,11 @@ class ESSearchResultsView(SearchResultsView):
                     if f[1] not in extra_terms['document_type']:
                         continue
                 terms['document_type'] += [f[1]]
+
+            # only documents support date and comment_on filters, but it's easier to handle them here than elsewhere
+            elif f[0] == 'comment_on':
+                terms['comment_on'] += [f[1]]
             elif f[0] == 'date':
-                # only documents support date filters, but it's easier to handle here than elsewhere
                 date_parts = f[1].split("=")
                 if len(date_parts) != 2: continue
                 
@@ -336,7 +339,7 @@ class DocumentSearchResults(ESSearchResults):
 
 class DocumentSearchResultsView(ESSearchResultsView):
     aggregation_level = 'document'
-    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type', 'date']
+    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type', 'comment_on', 'date']
 
     def get_results(self):
         query = {}

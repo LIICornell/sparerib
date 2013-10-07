@@ -367,7 +367,7 @@ var ResultsView = Backbone.View.extend({
         },
         'document': {
             'editable': ['keyword', 'agency', 'submitter', 'date'],
-            'magic': ['mentioned', 'docket', 'type']
+            'magic': ['mentioned', 'docket', 'type', 'comment_on']
         },
         'document-fr': {
             'editable': ['keyword', 'agency', 'submitter', 'date'],
@@ -375,7 +375,7 @@ var ResultsView = Backbone.View.extend({
         },
         'document-non-fr': {
             'editable': ['keyword', 'agency', 'submitter', 'date'],
-            'magic': ['mentioned', 'docket', 'type']
+            'magic': ['mentioned', 'docket', 'type', 'comment_on']
         },
         'entity': {
             'editable': ['keyword'],

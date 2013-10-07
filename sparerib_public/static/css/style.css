@@ -509,7 +509,8 @@ ul.sign-up {
   background: rgba(200,200,200, 0.3);
   cursor: pointer;
 }
-.sidebar-item a.view-more {
+
+a.view-more {
   display: block;
   margin-top: 12px;
 }
