@@ -109,7 +109,7 @@ class ESSearchResultsView(SearchResultsView):
         for f in self.filters:
             if f[0] not in self.allowed_filters:
                 continue
-            
+
             if f[0] == 'agency':
                 terms['agency'] += [f[1]]
             elif f[0] == 'docket':
@@ -269,7 +269,7 @@ class MongoSearchResults(object):
                 self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
             else:
                 # build query
-                cursor = model._get_collection().find(__raw__=self.query['filter']).sort(*self.alternative_sort)
+                cursor = model._get_collection().find(self.query['filter'], fields=self.query['project'].keys()).sort(*self.alternative_sort)
                 
                 # get full count
                 self._count = len(self.extra_ids) + cursor.count()
@@ -492,6 +492,7 @@ class EntitySearchResultsView(MongoSearchResultsView):
         mongo_filter = {'searchable': True, 'td_type': 'organization'}
         has_real_filters = False
         candidate_sorts = []
+        project_fields = {'aliases': 1, 'td_type': 1, 'stats.submitter_mentions.count': 1, 'stats.text_mentions.count': 1}
 
         for f in self.filters:
             if f[0] in ('submitter', 'mentioned'):
@@ -504,11 +505,12 @@ class EntitySearchResultsView(MongoSearchResultsView):
                     '.%s.%s' % ('agencies' if f[0].startswith('agency') else 'dockets', f[1])
                 mongo_filter[filter_key] = {'$gte': 1}
                 candidate_sorts.append((filter_key, -1))
+                project_fields[filter_key] = 1
 
         if extra_ids:
             mongo_filter['_id'] = {'$nin': extra_ids}
 
-        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'aliases': 1, 'td_type': 1}, 'limit': 50000}
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': project_fields, 'limit': 50000}
 
         return EntitySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None), is_filtered=has_real_filters)
 
@@ -519,7 +521,19 @@ class EntitySearchResults(MongoSearchResults):
         return reverse('entity-view', kwargs={'entity_id': match_object['_id'], 'type': match_object['td_type']})
 
     def get_result_fields(self, match_object):
-        return {'name': match_object['aliases'][0], 'type': match_object['td_type']}
+        fields = {'name': match_object['aliases'][0], 'type': match_object['td_type']}
+        stats = match_object.get('stats', {})
+        for count_type in ('submitter', 'text'):
+            key = '%s_mentions' % count_type
+            if key in stats:
+                if 'dockets' in stats[key]:
+                    fields['%s_count' % count_type] = sum(stats[key]['dockets'].values())
+                elif 'agencies' in stats[key]:
+                    fields['%s_count' % count_type] = sum(stats[key]['agencies'].values())
+                else:
+                    fields['%s_count' % count_type] = stats[key].get('count', 0)
+        return fields
+
 
 class AgencySearchResultsView(MongoSearchResultsView):
     aggregation_level = 'agency'

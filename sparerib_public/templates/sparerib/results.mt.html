@@ -66,12 +66,17 @@
         <% }); %>
     <% } else if (search.search_type == "entity") { %>
         <tr>
-            <th>Name</th>
+            <th>Name</th><th>Submissions</th>
         </tr>
         
         <% _.each(results, function(result, idx) { %>
         <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
             <td class="title"><a href="/<%=result._type%>/<%=(slugify(result.fields.name) + '/')%><%=result._id%>"><%=result.fields.name%></a></td>
+            <td>
+                <a href="/search-document/<%=encodeURIComponent(_.map(search.filters, function(filter) { return filter.type + ":" + filter.value + ":" + JSON.stringify(filter.label); }).join(" ") + " submitter:" + result._id + ":" + JSON.stringify(result.fields.name))%>">
+                    <%=result.fields.submitter_count%> &raquo;
+                </a>
+            </td>
         </tr>
         <% }); %>
     <% } else if (search.search_type == "agency") { %>
