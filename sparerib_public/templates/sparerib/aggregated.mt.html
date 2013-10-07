@@ -43,7 +43,12 @@
                 <dd class="document-date"><%=shortFormatDate(fr_doc.date)%></dd>
                 <dt class="comment-info">Comments:&nbsp;<dt>
                 <dd class="comment-count"><%=fr_doc.stats.count%></dd>
-                    <span class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></span>
+                <span class="comment-link">
+                    <% if (fr_doc.stats.count > 0) { %>
+                    <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" comment_on:' + fr_doc.id + ":" + JSON.stringify(fr_doc.title))%>">View &amp; search &raquo;</a>
+                    <% } %>
+                </span>
+                <span class="openness"><%=fr_doc.comments_open ? "Open for Comment" : "Closed to Comments"%></span>
             </dl>
 
         </div>
@@ -104,8 +109,16 @@
         <% } %>
     </div>
     <div class="sidebar">
-        <div class="sidebar-item">
-            <a href="#">Track this <%=type%> with Scout &raquo;</a>
+        <div class="sidebar-item comment-search">
+            <% if (type == "docket") { %>
+                <dl class="docket-info">
+                    <dt class="comment-info">Total comments:&nbsp;<dt>
+                    <dd class="comment-count"><%=submission_count%></dd>
+                </dl>
+                <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" ' + agg_filter)%>">
+                    View &amp; search comments &raquo;
+                </a>
+            <% } %>
         </div>
 
         <% if (type === "docket") { %>
@@ -144,11 +157,6 @@
                         counted_comments += stats[submission_type][i].count;
                     }
                 %>
-                <!--
-                <a href="/search-document-non-fr/<%=encodeURIComponent('type:public_submission:"Public Submission" ' + agg_filter)%>">
-                    View all <%=submission_count%> comments &raquo;
-                </a>
-                -->
                 <a href="/search-entity/<%=encodeURIComponent(agg_filter)%>">
                     View all recognized submitters &raquo;
                 </a>

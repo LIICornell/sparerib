@@ -522,13 +522,13 @@ a.view-more {
 .similarity-description .group-count {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #d59305;
 }
 .similarity-description .cutoff {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #529594;
 }
 .similarity-teaser {
@@ -639,24 +639,47 @@ dd.document-date {
 }
 dt.comment-info {
   padding-top: 16px;
-  border-top: 1px solid #ffffff;
   font-weight:bold;
   float:left;
 }
+dl.document-info dt.comment-info {
+  border-top: 1px solid #ffffff;
+}
 .openness {
+  display: block;
+  padding-top: 8px;
+  border-top: 1px solid #ffffff;
   text-transform: lowercase;
   font-size: 95%;
 }
 dd.comment-count {
   font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #d59305;
   padding-left:5px;
   padding-top: 9px;
+}
+dl.document-info dd.comment-count {
   border-top: 1px solid #ffffff;
+}
+dl.document-info .comment-link {
+  text-transform: lowercase;
+  display: block;
+  border-bottom: 1px solid #a8a8a8;
+  padding-bottom: 8px;
+}
 
-
+dl.docket-info {
+  margin: 0px;
+}
+.comment-search {
+  font-size: 95%;
+  padding-top: 15px !important;
+}
+.comment-search a {
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-size: 120%;
 }
 
 .right {
@@ -1236,7 +1259,7 @@ table tr.even {
 .cluster-doc-header span.cluster-doc-title {
   background: none repeat scroll 0 0 #EEEEEE;
   font-family: "gnuolane","Franklin Gothic Bold",Impact,Haettenschweiler,"Helvetica Inserat","Arial Black",sans-serif;
-  font-size: 145%;
+  font-size: 140%;
   font-weight: 400;
 }
 .cluster-doc-key {
@@ -1365,7 +1388,7 @@ table tr.even {
   background: #eeeeee;
   font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 400;
-  font-size: 145%;
+  font-size: 140%;
 }
 
 .loading {
@@ -1615,7 +1638,7 @@ table tr.even {
 .similarityLink {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
     font-weight: 400;
-    font-size: 145%;
+    font-size: 140%;
     }
 
 /* style dummy links */
