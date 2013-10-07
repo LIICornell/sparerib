@@ -540,19 +540,33 @@ class AgencySearchResultsView(MongoSearchResultsView):
 
     # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
     # unadorned 'agency' and 'docket' filter entities by submission to that agency/docket, and with '_mentioned', filter by mention in that agency/docket
-    allowed_filters = ['agency']
+    allowed_filters = ['agency', 'submitter', 'mentioned']
 
     def get_results(self):
+        extra_ids = []
         mongo_filter = {}
+        has_real_filters = False
+        candidate_sorts = []
+        project_fields = {'name': 1, 'stats.count': 1}
 
-        extra_ids = [f[1] for f in self.filters if f[0] == 'agency']
+        for f in self.filters:
+            if f[0] == 'agency':
+                extra_ids.append(f[1])
+            elif f[0] in ('submitter', 'mentioned'):
+                key = 'text_entities' if f[0] == 'mentioned' else 'submitter_entities'
+                has_real_filters = True
+
+                filter_key = 'stats.%s.%s' % (key, f[1])
+                mongo_filter[filter_key] = {'$gte': 1}
+                candidate_sorts.append((filter_key, -1))
+                project_fields[filter_key] = 1
 
         if extra_ids:
             mongo_filter['_id'] = {'$nin': extra_ids}
 
-        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': {'name': 1}, 'limit': 50000}
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': project_fields, 'limit': 50000}
 
-        return AgencySearchResults(query, extra_ids)
+        return AgencySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None), is_filtered=has_real_filters)
 
 class AgencySearchResults(MongoSearchResults):
     model = Agency
@@ -561,7 +575,17 @@ class AgencySearchResults(MongoSearchResults):
         return reverse('agency-view', kwargs={'agency': match_object['_id']})
 
     def get_result_fields(self, match_object):
-        return {'name': match_object['name']}
+        fields = {'name': match_object['name']}
+        stats = match_object.get('stats', {})
+        for count_type in ('submitter', 'text'):
+            key = '%s_entities' % count_type
+            if key in stats:
+                fields['%s_count' % count_type] = sum(stats[key].values())
+            else:
+                fields['%s_count' % count_type] = 0
+        fields['count'] = stats.get('count', 0)
+        
+        return fields
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):

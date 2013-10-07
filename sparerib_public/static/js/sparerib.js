@@ -382,8 +382,8 @@ var ResultsView = Backbone.View.extend({
             'magic': ['submitter', 'mentioned', 'agency', 'docket', 'agency_mentioned', 'docket_mentioned']
         },
         'agency': {
-            'editable': ['keyword'],
-            'magic': ['agency']
+            'editable': ['keyword', 'submitter'],
+            'magic': ['agency', 'mentioned']
         }
     },
 

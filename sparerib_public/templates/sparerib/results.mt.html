@@ -81,12 +81,26 @@
         <% }); %>
     <% } else if (search.search_type == "agency") { %>
         <tr>
-            <th>Name</th>
+            <th>Name</th><th>Documents</th>
         </tr>
         
         <% _.each(results, function(result, idx) { %>
         <tr class="<%=(idx % 2 == 0 ? 'even': 'odd')%>">
             <td class="title"><a href="/<%=result._type%>/<%=result._id%>"><%=result.fields.name%></a></td>
+            <td>
+                <% if (result.fields.submitter_count) { %>
+                <a href="/search-document/<%=encodeURIComponent(_.map(search.filters, function(filter) { return filter.type + ":" + filter.value + ":" + JSON.stringify(filter.label); }).join(" ") + " agency:" + result._id + ":" + JSON.stringify(result.fields.name))%>">
+                    <%=result.fields.submitter_count%> &raquo;
+                </a>
+                <% } else if (result.fields.text_count) { %>
+                <a href="/search-document/<%=encodeURIComponent(_.map(search.filters, function(filter) { return filter.type + ":" + filter.value + ":" + JSON.stringify(filter.label); }).join(" ") + " agency:" + result._id + ":" + JSON.stringify(result.fields.name))%>">
+                    <%=result.fields.text_count%> &raquo;
+                </a>
+                <% } else { %>
+                <a href="/search-document/<%=encodeURIComponent("agency:" + result._id + ":" + JSON.stringify(result.fields.name))%>">
+                    <%=result.fields.count%> &raquo;
+                </a>
+                <% } %>
         </tr>
         <% }); %>
     <% } %>
