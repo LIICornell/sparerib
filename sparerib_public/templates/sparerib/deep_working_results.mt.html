@@ -5,6 +5,18 @@
 </div>
 <div class="main-content with-left-sidebar">
     <div class="sidebar">
+        <div class="sidebar-item search-overview">
+            <% if (depth == "deep") { %>
+                <a href="/search/<%=encodeURIComponent(query)%>">&laquo; Back to overview</a>
+            <% } else { %>
+                <ul>
+                <% _.each([['Dockets', 'docket'], ['Notices, Rules, Proposed Rules', 'document-fr'], ['Comments, Supp. Materials, Other', 'document-non-fr'], ['Organizations', 'entity'], ['Agencies', 'agency']], function(agg_type) { %>
+                    <li class="loading search-overview-<%=agg_type[1]%>" data-search-type="<%=agg_type[1]%>"><a href="/"><%=agg_type[0]%></a></li>
+                <% }); %>
+                </ul>
+                <div class="clear"></div>
+            <% } %>
+        </div>
         <div class="sidebar-item search-filter search-filter-keyword" data-filter-type="keyword">
             <!-- this should move -->
             <h4 style="font-size: 140%; margin-bottom: 10px;">Filter by</h4>
@@ -82,7 +94,7 @@
         <% } else { %>
             <div class="result-set result-set-shallow">
                 <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr'], ['Organizations', 'entity'], ['Agencies', 'agency']], function(agg_type) { %>
-                <h3><%=agg_type[0]%></h3>
+                <h3 class="<%=agg_type[1]%>-title"><%=agg_type[0]%></h3>
 
                 <div class="search-results-wrapper">
                     <div class="search-results-loading search-results-loading-<%=agg_type[1]%> loading"></div>

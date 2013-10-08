@@ -352,7 +352,8 @@ var ResultsView = Backbone.View.extend({
     className: 'search-view',
 
     events: {
-        'click .sidebar .search-tag .ui-icon-close': 'removeTag'
+        'click .sidebar .search-tag .ui-icon-close': 'removeTag',
+        'click .search-overview ul a': 'overview_click'
     },
 
     templates: {
@@ -408,6 +409,15 @@ var ResultsView = Backbone.View.extend({
                         $el.find('.search-results-' + model.get('level')).html(this.templates.complete(context)).slideDown("fast");
                         $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
+                        // update the ticker on the side
+                        var overview = $('.search-overview .search-overview-' + model.get('level'));
+                        var total = model.get('total');
+                        if (total == 0) {
+                            overview.addClass('zero');
+                        }
+                        overview.removeClass('loading');
+                        overview.append("<span class='count'>" + total + "</span>");
+
                         // populate the search input if necessary, but only use responses from docket, document-fr, or document-non-fr, since they support all the filters in the 'all' type
                         if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document', 'document-fr', 'document-non-fr'], model.get('level')))) {
                             var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
@@ -457,7 +467,27 @@ var ResultsView = Backbone.View.extend({
         if (!form.length) form = container.closest('.sidebar').find('form').eq(0);
 
         form.trigger('submit');
-    }
+    },
+
+    overview_click: function(evt) {
+        evt.preventDefault();
+        var $this = $(evt.target);
+        var $li = $this.closest('li');
+
+        if ($li.hasClass('loading')) {
+            return;
+        }
+
+        var type = $li.data('search-type');
+        var title = this.$el.find('h3.' + type + '-title');
+        var offset = title.offset().top;
+
+        if ($.browser.mozilla) {
+            $('html').animate({'scrollTop': offset}, 'ease');
+        } else if ($.browser.webkit) {
+            $('body').animate({'scrollTop': offset}, 'ease');
+        }
+    },
 })
 
 var AggregatedDetailView = Backbone.View.extend({

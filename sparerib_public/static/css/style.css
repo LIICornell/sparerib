@@ -1033,6 +1033,17 @@ table tr.even {
 .search-overview ul li {
   font-size: 90%;
   padding: 4px;
+  clear: both;
+}
+.search-overview ul li.loading {
+  background: url('../img/loading_mini_dark.gif') no-repeat right center;
+}
+.search-overview ul li.loading a, .search-overview ul li.zero a, .search-overview ul li.zero span.count {
+  color: #c6c6c6;
+}
+.search-overview ul li span.count {
+  display: block;
+  float: right;
 }
 .main-content .search .ui-intertag {
   width: 250px;
