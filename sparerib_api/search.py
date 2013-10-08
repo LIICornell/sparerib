@@ -143,11 +143,11 @@ class ESSearchResultsView(SearchResultsView):
                 if not date.tzinfo:
                     date = date.replace(tzinfo=EASTERN)
 
-                if date_type == "from":
+                if date_type == "gte":
                     date_rules['gte'] = date.astimezone(UTC).isoformat()
-                elif date_type == "through":
+                elif date_type == "lte":
                     date_rules['lte'] = date.astimezone(UTC).isoformat()
-                elif date_type == "on":
+                elif date_type == "eq":
                     date_rules['gte'] = date.astimezone(UTC).isoformat()
                     date_rules['lte'] = (date + datetime.timedelta(days=1)).astimezone(UTC).isoformat()
 

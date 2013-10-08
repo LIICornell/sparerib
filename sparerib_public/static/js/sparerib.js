@@ -235,6 +235,11 @@ var SearchView = Backbone.View.extend({
                     new_tag.data('value', item.value);
                     new_tag.addClass('ui-tag-type-' + item.type);
 
+                    var value_parts = item.value.split("=");
+                    if (value_parts.length > 1) {
+                        new_tag.addClass('search-tag-' + value_parts[0]);
+                    }
+
                     var area = $('.sidebar .search-type-' + item.type);
                     new_tag.appendTo(area);
 
@@ -325,7 +330,7 @@ var SearchView = Backbone.View.extend({
 
     add_date_filter: function(evt) {
         var itg = this.$el.find('.ui-intertag');
-        var select = this.$el.find('select');
+        var select = this.$el.find('select :selected');
         var input = this.$el.find('input[type=text]');
         var dateVal = input.val();
         var typeVal = select.val();
@@ -333,7 +338,7 @@ var SearchView = Backbone.View.extend({
             var m = moment(dateVal);
             itg.data('intertagOptions').addTag({
                 type: 'date',
-                label: "<em>" + helpers.capitalize(typeVal) + "</em> " + m.format("LL"),
+                label: "<em>" + select.html() + "</em> " + m.format("LL"),
                 value: typeVal + "=" + m.format("YYYY-MM-DD")
             }, true);
             input.val("");
@@ -388,7 +393,7 @@ var ResultsView = Backbone.View.extend({
     },
 
     render: function() {
-        var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
+        var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level'), 'query': this.options.models[0].model.get('query')}, helpers)));
         var view = this;
         var $searchFilters = $el.find('.search-filter');
         SF = $searchFilters;
@@ -421,6 +426,12 @@ var ResultsView = Backbone.View.extend({
 
                             // populate the search fields
                             $('.main-content .search form .ui-intertag').eq(0).val({'tags': context.search.filters, 'text': context.search.text_query});
+
+                            // futz with the date filter if necessary
+                            if ($('.search-type-date:visible .search-tag-gte').length > 0 && $('.search-type-date:visible .search-tag-lte').length == 0) {
+                                $('.search-filter-date:visible .date-type').val('lte');
+                            }
+
                             searchPopulated = true;
                         }
                     }, this),

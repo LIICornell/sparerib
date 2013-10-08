@@ -1025,6 +1025,15 @@ table tr.even {
   font-style: italic;
 }
 
+.search-overview ul, .search-overview ul li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.search-overview ul li {
+  font-size: 90%;
+  padding: 4px;
+}
 .main-content .search .ui-intertag {
   width: 250px;
 
