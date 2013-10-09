@@ -510,6 +510,11 @@ ul.sign-up {
   cursor: pointer;
 }
 
+a.view-more {
+  display: block;
+  margin-top: 12px;
+}
+
 .similarity-description {
   line-height: 1.6em;
   margin: 12px 0px 12px 0px;
@@ -517,13 +522,13 @@ ul.sign-up {
 .similarity-description .group-count {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #d59305;
 }
 .similarity-description .cutoff {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #529594;
 }
 .similarity-teaser {
@@ -646,24 +651,47 @@ dd.document-date {
 }
 dt.comment-info {
   padding-top: 16px;
-  border-top: 1px solid #ffffff;
   font-weight:bold;
   float:left;
 }
+dl.document-info dt.comment-info {
+  border-top: 1px solid #ffffff;
+}
 .openness {
+  display: block;
+  padding-top: 8px;
+  border-top: 1px solid #ffffff;
   text-transform: lowercase;
   font-size: 95%;
 }
 dd.comment-count {
   font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 700;
-  font-size: 145%;
+  font-size: 140%;
   color: #d59305;
   padding-left:5px;
   padding-top: 9px;
+}
+dl.document-info dd.comment-count {
   border-top: 1px solid #ffffff;
+}
+dl.document-info .comment-link {
+  text-transform: lowercase;
+  display: block;
+  border-bottom: 1px solid #a8a8a8;
+  padding-bottom: 8px;
+}
 
-
+dl.docket-info {
+  margin: 0px;
+}
+.comment-search {
+  font-size: 95%;
+  padding-top: 15px !important;
+}
+.comment-search a {
+  font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
+  font-size: 120%;
 }
 
 .right {
@@ -1007,6 +1035,26 @@ table tr.even {
   font-style: italic;
 }
 
+.search-overview ul, .search-overview ul li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.search-overview ul li {
+  font-size: 90%;
+  padding: 4px;
+  clear: both;
+}
+.search-overview ul li.loading {
+  background: url('../img/loading_mini_dark.gif') no-repeat right center;
+}
+.search-overview ul li.loading a, .search-overview ul li.zero a, .search-overview ul li.zero span.count {
+  color: #c6c6c6;
+}
+.search-overview ul li span.count {
+  display: block;
+  float: right;
+}
 .main-content .search .ui-intertag {
   width: 250px;
 
@@ -1026,6 +1074,15 @@ table tr.even {
 .main-content .search-filter-keyword .search .ui-intertag {
   width: 225px !important;
 }
+
+.main-content .search-filter-date .search .ui-intertag {
+  width: 100px !important;
+}
+.main-content .search-filter-date .search select {
+  float: left;
+  margin: 2px 4px 2px 0;
+}
+
 .main-content .search .ui-intertag .ui-intertag-subinput {
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1232,7 +1289,7 @@ table tr.even {
 .cluster-doc-header span.cluster-doc-title {
   background: none repeat scroll 0 0 #EEEEEE;
   font-family: "gnuolane","Franklin Gothic Bold",Impact,Haettenschweiler,"Helvetica Inserat","Arial Black",sans-serif;
-  font-size: 145%;
+  font-size: 140%;
   font-weight: 400;
 }
 .cluster-doc-key {
@@ -1361,7 +1418,7 @@ table tr.even {
   background: #eeeeee;
   font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
   font-weight: 400;
-  font-size: 145%;
+  font-size: 140%;
 }
 
 .loading {
@@ -1431,7 +1488,10 @@ table tr.even {
 .search-tag:last-child {
   border: 0;
 }
-.search-filter-magic {
+.search-filter {
+  display: none;
+}
+.search-filter-magic .search {
   display: none;
 }
 
@@ -1636,7 +1696,7 @@ table tr.even {
 .similarityLink {
     font-family: "gnuolane", "Franklin Gothic Bold", Impact, Haettenschweiler, "Helvetica Inserat", "Arial Black", sans-serif;
     font-weight: 400;
-    font-size: 145%;
+    font-size: 140%;
     }
 
 /* style dummy links */

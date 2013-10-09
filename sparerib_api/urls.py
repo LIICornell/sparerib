@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView, BulkView
 
-from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
+from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, EntitySearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
 from clustering import DocketHierarchyView, SingleClusterView, DocumentClusterView, DocumentClusterChainView, HierarchyTeaserView
 
@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     url(r'^search/document-non-fr/(?P<query>.*$)', NonFRSearchResultsView.as_view(), name='search-non-fr-documents-view'),
     url(r'^search/docket/(?P<query>.*$)', DocketSearchResultsView.as_view(), name='search-dockets-view'),
     url(r'^search/agency/(?P<query>.*$)', AgencySearchResultsView.as_view(), name='search-agency-view'),
+    url(r'^search/entity/(?P<query>.*$)', EntitySearchResultsView.as_view(), name='search-entity-view'),
     url(r'^search/(?P<query>.*$)', DefaultSearchResultsView.as_view(), name='search-default-view'),
 
     # raw text

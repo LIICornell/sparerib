@@ -5,6 +5,18 @@
 </div>
 <div class="main-content with-left-sidebar">
     <div class="sidebar">
+        <div class="sidebar-item search-overview">
+            <% if (depth == "deep") { %>
+                <a href="/search/<%=encodeURIComponent(query)%>">&laquo; Back to overview</a>
+            <% } else { %>
+                <ul>
+                <% _.each([['Dockets', 'docket'], ['Notices, Rules, Proposed Rules', 'document-fr'], ['Comments, Supp. Materials, Other', 'document-non-fr'], ['Organizations', 'entity'], ['Agencies', 'agency']], function(agg_type) { %>
+                    <li class="loading search-overview-<%=agg_type[1]%>" data-search-type="<%=agg_type[1]%>"><a href="/"><%=agg_type[0]%></a></li>
+                <% }); %>
+                </ul>
+                <div class="clear"></div>
+            <% } %>
+        </div>
         <div class="sidebar-item search-filter search-filter-keyword" data-filter-type="keyword">
             <!-- this should move -->
             <h4 style="font-size: 140%; margin-bottom: 10px;">Filter by</h4>
@@ -12,7 +24,7 @@
             <h4>Keyword</h4>
             <div class="search">
                 <form>
-                    <input type="text" name="query" class="search-query" /> <span class="ui-icon ui-icon-plus"></span>
+                    <input type="text" name="query" class="search-query" /> <span class="ui-icon ui-icon-plus add-keyword"></span>
                     <div class="clear"></div>
                 </form>
             </div>
@@ -38,19 +50,33 @@
             </div>
             <div class="search-tags search-type search-type-submitter"></div>
         </div>
-        <div class="sidebar-item search-filter search-filter-magic">
+        <div class="sidebar-item search-filter search-filter-magic" data-filter-type="mentioned">
             <h4>Entity Mentioned</h4>
             <div class="search-tags search-type search-type-mentioned"></div>
         </div>
-        <div class="sidebar-item search-filter search-filter-magic">
-            <h4>Date and Time</h4>
+        <div class="sidebar-item search-filter search-filter-magic" data-filter-type="comment_on">
+            <h4>Comment On</h4>
+            <div class="search-tags search-type search-type-comment_on"></div>
+        </div>
+        <div class="sidebar-item search-filter search-filter-magic search-filter-date" data-filter-type="date">
+            <h4>Date</h4>
+            <div class="search">
+                <form>
+                    <select class="date-type">
+                        <option value="gte" selected="selected">From</option>
+                        <option value="eq">On</option>
+                        <option value="lte">Until</option>
+                    </select> <input type="text" name="query" class="date-box" /> <span class="ui-icon ui-icon-plus add-date-filter"></span>
+                    <div class="clear"></div>
+                </form>
+            </div>
             <div class="search-tags search-type search-type-date"></div>
         </div>
-        <div class="sidebar-item search-filter search-filter-magic">
+        <div class="sidebar-item search-filter search-filter-magic" data-filter-type="docket">
             <h4>Docket</h4>
             <div class="search-tags search-type search-type-docket"></div>
         </div>
-        <div class="sidebar-item search-filter search-filter-magic">
+        <div class="sidebar-item search-filter search-filter-magic" data-filter-type="type">
             <h4>Document Type</h4>
             <div class="search-tags search-type search-type-type"></div>
         </div>
@@ -58,7 +84,7 @@
     <div class="main-column">
         <% if (depth == "deep") { %>
             <div class="result-set result-set-deep">
-                <h3><%=capitalize(({'docket': 'docket', 'document': 'document', 'document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other'})[level])%> results</h3>
+                <h3><%=capitalize(({'docket': 'docket', 'document': 'document', 'document-fr': 'notice, rule and proposed rule','document-non-fr': 'comment, supporting & related material and other', 'entity': 'organization', 'agency': 'agency'})[level])%> results</h3>
 
                 <div class="search-results-wrapper">
                     <div class="search-results-loading search-results-loading-<%=level%> loading"></div>
@@ -67,17 +93,8 @@
             </div>
         <% } else { %>
             <div class="result-set result-set-shallow">
-                <div class="filter-results">
-                    <h3>Agencies and Organizations</h3>
-
-                    <div class="search-results-wrapper">
-                        <div class="search-results-loading search-results-loading-entity-agency loading"></div>
-                        <div class="search-results-loaded search-results-shallow search-results-entity-agency"></div>
-                    </div>
-                </div>
-
-                <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr']], function(agg_type) { %>
-                <h3><%=agg_type[0]%></h3>
+                <% _.each([['Dockets', 'docket'], ['Notices, Rules and Proposed Rules', 'document-fr'], ['Comments, Supporting &amp; Related Materials and Other', 'document-non-fr'], ['Organizations', 'entity'], ['Agencies', 'agency']], function(agg_type) { %>
+                <h3 class="<%=agg_type[1]%>-title"><%=agg_type[0]%></h3>
 
                 <div class="search-results-wrapper">
                     <div class="search-results-loading search-results-loading-<%=agg_type[1]%> loading"></div>

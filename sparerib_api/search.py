@@ -8,19 +8,26 @@ from django.conf import settings
 
 from util import *
 
-import math, json
+import math, json, operator, copy
+import dateutil, dateutil.parser
 
 import pyes
-from query_parse import parse_query
+from query_parse import parse_query, parse_query_for_mongo
 
 from collections import defaultdict
 
 from regs_models import *
 
-ALLOWED_FILTERS = ['agency', 'docket', 'submitter', 'mentioned', 'type']
+### Constants ###
+
+EASTERN = dateutil.tz.gettz("US/Eastern")
+UTC = dateutil.tz.tzutc()
+
+### Base search classes ###
 
 class SearchResultsView(APIView):
     aggregation_level = None
+    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type']
 
     def get(self, request, query):
         self.set_query(query)
@@ -71,7 +78,7 @@ class SearchResultsView(APIView):
                     'type': f[0],
                     'value': f[1],
                     'label': f[2] if len(f) > 2 else f[1]
-                } for f in self.filters if f[0] in ALLOWED_FILTERS],
+                } for f in self.filters if f[0] in self.allowed_filters],
                 'raw_query': self.raw_query,
                 'aggregation_level': self.aggregation_level,
                 'search_type': getattr(self, 'search_type', self.aggregation_level)
@@ -80,11 +87,29 @@ class SearchResultsView(APIView):
 
         return out
 
+    # slight tweak to how this was done in the original - this will be the default
+    limit = 10
+    # and this will be the max
+    max_limit = 50
+
+    def get_limit(self):
+        try:
+            limit = int(self.request.GET.get('limit', self.limit))
+            return min(limit, self.max_limit)
+        except ValueError:
+            return self.limit
+
+class ESSearchResultsView(SearchResultsView):
     def get_es_filters(self, extra_terms={}):
         terms = defaultdict(list)
         terms.update(extra_terms)
 
+        filter_list = []
+        date_rules = {}
         for f in self.filters:
+            if f[0] not in self.allowed_filters:
+                continue
+
             if f[0] == 'agency':
                 terms['agency'] += [f[1]]
             elif f[0] == 'docket':
@@ -101,59 +126,220 @@ class SearchResultsView(APIView):
                     if f[1] not in extra_terms['document_type']:
                         continue
                 terms['document_type'] += [f[1]]
-        count = len(terms.values())
+
+            # only documents support date and comment_on filters, but it's easier to handle them here than elsewhere
+            elif f[0] == 'comment_on':
+                terms['comment_on'] += [f[1]]
+            elif f[0] == 'date':
+                date_parts = f[1].split("=")
+                if len(date_parts) != 2: continue
+                
+                date_type, date_str = date_parts
+                try:
+                    date = dateutil.parser.parse(date_str)
+                except:
+                    continue
+
+                if not date.tzinfo:
+                    date = date.replace(tzinfo=EASTERN)
+
+                if date_type == "gte":
+                    date_rules['gte'] = date.astimezone(UTC).isoformat()
+                elif date_type == "lte":
+                    date_rules['lte'] = date.astimezone(UTC).isoformat()
+                elif date_type == "eq":
+                    date_rules['gte'] = date.astimezone(UTC).isoformat()
+                    date_rules['lte'] = (date + datetime.timedelta(days=1)).astimezone(UTC).isoformat()
+
+        # move term filters into the filter list
+        for key, value in terms.iteritems():
+            filter_list.append({'terms': {key: value}})
+
+        # move date rules, if any, to the filter list
+        if date_rules:
+            filter_list.append({'range': {'posted_date': date_rules}})
+
+        count = len(filter_list)
         if count == 0:
             return None
         elif count == 1:
-            return {'terms': terms}
+            return filter_list[0]
         else:
-            term_list = []
-            for key, value in terms.iteritems():
-                term_list.append({'terms': {key: value}})
-            return {'and': term_list}
+            return {'and': filter_list}
 
     def get_es_text_query(self):
-        return {'text': {'files.text': self.text_query}} if self.text_query else {'match_all': {}}
+        return {
+            'query_string': {
+                'fields': ['files.text', 'title^2', 'identifiers^4'],
+                'query': self.text_query,
+                'use_dis_max': True
+            }
+        } if self.text_query else {'match_all': {}}
 
-    # slight tweak to how this was done in the original - this will be the default
-    limit = 10
-    # and this will be the max
-    max_limit = 50
+class ESSearchResults(object):
+    indices = "regulations"
+    doc_types = None
+    _es = None
 
-    def get_limit(self):
-        try:
-            limit = int(self.request.GET.get('limit', self.limit))
-            return min(limit, self.max_limit)
-        except ValueError:
-            return self.limit
-
-class DocumentSearchResults(object):
     def __init__(self, query):
         self.query = query
         self._results = None
         # paginator wants the count before we know what slice we want, so add some indirection hackery to avoid having to do two queries
         self._count = -1
 
+    @property
+    def es(self):
+        if not self._es:
+            self._es = es = pyes.ES(settings.ES_SETTINGS)
+        return self._es
+
     def __getslice__(self, start, end):
         if not self._results:
             self.query['from'] = start
             self.query['size'] = end - start
             
-            es = pyes.ES(settings.ES_SETTINGS)
-            self._results = es.search_raw(self.query)
+            self._results = self.es.search_raw(self.query, indices=self.indices, doc_types=self.doc_types)
             self._count = self._results['hits']['total']
 
-        def stitch_record(match):
-            match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
-            return match
-
-        return map(stitch_record, self._results['hits']['hits'])
+        return self._results['hits']['hits']
 
     def __len__(self):
         return self._count
 
-class DocumentSearchResultsView(SearchResultsView):
+class MongoSearchResultsView(SearchResultsView):
+    def set_query(self, query):
+        parsed = parse_query_for_mongo(query)
+        self.raw_query = query
+        self.text_query = parsed['text']
+        self.mongo_query = parsed['quoted_text']
+        self.filters = parsed['filters']
+
+class MongoSearchResults(object):
+    model = None
+
+    def __init__(self, query, extra_ids=[], alternative_sort=("_id", 1), is_filtered=False):
+        self.query = query
+        self.extra_ids = extra_ids
+        self._results = None
+        self._count = -1
+        self.alternative_sort = alternative_sort if alternative_sort else ("_id", 1)
+        self.is_filtered = is_filtered
+
+    def __getslice__(self, start, end):
+        model = self.model
+
+        do_full_search = True
+        initial = []
+        actual = []
+        
+        if start < len(self.extra_ids):
+            # some of the results will be faked
+            initial_ids = self.extra_ids[start:end]
+
+            # grab them from the database
+            initial = list(model._get_collection().find({'_id': {'$in': initial_ids}}, self.query['project']))
+
+            if len(initial) >= (end - start):
+                # we can satisfy the whole query with fake things
+                do_full_search = False
+        
+        # check and see if there's actually any querying going on (either search terms or filters)
+        if not (self.query['search'] or self.is_filtered):
+            do_full_search = False
+
+        self._count = len(self.extra_ids)
+
+        if do_full_search:
+            # calcualte the actual offsets in light of how much fake stuff we're shoving in at the beginning
+            actual_start = start - len(self.extra_ids) + len(initial)
+            actual_end = end - len(self.extra_ids)
+
+            # this might be a text search or a regular query, depending on whether things besides filters are supplied
+            if self.query['search']:
+                self._results = model._get_db().command("text", model._get_collection_name(), **self.query)
+                actual = self._results['results'][actual_start:actual_end]
+
+                actual_fmt = [{
+                    '_id': match['obj']['_id'],
+                    '_type': model._class_name.lower(),
+                    '_index': 'regulations',
+                    '_score': match['score'],
+                    '_from_filter': False,
+                    'url': self.get_result_url(match['obj']),
+                    'fields': self.get_result_fields(match['obj'])
+                } for match in actual]
+
+                self._count = len(self.extra_ids) + (len(self._results['results']) if self._results else 0)
+            else:
+                # build query
+                cursor = model._get_collection().find(self.query['filter'], fields=self.query['project'].keys()).sort(*self.alternative_sort)
+                
+                # get full count
+                self._count = len(self.extra_ids) + cursor.count()
+
+                # fetch subset of results
+                self._results = cursor.skip(actual_start).limit(actual_end - actual_start)
+                actual = list(self._results)
+
+                actual_fmt = [{
+                    '_id': match['_id'],
+                    '_type': model._class_name.lower(),
+                    '_index': 'regulations',
+                    '_score': 99, # arbitrary but high, since they come first
+                    '_from_filter': False,
+                    'url': self.get_result_url(match),
+                    'fields': self.get_result_fields(match)
+                } for match in actual]
+        else:
+            actual_fmt = []
+        
+        initial_fmt = [{
+            '_id': match['_id'],
+            '_type': model._class_name.lower(),
+            '_index': 'regulations',
+            '_score': 100, # arbitrary but high, since they come first
+            '_from_filter': True,
+            'url': self.get_result_url(match),
+            'fields': self.get_result_fields(match)
+        } for match in initial]
+
+        return initial_fmt + actual_fmt
+
+    def __len__(self):
+        return self._count
+
+    def get_result_fields(self, match_object):
+        return {}
+
+    def get_result_url(self, match_object):
+        return ""
+
+### Implementations ###
+
+class DocumentSearchResults(ESSearchResults):
+    doc_types = ["document"]
+
+    def __getslice__(self, start, end):
+        s = super(DocumentSearchResults, self).__getslice__(start, end)
+
+        def stitch_record(match):
+            match['url'] = reverse('document-view', kwargs={'document_id': match['_id']})
+
+            if match.get('highlight', None):
+                # munge the highlights so the frontend doesn't have to care what field they came from
+                ordered = sorted(match['highlight'].items(), key=lambda x: ['identifiers', 'title', 'files.text'].index(x[0]))
+                collated = [[(row[0], snippet) for snippet in row[1]] for row in ordered]
+                collapsed = reduce(operator.add, collated)
+                formatted = ["<strong>ID:</strong> %s" % item[1] if item[0] == 'identifiers' else item[1] for item in collapsed]
+                match['highlight'] = formatted
+            
+            return match
+
+        return map(stitch_record, s)
+
+class DocumentSearchResultsView(ESSearchResultsView):
     aggregation_level = 'document'
+    allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type', 'comment_on', 'date']
 
     def get_results(self):
         query = {}
@@ -166,8 +352,8 @@ class DocumentSearchResultsView(SearchResultsView):
 
         if text_query:
             query['query'] = text_query
-            if 'text' in text_query:
-                query['highlight'] = {'fields': dict([(key, {}) for key in text_query['text'].keys()])}
+            if 'query_string' in text_query:
+                query['highlight'] = {'fields': dict([(field.split('^')[0], {}) for field in text_query['query_string']['fields']])}
 
         query['fields'] = ['document_type', 'docket_id', 'title', 'submitter_name', 'submitter_organization', 'agency', 'posted_date']
         
@@ -189,85 +375,220 @@ class NonFRSearchResultsView(DocumentSearchResultsView):
 
         return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
-class AggregatedSearchResults(list):
-    def __init__(self, items, aggregation_level, aggregation_field, aggregation_collection):
-        super(AggregatedSearchResults, self).__init__(items)
-        self.aggregation_level = aggregation_level
-        self.aggregation_field = aggregation_field
-        self.aggregation_collection = aggregation_collection
+class DocketSearchResultsView(ESSearchResultsView):
+    aggregation_level = 'docket'
+
+    def get_results(self):
+        query = {}
+        
+        filters = self.get_es_filters()
+        text_query = self.get_es_text_query()
+
+        subqueries = [{
+            'has_child': {
+                'type': 'document',
+                'query': text_query.copy(),
+                'score_type': 'sum'
+            }
+        }]
+
+        if filters:
+            query['filter'] = {
+                'has_child': {
+                    'type': 'document',
+                    'filter': filters
+                }
+            }
+
+        if text_query and 'query_string' in text_query:
+            title_query = copy.deepcopy(text_query)
+            title_query['query_string']['boost'] = 10
+            title_query['query_string']['fields'] = ['title']
+            subqueries.append(title_query)
+
+        query['query'] = {
+            'dis_max': {
+                'queries': subqueries
+            }
+        }
+
+        query['fields'] = ['_id', 'title', 'agency']
+
+        return DocketSearchResults(query)
+
+class DocketSearchResults(ESSearchResults):
+    doc_types = ["docket"]
 
     def __getslice__(self, start, end):
-        s = super(AggregatedSearchResults, self).__getslice__(start, end)
+        s = super(DocketSearchResults, self).__getslice__(start, end)
 
+        # get some extra info from Mongo
         db = Doc._get_db()
 
-        ids = [match['term'] for match in s]
-        agg_search = db[self.aggregation_collection].find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
+        ids = [match['_id'] for match in s]
+        agg_search = db.dockets.find({'_id': {'$in': ids}}, ['_id', 'name', 'year', 'title', 'details', 'agency', 'stats'])
         agg_map = dict([(result['_id'], result) for result in agg_search])
 
-        def stitch_record(match):
-            out = {
-                '_type': self.aggregation_level,
-                '_index': 'regulations',
-                'fields': {},
-                '_score': match['total'],
-                '_id': match['term'],
-                'matched': match['count'],
-                'url': reverse(self.aggregation_level + '-view', kwargs={self.aggregation_field: match['term']})
+        # get some extra info from ES
+        if ids:
+            count_query = {
+                'query': [query for query in self.query['query']['dis_max']['queries'] if 'has_child' in query][0]['has_child']['query'],
+                'facets': {'dockets': {'terms': {'field': 'docket_id', 'size': len(ids)}}},
+                'size': 0
             }
-            if match['term'] in agg_map:
-                agg_data = agg_map[match['term']]
-                out['fields'] = {
-                    self.aggregation_field: agg_map[match['term']]['_id'],
+            
+            hp_filter = {
+                'has_parent': {
+                    'type': 'docket',
+                    'filter': {
+                        'ids': {'values': ids}
+                    }
+                }
+            }
+            if 'filter' in self.query:
+                count_query['facets']['dockets']['facet_filter'] = {
+                    'and': [
+                        self.query['filter']['has_child']['filter'],
+                        hp_filter
+                    ]
+                }
+            else:
+                count_query['facets']['dockets']['facet_filter'] = hp_filter
+
+            child_results = self.es.search_raw(count_query, indices=self.indices, doc_types=['document'])
+            child_counts = dict([(term['term'], term['count']) for term in child_results['facets']['dockets']['terms']])
+        else:
+            child_counts = {}
+
+        def stitch_record(match):
+            match['url'] = reverse('docket-view', kwargs={'docket_id': match['_id']})
+
+            if match['_id'] in agg_map and 'stats' in agg_map[match['_id']]:
+                agg_data = agg_map[match['_id']]
+                match['fields'].update({
+                    'docket_id': agg_map[match['_id']]['_id'],
                     'date_range': agg_data['stats']['date_range'],
                     'count': agg_data['stats']['count']
-                }
-                for label in ['name', 'title', 'agency', 'year']:
-                    if label in agg_data:
-                        out['fields'][label] = agg_data[label]
+                })
+                if 'year' in agg_data:
+                    match['fields']['year'] = agg_data['year']
                 
                 rulemaking_field = agg_data.get('details', {}).get('dk_type', None)
                 if rulemaking_field:
                     out['fields']['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
-            return out
+
+            match['fields']['matched'] = child_counts.get(match['_id'], 0)
+            
+            return match
 
         return map(stitch_record, s)
 
-class AggregatedSearchResultsView(SearchResultsView):
+class EntitySearchResultsView(MongoSearchResultsView):
+    aggregation_level = 'entity'
+
+    # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
+    # unadorned 'agency' and 'docket' filter entities by submission to that agency/docket, and with '_mentioned', filter by mention in that agency/docket
+    allowed_filters = ['agency', 'agency_mentioned', 'docket', 'docket_mentioned', 'submitter', 'mentioned']
+
     def get_results(self):
-        query = {
-            'query': self.get_es_text_query(),
-            'facets': {
-                self.aggregation_level: {
-                    'terms_stats': {
-                        'key_field': self.aggregation_field,
-                        'value_script': 'doc.score',
-                        'size': 1000000,
-                        'order': 'total'
-                    }
-                }
-            },
-            'size': 0
-        }
+        extra_ids = []
+        mongo_filter = {'searchable': True, 'td_type': 'organization'}
+        has_real_filters = False
+        candidate_sorts = []
+        project_fields = {'aliases': 1, 'td_type': 1, 'stats.submitter_mentions.count': 1, 'stats.text_mentions.count': 1}
 
-        filters = self.get_es_filters()
-        if filters:
-            query['facets'][self.aggregation_level]['facet_filter'] = filters
+        for f in self.filters:
+            if f[0] in ('submitter', 'mentioned'):
+                extra_ids.append(f[1])
+            elif f[0].startswith('agency') or f[0].startswith('docket'):
+                has_real_filters = True
 
-        es = pyes.ES(settings.ES_SETTINGS)
-        results = es.search_raw(query)
+                filter_key = 'stats.' +\
+                    ('text_mentions' if f[0].endswith('_mentioned') else 'submitter_mentions') +\
+                    '.%s.%s' % ('agencies' if f[0].startswith('agency') else 'dockets', f[1])
+                mongo_filter[filter_key] = {'$gte': 1}
+                candidate_sorts.append((filter_key, -1))
+                project_fields[filter_key] = 1
 
-        return AggregatedSearchResults(results['facets'][self.aggregation_level]['terms'], self.aggregation_level, self.aggregation_field, self.aggregation_collection)
+        if extra_ids:
+            mongo_filter['_id'] = {'$nin': extra_ids}
 
-class DocketSearchResultsView(AggregatedSearchResultsView):
-    aggregation_level = 'docket'
-    aggregation_field = 'docket_id'
-    aggregation_collection = 'dockets'
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': project_fields, 'limit': 50000}
 
-class AgencySearchResultsView(AggregatedSearchResultsView):
+        return EntitySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None), is_filtered=has_real_filters)
+
+class EntitySearchResults(MongoSearchResults):
+    model = Entity
+
+    def get_result_url(self, match_object):
+        return reverse('entity-view', kwargs={'entity_id': match_object['_id'], 'type': match_object['td_type']})
+
+    def get_result_fields(self, match_object):
+        fields = {'name': match_object['aliases'][0], 'type': match_object['td_type']}
+        stats = match_object.get('stats', {})
+        for count_type in ('submitter', 'text'):
+            key = '%s_mentions' % count_type
+            if key in stats:
+                if 'dockets' in stats[key]:
+                    fields['%s_count' % count_type] = sum(stats[key]['dockets'].values())
+                elif 'agencies' in stats[key]:
+                    fields['%s_count' % count_type] = sum(stats[key]['agencies'].values())
+                else:
+                    fields['%s_count' % count_type] = stats[key].get('count', 0)
+        return fields
+
+
+class AgencySearchResultsView(MongoSearchResultsView):
     aggregation_level = 'agency'
-    aggregation_field = 'agency'
-    aggregation_collection = 'agencies'
+
+    # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
+    # unadorned 'agency' and 'docket' filter entities by submission to that agency/docket, and with '_mentioned', filter by mention in that agency/docket
+    allowed_filters = ['agency', 'submitter', 'mentioned']
+
+    def get_results(self):
+        extra_ids = []
+        mongo_filter = {}
+        has_real_filters = False
+        candidate_sorts = []
+        project_fields = {'name': 1, 'stats.count': 1}
+
+        for f in self.filters:
+            if f[0] == 'agency':
+                extra_ids.append(f[1])
+            elif f[0] in ('submitter', 'mentioned'):
+                key = 'text_entities' if f[0] == 'mentioned' else 'submitter_entities'
+                has_real_filters = True
+
+                filter_key = 'stats.%s.%s' % (key, f[1])
+                mongo_filter[filter_key] = {'$gte': 1}
+                candidate_sorts.append((filter_key, -1))
+                project_fields[filter_key] = 1
+
+        if extra_ids:
+            mongo_filter['_id'] = {'$nin': extra_ids}
+
+        query = {'search': self.mongo_query, 'filter': mongo_filter, 'project': project_fields, 'limit': 50000}
+
+        return AgencySearchResults(query, extra_ids, alternative_sort=(candidate_sorts[0] if candidate_sorts else None), is_filtered=has_real_filters)
+
+class AgencySearchResults(MongoSearchResults):
+    model = Agency
+
+    def get_result_url(self, match_object):
+        return reverse('agency-view', kwargs={'agency': match_object['_id']})
+
+    def get_result_fields(self, match_object):
+        fields = {'name': match_object['name']}
+        stats = match_object.get('stats', {})
+        for count_type in ('submitter', 'text'):
+            key = '%s_entities' % count_type
+            if key in stats:
+                fields['%s_count' % count_type] = sum(stats[key].values())
+            else:
+                fields['%s_count' % count_type] = 0
+        fields['count'] = stats.get('count', 0)
+        
+        return fields
 
 class DefaultSearchResultsView(APIView):
     def get(self, request, query):

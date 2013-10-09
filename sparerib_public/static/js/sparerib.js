@@ -73,9 +73,13 @@ var helpers = {
         return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
     },
     'shortFormatDate': function(iso_date) {
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        var date = new Date(iso_date);
-        return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+        if (iso_date) {
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var date = new Date(iso_date);
+            return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+        } else {
+            return "&mdash;";
+        }
     },
     'capitalize': function(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -196,7 +200,6 @@ var StaticView = Backbone.View.extend({
             var template = _.template(content);
             this.$el.html(template({}));
             this.$el.find('a.jump').click(function(evt) {
-                console.log($(evt.target).attr('href'));
                 var top = $($(evt.target).attr('href')).offset().top;
                 $(window).scrollTop(top);
                 return false;
@@ -213,7 +216,8 @@ var SearchView = Backbone.View.extend({
 
     events: {
         'submit form': 'search',
-        'click .ui-icon-plus': 'add_keyword'
+        'click .add-keyword': 'add_keyword',
+        'click .add-date-filter': 'add_date_filter'
     },
 
     intertag: function() {
@@ -237,6 +241,11 @@ var SearchView = Backbone.View.extend({
                     new_tag.find('.ui-label').html(item.label);
                     new_tag.data('value', item.value);
                     new_tag.addClass('ui-tag-type-' + item.type);
+
+                    var value_parts = item.value.split("=");
+                    if (value_parts.length > 1) {
+                        new_tag.addClass('search-tag-' + value_parts[0]);
+                    }
 
                     var area = $('.sidebar .search-type-' + item.type);
                     new_tag.appendTo(area);
@@ -271,7 +280,7 @@ var SearchView = Backbone.View.extend({
                 },
                 'source': function(request, response) {
                     var filterType = $(this.element[0]).closest('.search-filter').data('filter-type');
-                    if (request.term.length == 0 || filterType == "keyword") {
+                    if (request.term.length == 0 || filterType == "keyword" || filterType == "date") {
                         response([]);
                     } else {
                         var tf = {'agency': 'a', 'submitter': 'o'};
@@ -285,6 +294,11 @@ var SearchView = Backbone.View.extend({
             options.placeholder = 'Search or filter by keyword, agency or submitter';
         }
         this.$el.find("input[type=text]").intertag(options);
+
+        if (this.$el.find('select.date-type').length) {
+            this.$el.find("input[type=text]").pikaday();
+        }
+        
         return this;
     },
 
@@ -319,6 +333,23 @@ var SearchView = Backbone.View.extend({
             }, true);
             input.val("");
         }
+    },
+
+    add_date_filter: function(evt) {
+        var itg = this.$el.find('.ui-intertag');
+        var select = this.$el.find('select :selected');
+        var input = this.$el.find('input[type=text]');
+        var dateVal = input.val();
+        var typeVal = select.val();
+        if (dateVal && typeVal) {
+            var m = moment(dateVal);
+            itg.data('intertagOptions').addTag({
+                type: 'date',
+                label: "<em>" + select.html() + "</em> " + m.format("LL"),
+                value: typeVal + "=" + m.format("YYYY-MM-DD")
+            }, true);
+            input.val("");
+        }
     }
 })
 
@@ -328,7 +359,8 @@ var ResultsView = Backbone.View.extend({
     className: 'search-view',
 
     events: {
-        'click .sidebar .search-tag .ui-icon-close': 'removeTag'
+        'click .sidebar .search-tag .ui-icon-close': 'removeTag',
+        'click .search-overview ul a': 'overview_click'
     },
 
     templates: {
@@ -336,9 +368,45 @@ var ResultsView = Backbone.View.extend({
         'deep': _.template($('#deep-working-results-tpl').html()),
         'complete': _.template($('#results-tpl').html())
     },
+
+    allowedFilters: {
+        'all': {
+            'editable': ['keyword', 'agency', 'submitter'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'docket': {
+            'editable': ['keyword', 'agency', 'submitter'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'document': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type', 'comment_on']
+        },
+        'document-fr': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type']
+        },
+        'document-non-fr': {
+            'editable': ['keyword', 'agency', 'submitter', 'date'],
+            'magic': ['mentioned', 'docket', 'type', 'comment_on']
+        },
+        'entity': {
+            'editable': ['keyword'],
+            'magic': ['submitter', 'mentioned', 'agency', 'docket', 'agency_mentioned', 'docket_mentioned']
+        },
+        'agency': {
+            'editable': ['keyword', 'submitter'],
+            'magic': ['agency', 'mentioned']
+        }
+    },
+
     render: function() {
-        var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level')}, helpers)));
-        var search_populated = false;
+        var $el = this.$el.html(this.templates['deep'](_.extend({'depth': this.options.depth, 'level': this.options.models[0].model.get('level'), 'query': this.options.models[0].model.get('query')}, helpers)));
+        var view = this;
+        var $searchFilters = $el.find('.search-filter');
+        SF = $searchFilters;
+
+        var searchPopulated = false;
         _.each(this.options.models, $.proxy(function(_model) {
             var model = _model.model;
             model.fetch(
@@ -348,36 +416,40 @@ var ResultsView = Backbone.View.extend({
                         $el.find('.search-results-' + model.get('level')).html(this.templates.complete(context)).slideDown("fast");
                         $el.find('.search-results-loading-' + model.get('level')).slideUp("fast");
 
-                        // populate the search input if necessary
-                        if (!search_populated) {
+                        // update the ticker on the side
+                        var overview = $('.search-overview .search-overview-' + model.get('level'));
+                        var total = model.get('total');
+                        if (total == 0) {
+                            overview.addClass('zero');
+                        }
+                        overview.removeClass('loading');
+                        overview.append("<span class='count'>" + total + "</span>");
+
+                        // populate the search input if necessary, but only use responses from docket, document-fr, or document-non-fr, since they support all the filters in the 'all' type
+                        if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document', 'document-fr', 'document-non-fr'], model.get('level')))) {
+                            var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
+                            
+                            // show the filters we're supposed to, and hide the others
+                            $searchFilters.filter('.search-filter-magic,.search-filter-editable').removeClass('search-filter-magic').removeClass('search-filter-visible').filter(":visible").addClass("previously-visible");
+                            _.each(['editable', 'magic'], function(filterClass) {
+                                _.each(view.allowedFilters[filterSet][filterClass], function(filterType) {
+                                    $searchFilters.filter("[data-filter-type=" + filterType + "]").addClass("search-filter-" + filterClass);
+                                });
+                            });
+                            $searchFilters.filter(".search-filter-editable,.search-filter-magic").removeClass("previously-visible");
+                            $searchFilters.filter(".search-filter-editable:hidden").slideDown("fast");
+                            $searchFilters.filter(".previously-visible").removeClass("previously-visible").slideUp("fast");
+                            $searchFilters.filter(".search-filter-magic:visible").slideUp("fast");
+
+                            // populate the search fields
                             $('.main-content .search form .ui-intertag').eq(0).val({'tags': context.search.filters, 'text': context.search.text_query});
 
-                            if (context.search.filters.length && this.options.depth == "shallow") {
-                                this.$el.find('.filter-results:hidden').slideDown('fast');
-                                entity_context = _.extend({'depth': this.options.depth}, helpers, {
-                                    'total': context.search.filters.length,
-                                    'search': {
-                                        'search_type': 'entity-agency',
-                                        'raw_query': ''
-                                    },
-                                    'results': _.map(context.search.filters, function(filter) {
-                                        return {
-                                            "_id": filter.value,
-                                            "_type": filter.type == 'submitter' ? 'organization' : 'agency', 
-                                            "fields": {
-                                                "name": filter.label
-                                            }, 
-                                            "url": "http://regulations.sunlightlabs.com/api/1.0/" + filter.type + "/" + filter.value
-                                        };
-                                    })
-                                });
-                                $el.find('.search-results-entity-agency').html(this.templates.complete(entity_context)).slideDown("fast");
-                                $el.find('.search-results-loading-entity-agency').slideUp("fast");
-                            } else {
-                                this.$el.find('.filter-results:visible').slideUp('fast');
+                            // futz with the date filter if necessary
+                            if ($('.search-type-date:visible .search-tag-gte').length > 0 && $('.search-type-date:visible .search-tag-lte').length == 0) {
+                                $('.search-filter-date:visible .date-type').val('lte');
                             }
 
-                            search_populated = true;
+                            searchPopulated = true;
                         }
                     }, this),
                     'error': function() {
@@ -398,8 +470,31 @@ var ResultsView = Backbone.View.extend({
             container.closest('.sidebar-item').slideUp("fast");
         }
 
-        container.closest('.search-filter').find('form').trigger('submit');
-    }
+        var form = container.closest('.search-filter').find('form');
+        if (!form.length) form = container.closest('.sidebar').find('form').eq(0);
+
+        form.trigger('submit');
+    },
+
+    overview_click: function(evt) {
+        evt.preventDefault();
+        var $this = $(evt.target);
+        var $li = $this.closest('li');
+
+        if ($li.hasClass('loading')) {
+            return;
+        }
+
+        var type = $li.data('search-type');
+        var title = this.$el.find('h3.' + type + '-title');
+        var offset = title.offset().top;
+
+        if ($.browser.mozilla) {
+            $('html').animate({'scrollTop': offset}, 'ease');
+        } else if ($.browser.webkit) {
+            $('body').animate({'scrollTop': offset}, 'ease');
+        }
+    },
 })
 
 var AggregatedDetailView = Backbone.View.extend({
@@ -1186,7 +1281,7 @@ var AppRouter = Backbone.Router.extend({
 
         if (type == null) {
             // are we on a search page?
-            var models = _.map(['docket', 'document-fr', 'document-non-fr'], function(type) {
+            var models = _.map(['docket', 'document-fr', 'document-non-fr', 'entity', 'agency'], function(type) {
                 return {'type': type, 'model': new SearchResults({'query': query, 'in_page': null, 'level': type, 'limit': 5})}
             });
             var depth = 'shallow';

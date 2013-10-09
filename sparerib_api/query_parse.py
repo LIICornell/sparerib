@@ -19,3 +19,10 @@ _syntax = SearchSyntax()
 def parse_query(query):
     parsed = _syntax.parseString(query)
     return {'text': ' '.join(parsed.text_terms), 'filters': parsed.filters.asList() if parsed.filters else []}
+
+# for mongo we quote everything to force AND logical behavior
+def parse_query_for_mongo(query):
+    parsed = _syntax.parseString(query)
+    # add quotes to things if they're not already quoted
+    quoted_terms = ['"%s"' % word.replace('"', '\\"') if not (word[0] == word[-1] and word[0] in ('"', "'")) else word for word in parsed.text_terms]
+    return {'text': ' '.join(parsed.text_terms), 'quoted_text': ' '.join(quoted_terms), 'filters': parsed.filters.asList() if parsed.filters else []}

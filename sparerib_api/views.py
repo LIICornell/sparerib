@@ -69,6 +69,7 @@ class AggregatedView(APIView):
                     'id': i[0],
                     'count': i[1]
                 } for i in sorted(items, key=lambda x: x[1], reverse=True)[:10]]
+                stats[label[4:] + "_count"] = len(items)
             del stats['text_entities'], stats['submitter_entities']
 
             # grab additional info about these ones from the database
