@@ -29,7 +29,7 @@
         </tr>
         
         <% _.each(results, function(result, idx) { %>
-        <tr class="<%=(idx % 2 == 0 || depth == 'deep' ? 'even': 'odd')%>">
+        <tr class="<%=(idx % 2 == 0 || (depth == 'deep' && typeof result.highlight !== "undefined") ? 'even': 'odd')%>">
             <td class="title"><a href="/document/<%=result._id%>"><%=result.fields.title%></a></td>
             <td><%=capitalize(result.fields.document_type.split('_').join(' '))%></t>
             <td><%=result.fields.agency%></td>
