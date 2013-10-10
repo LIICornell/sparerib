@@ -7,7 +7,7 @@ from regs_models import Doc
 from django.core.cache import cache
 import hashlib, json
 import uuid
-from huey.djhuey.decorators import queue_command
+from django_rq import job
 
 TEN_MINUTES = datetime.timedelta(minutes=10)
 THIRTY_DAYS = 60 * 60 * 24 * 30
@@ -82,7 +82,7 @@ class DeferredExporter(object):
 
         cache.set("sparerib_api.deferred.defer-" + self.uuid, self, timeout=THIRTY_DAYS)
 
-        queue_deferred(self.uuid)
+        queue_deferred.delay(self.uuid)
 
         return data
 
@@ -145,6 +145,6 @@ def get_status(uuid):
         return None
     return deferred.get_status()
 
-@queue_command
+@job
 def queue_deferred(uuid):
     run_deferred(uuid)

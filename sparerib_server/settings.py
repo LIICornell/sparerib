@@ -46,7 +46,7 @@ INSTALLED_APPS = (
     'sparerib_api',
     'sparerib_public',
     'analysis',
-    'huey.djhuey'
+    'django_rq',
 )
 
 # hacks to make everything work in pypy
