@@ -796,7 +796,10 @@ var DownloadView = Backbone.ModalView.extend({
             closeImageHoverUrl: "/static/img/icons/regulations-ex-large.png",
             backgroundClickClosesModal: false
         });
+
+        this.open = false;
         this.on('closeModalWindow', this.handleClose);
+
         this.statuses = {
             'started': {'icon': 'working', 'message': 'Requesting your data...'},
             'deferred': {'icon': 'working', 'message': 'Preparing your data...'},
@@ -815,7 +818,7 @@ var DownloadView = Backbone.ModalView.extend({
             _this.setState(response.status);
             if (response.status == "done") {
                 _this.$el.find(".dl-url").attr('href', response.url);
-            } else {
+            } else if (_this.open) {
                 setTimeout(function() {
                     $.getJSON("/api/1.0/bulk/uuid/" + response.uuid).done(handleResponse);
                 }, 2000)
@@ -830,6 +833,7 @@ var DownloadView = Backbone.ModalView.extend({
             Backbone.ModalView.prototype.showModal.call(_this);
             $("body").css({"height":"100%", "overflow": "hidden"});
         };
+        this.open = true;
 
         /* scroll us up to the top before showing the dialog */
         if (window.scrollY == 0) {
@@ -847,6 +851,7 @@ var DownloadView = Backbone.ModalView.extend({
     },
     handleClose: function() {
         $("body").css({"height":"", "overflow": ""});
+        this.open = false;
         app.navigate(Backbone.history.fragment.replace(/\/download$/, ''));
     },
     setState: function(state) {
