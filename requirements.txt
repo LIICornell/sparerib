@@ -20,4 +20,9 @@ python-dateutil
 redis
 django-redis
 boto
-huey
+
+rq
+django-rq
+
+supervisor
+git+https://github.com/apendleton/django-supervisor.git@isolate_watchdog#egg=djsupervisor

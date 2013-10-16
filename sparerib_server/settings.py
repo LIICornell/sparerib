@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'sparerib_public',
     'analysis',
     'django_rq',
+    'djsupervisor',
 )
 
 # hacks to make everything work in pypy
