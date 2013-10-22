@@ -102,3 +102,22 @@ from django.contrib.localflavor.us.us_states import US_STATES
 STATES = dict(US_STATES)
 def expand_state(state):
     return STATES.get(state, state)
+
+from enum import Enum
+class OrderedEnum(Enum):
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self._value_ >= other._value_
+        return NotImplemented
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self._value_ > other._value_
+        return NotImplemented
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self._value_ <= other._value_
+        return NotImplemented
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self._value_ < other._value_
+        return NotImplemented

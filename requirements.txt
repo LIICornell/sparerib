@@ -20,6 +20,7 @@ python-dateutil
 redis
 django-redis
 boto
+enum34
 
 rq
 django-rq
