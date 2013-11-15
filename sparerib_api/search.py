@@ -345,6 +345,8 @@ class DocumentSearchResultsView(ESSearchResultsView):
 
     Allowed filters for this document type include 'agency', 'docket', 'submitter', 'mentioned', 'type', 'comment_on', and 'date'.  'submitter' and 'mentioned' should use entity IDs, 'type' should be one of the allowed
     document types, and 'comment_on' should be the document ID of a Federal Regsiter document.
+
+    query -- a search query, e.g., "agency:FAA airplane"
     """
 
     aggregation_level = 'document'
@@ -371,6 +373,8 @@ class DocumentSearchResultsView(ESSearchResultsView):
 class FRSearchResultsView(DocumentSearchResultsView):
     """
     This endpoint is similar to the document search, but only includes Federal Register documents in its results (notices, proposed rules, and rules).
+
+    query -- a search query
     """
 
     name = "Federal Register Document Search Results"
@@ -385,6 +389,8 @@ class FRSearchResultsView(DocumentSearchResultsView):
 class NonFRSearchResultsView(DocumentSearchResultsView):
     """
     This endpoint is similar to the document search, but only includes non-Federal-Register documents in its results (comments, supporting material, and "other").
+
+    query -- a search query
     """
     name = "Non-Federal-Register Document Search Results"
 
@@ -399,6 +405,8 @@ class DocketSearchResultsView(ESSearchResultsView):
     """
     This endpoint provides search results for dockets, searching both the docket titles and the contents of their documents, with weight given to the former over the latter.
     Filtering is similar to that of documents, with the following types supported: 'agency', 'docket', 'submitter', 'mentioned', and 'type'.
+
+    query -- a search query
     """
     aggregation_level = 'docket'
 
@@ -513,6 +521,8 @@ class EntitySearchResultsView(MongoSearchResultsView):
     Filtering is similar in format to that of documents, with the following types supported: 'agency', 'docket', 'agency_mentioned', and 'docket_mentioned'.
     The first two filter to organizations that have submitted to that agency or docket, respectively, and last two filter to organizations that have been mentioned
     in documents in that agency or docket.
+
+    query -- a search query
     """
     aggregation_level = 'entity'
 
@@ -573,6 +583,8 @@ class AgencySearchResultsView(MongoSearchResultsView):
     This endpoint provides search results for agencies, searching on their names.
     Filtering is similar in format to that of documents, with the following types supported: 'submitter' and 'mentioned', each of which
     takes an entity ID.  These filters show only agencies that contain documents that either were submitted by or mention the entity with that ID, respectively.
+
+    query -- a search query
     """
     aggregation_level = 'agency'
 
@@ -627,7 +639,7 @@ class AgencySearchResults(MongoSearchResults):
 
 class DefaultSearchResultsView(APIView):
     exclude_from_docs = True
-    
+
     def get(self, request, query):
         parsed = parse_query(query)
         if any([f for f in parsed['filters'] if f[0] == 'docket']):

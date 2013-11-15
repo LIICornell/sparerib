@@ -557,6 +557,11 @@ class EntityDocketView(APIView):
     """
     This endpoint powers allows Influence Explorer to show specific documents from a specific docket that mention or were submitted by a specific entity; this information
     if included on Influence Explorer organization pages.  Metadata is structured similarly to the same information on docket, entity, and document endpoints.
+
+    entity_id -- an Influence Explorer entity ID
+    docket_id -- a Regulations.gov docket ID
+    document_type -- either 'mentions' or 'submissions'
+    entity_type -- the type of entity; currently must be 'organization'
     """
     name = "Entity-Docket Overlap"
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [JSONPRenderer]

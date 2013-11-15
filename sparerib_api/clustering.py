@@ -68,10 +68,13 @@ class DocketHierarchyView(CommonClusterView):
     it contains are sufficiently similar to still form a cluster at the next threshold of similarity.
 
     This endpoint can also supply distinguishing phrases for each cluster.  The process of calculating these phrases is computationally expensive, so by default, phrases are only included if they've already
-    been generated and cached; each cluster's *phrases* key will be a list of strings if this is true, or null otherwise.  Setting the *require_summaries* GET parameter to *True* will force computation of phrases
+    been generated and cached; each cluster's *phrases* key will be a list of strings if this is true, or null otherwise.  Setting the *require_summaries* GET parameter to *true* will force computation of phrases
     if they haven't already been generated.  Docket Wrench's usage pattern is to make an initial call to this endpoint without *require_summaries*, then make a second call with *require_summaries* if phrases weren't
     included in the initial response.  This allows the application to render other parts of the clustering visualization without waiting for phrases to be computed, which is slower than the initial clustering
     calculations.  Other consuming applications may want to follow this same pattern.
+
+    docket_id -- a Regulations.gov docket ID, e.g., "EPA-HQ-OAR-2009-0234"
+    require_summaries -- "true" or "false"; defaults to "false"
     """
 
     name = "Docket Clustering Hierarchy"
@@ -151,7 +154,7 @@ class HierarchyTeaserView(CommonClusterView):
 
     item_id -- a Regulations.gov document or docket ID
     """
-    name = "Docket Clustering Hierarchy Teaser"
+    name = "Clustering Hierarchy Teaser"
 
     @profile
     def get(self, request, item_id, item_type="docket"):
@@ -209,6 +212,8 @@ class SingleClusterView(CommonClusterView):
     The response contains a list of documents, ordered by most to least central within the cluster, with the clustering ID of each document,
     its title, and any submitter text that was included with the original document.
 
+    docket_id -- a Regulations.gov docket ID, e.g., "EPA-HQ-OAR-2009-0234"
+    cluster_id -- a numerical representative document ID, e.g., "5123"
     cutoff -- The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive.
     """
     name = "Single-cluster Document List"
@@ -239,7 +244,10 @@ class DocumentClusterView(CommonClusterView):
     are less frequent.  As Docket Wrench's clustering analysis only examines the first 10,000 characters of a document, documents may be truncated; if they are, the *truncated* key
     will be set to *True*.
 
+    docket_id -- a Regulations.gov docket ID, e.g., "EPA-HQ-OAR-2009-0234"
+    cluster_id -- a numerical representative document ID, e.g., "5123"
     cutoff -- The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive.
+    document_id -- a numerical document ID, e.g., "5123"
     """
 
     name = "Document with Annotated for Cluster"
@@ -285,6 +293,9 @@ class DocumentClusterView(CommonClusterView):
 class DocumentClusterChainView(CommonClusterView):
     """
     This endpoint allows clients to determine which clusters at which cutoff levels contain a particular document.  Documents, dockets, and clusters are identified as with other clustering endpoints.
+
+    docket_id -- a Regulations.gov docket ID, e.g., "EPA-HQ-OAR-2009-0234"
+    document_id -- a numerical document ID, e.g., "5123"
     """
 
     @profile
