@@ -23,7 +23,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re, datetime, calendar, urllib, itertools, struct, uuid
+import re, datetime, calendar, urllib, itertools, struct, uuid, json
 
 class AggregatedView(APIView):
     "Regulations.gov docket view"
@@ -96,6 +96,17 @@ class AggregatedView(APIView):
         return Response(out)
 
 class DocketView(AggregatedView):
+    """
+    This endpoint powers Docket Wrench's docket pages.  Included are general metadata (title, URL, year, ID, and whether or not it's a rulemaking docket),
+    information about the agency that manages the docket, and stats about the docket's contents.  Noteworthy stats subkeys include the total document count
+    (*count*), a breakdown of documents by type (*type_breakdown*, broken down into *notice*, *proposed_rule*, *rule*, *public_submission*, *supporting_material*, and *other*),
+    information about the top entities that were recognized as having submitted comments (*top_submitter_entities*) and that were mentioned (*top_text_entities*).
+    The *doc_info* key includes a subkey *fr_docs* the lists and summarizes all Federal Register documents (notices, proposed rules, and rules) within the docket, with metadata.
+    *weeks* is a breakdown of submissions by week over the date range of the receipt of submissions (included separately in the *date_range* key).
+
+    docket_id -- a Regulations.gov ID, e.g. "EPA-HQ-OAR-2009-0234"
+    """
+
     aggregation_level = 'docket'
     aggregation_field = 'docket_id'
     aggregation_class = Docket
@@ -170,6 +181,15 @@ class DocketView(AggregatedView):
         return Response(out)
 
 class AgencyView(AggregatedView):
+    """
+    This endpoint powers Docket Wrench's agency pages.  Included are general metadata (name, URL, and ID), as well as stats about the dockets the agency manages, and the
+    documents within those dockets.  The stats are, for the most part, structured similarly to those provided by the docket endpoint; note, though, that date aggregation is
+    by month rather than by week because of the longer time scales involved in agency data.  Additional information is included about noteworthy dockets for that agency: *recent_dockets*
+    contains dockets whose first submissions were most recent, and *popular_dockets* includes dockets that have had the most submissions.
+
+    agency -- a Regulations.gov agency ID, e.g., "FAA"
+    """
+
     aggregation_level = 'agency'
     aggregation_field = 'agency'
     aggregation_class = Agency
@@ -192,7 +212,22 @@ class AgencyView(AggregatedView):
         return Response(out)
 
 class DocumentView(APIView):
-    "Regulations.gov document view"
+    """
+    This endpoint powers Docket Wrench's document pages.  Included are general metadata (type, title, URL, year, and ID),
+    information about the dockey in which the document can be found, and information about agency that manages that docket. 
+    Stats are also included about the docket, which powers the docket summary graph on Docket Wrench document pages.
+    Additional information included about the document includes summary information and URLs about each piece of text included
+    with the comment (either a *view* or an *attachment* in Regulations.gov parlance), relevant information about submitting or mentioned
+    entities, and *details* as supplied by Regulations.gov, such as date received, federal register number, etc.  Docket Wrench provides these
+    details in two forms, one under the *details* key which is as provided by Regulations.gov, and the other under the *clean_details* key, which
+    includes much of the same information cleaned up for display on Docket Wrench: dates are pretty, names are combined, some identifiers are standardized,
+    and information is grouped and ordered.
+
+    Additionally, if the document is a federal register document (a rule, proposed rule, or notice), the response includes stats about comments submitted on
+    the document, if any.  The format for these stats is similar to that for dockets.
+
+    document_id -- a Regulations.gov document ID, e.g., "EPA-HQ-OAR-2009-0234-20377"
+    """
 
     def get(self, request, *args, **kwargs):
         "Access basic metadata about regulations.gov documents."
@@ -397,7 +432,20 @@ class DocumentView(APIView):
         return Response(out)
 
 class EntityView(APIView):
-    "TD entity view"
+    """
+    This endpoint powers Docket Wrench's organization pages.  Included are general metadata (type, name, URL, and ID),
+    as well as stats about documents the entity submitted or was mentioned in.  This functionality is powered by the database
+    of entities underlying our Influence Explorer project, and relies on a somewhat-lossy text-matching process to identify
+    both submissions and mentions; see the respective methodology pages for Influence Explorer and Docket Wrench for more information.
+
+    Stats are divided into *text_mentions* and *submitter_mentions* objects, which are structurally similar to one another, and contain information
+    about documents that mention the entity, and documents that the entity likely submitted, respectively.  In each is general metadata about top dockets
+    and agencies for each of these document types.  For the agencies, breakdowns of submission by month are included to facilitate drawing of graphs of
+    submissions over time.
+
+    entity_id -- an Influence Explorer entity ID, e.g., "d958530f0e2a4979a35af270dfb309a3"
+    type -- an Influence Explorer entity type; currently only "organization" is supported.
+    """
 
     def get(self, request, *args, **kwargs):
         "Access aggregate information about entities as they occur in regulations.gov data."
@@ -506,7 +554,11 @@ class EntityView(APIView):
         return Response(out)
 
 class EntityDocketView(APIView):
-    "TD/Docket join view"
+    """
+    This endpoint powers allows Influence Explorer to show specific documents from a specific docket that mention or were submitted by a specific entity; this information
+    if included on Influence Explorer organization pages.  Metadata is structured similarly to the same information on docket, entity, and document endpoints.
+    """
+    name = "Entity-Docket Overlap"
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [JSONPRenderer]
 
     def get(self, request, entity_id, docket_id, document_type, entity_type):
@@ -578,6 +630,13 @@ class BinaryEntityRenderer(BaseRenderer):
         return "".join(to_structs())
 
 class EntitySummaryView(APIView):
+    """
+    This endpoint provides a list of the IDs of all organizations that are recognized to have submitted or be mentioned in at least one document.  In addition to the
+    usual JSON output, this endpoint can be used with a *Content-Accept* header of "application/octet-stream" which will return the entity list in a highly compact binary format
+    consisting of just the UUIDs of the entities in question, expressed as pairs of big-endian unsigned longs; see http://stackoverflow.com/questions/6877096/how-to-pack-a-uuid-into-a-struct-in-python
+    for more information about decoding.
+    """
+
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [BinaryEntityRenderer]
     def get(self, request):
         entities = Entity.objects(__raw__={'td_type': 'organization', '$or':[{'stats.submitter_mentions.count':{'$gte':1}}, {'stats.text_mentions.count':{'$gte':1}}]}).only('id')
@@ -598,5 +657,11 @@ class RawTextView(View):
             return HttpResponse(view.as_html(), content_type='text/html')
 
 class NotFoundView(APIView):
+    exclude_from_docs = True
+
     def get(self, request):
         return Response(status=404)
+
+from rest_iodocs.util import get_api_endpoints
+def docs(request):
+    return HttpResponse(json.dumps(get_api_endpoints(strip_prefix="api/1.0/")), content_type='application/json')

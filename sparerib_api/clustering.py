@@ -55,6 +55,27 @@ class CommonClusterView(APIView):
 
 
 class DocketHierarchyView(CommonClusterView):
+    """
+    Docket Wrench uses hierarchical agglomerative clustering (HAC) to cluster comments on a docket-by-docket basis.  The result of this process is a so-called dendrogram
+    in which clusters can be examined in a tree with smaller numbers of loose clusters at the top, dividing into larger numbers of tigher clusters towards the bottom.
+    Docket Wrench includes cluster groups at the 50%, 60%, 70%, 80%, and 90% similarity levels.
+
+    This endpoint returns the cluster tree for a given docket.  It includes some general information about the docket's clustering behavior in the *stats* object (its agency, and how many documents
+    were or were not included in the clustering response, for example).  The actual cluster tree is in *cluster_hierarchy*, which is a list of the loosest clusters in the docket. Each cluster
+    is uniquely identified by a combination of the similarity threshold (the *cutoff* key), and the numerical ID of a canonical document it contains (the *name* key).  Thus, each cluster has a *cutoff*,
+    *name*, *size* (which is the number of documents it contains), *phrases*, and *children*.  *children* is another list, of the clusters that result from the splitting of that cluster into subclusters as the
+    similarity threshold is increased, so each will have a higher similarity threshold than its parent.  A cluster won't have children if it's already at the highest threshold (90%), or if no two documents
+    it contains are sufficiently similar to still form a cluster at the next threshold of similarity.
+
+    This endpoint can also supply distinguishing phrases for each cluster.  The process of calculating these phrases is computationally expensive, so by default, phrases are only included if they've already
+    been generated and cached; each cluster's *phrases* key will be a list of strings if this is true, or null otherwise.  Setting the *require_summaries* GET parameter to *True* will force computation of phrases
+    if they haven't already been generated.  Docket Wrench's usage pattern is to make an initial call to this endpoint without *require_summaries*, then make a second call with *require_summaries* if phrases weren't
+    included in the initial response.  This allows the application to render other parts of the clustering visualization without waiting for phrases to be computed, which is slower than the initial clustering
+    calculations.  Other consuming applications may want to follow this same pattern.
+    """
+
+    name = "Docket Clustering Hierarchy"
+
     @profile
     def get(self, request, docket_id):
         docket = Docket.objects.get(id=docket_id)
@@ -120,6 +141,18 @@ def remove_members(hierarchy):
 
 
 class HierarchyTeaserView(CommonClusterView):
+    """
+    This endpoint is somewhat similar to the standard docket clustering view, but with less information; it's used to show a teaser of the number
+    of clusters on regular Docket Wrench docket or document pages, and to decide whether or not to include a link to the full clustering display.  It only
+    includes cluster counts, and only includes those counts at the 50% and 80% levels.
+
+    Information will either be about a document or docket, depending on which is requested in the URL: it will be about clusters containing that document if the URL begins with "/document",
+    otherwise it will cover all documents within the docket.  *item_id* will either be a document ID or a docket ID, accordingly.
+
+    item_id -- a Regulations.gov document or docket ID
+    """
+    name = "Docket Clustering Hierarchy Teaser"
+
     @profile
     def get(self, request, item_id, item_type="docket"):
         if item_type == "document":
@@ -168,6 +201,18 @@ class HierarchyTeaserView(CommonClusterView):
 
 
 class SingleClusterView(CommonClusterView):
+    """
+    This endpoint supplies a list of the documents within a given cluster; it's used to fill the bottom left pane of the Docket Wrench
+    clustering visualization.  The cluster is identified by its representative document ID (*name* in the full clustering response) and
+    a clustering threshold, supplied via the *cutoff* GET parameter as a number between 0.5 and 0.9, inclusive.
+
+    The response contains a list of documents, ordered by most to least central within the cluster, with the clustering ID of each document,
+    its title, and any submitter text that was included with the original document.
+
+    cutoff -- The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive.
+    """
+    name = "Single-cluster Document List"
+
     @profile
     def get(self, request, docket_id, cluster_id):
         cluster_id = int(cluster_id)
@@ -188,6 +233,17 @@ class SingleClusterView(CommonClusterView):
 
 
 class DocumentClusterView(CommonClusterView):
+    """
+    This endpoint returns HTML and metadata for a particular comment within a particular cluster for a particular cutoff within a docket.  The HTML is annotated with *span* tags
+    that assign a background color to phrases within the text, where phrases that are more frequent within that document's cluster at that cutoff level are darker than those that
+    are less frequent.  As Docket Wrench's clustering analysis only examines the first 10,000 characters of a document, documents may be truncated; if they are, the *truncated* key
+    will be set to *True*.
+
+    cutoff -- The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive.
+    """
+
+    name = "Document with Annotated for Cluster"
+
     @profile
     def get(self, request, docket_id, cluster_id, document_id):
         document_id = int(document_id)
@@ -227,6 +283,10 @@ class DocumentClusterView(CommonClusterView):
         })
 
 class DocumentClusterChainView(CommonClusterView):
+    """
+    This endpoint allows clients to determine which clusters at which cutoff levels contain a particular document.  Documents, dockets, and clusters are identified as with other clustering endpoints.
+    """
+
     @profile
     def get(self, request, docket_id, document_id):
         document_id = int(document_id)

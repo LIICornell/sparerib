@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView
+from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView, docs
 
 from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, EntitySearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
@@ -36,6 +36,9 @@ urlpatterns = patterns('',
     # cluster teasers
     url(r'^docket/(?P<item_id>[A-Z0-9_-]+)/hierarchy_teaser$', HierarchyTeaserView.as_view(), name='docket-hierarchy', kwargs={'item_type': 'docket'}),
     url(r'^document/(?P<item_id>[A-Z0-9_-]+)/hierarchy_teaser$', HierarchyTeaserView.as_view(), name='docket-hierarchy', kwargs={'item_type': 'document'}),
+
+    # docs
+    url(r'^iodocs', docs),
 
     # explicitly do our own fall-through to make sure we don't serve up the Backbone HTML on API calls
     url(r'', NotFoundView.as_view()),

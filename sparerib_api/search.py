@@ -338,6 +338,15 @@ class DocumentSearchResults(ESSearchResults):
         return map(stitch_record, s)
 
 class DocumentSearchResultsView(ESSearchResultsView):
+    """
+    This endpoint searches document text.  Search terms are ANDed together, and quoted strings are allowed.  Additionally, filters can be included, formatted as follows: *filter_type:filter_text[:filter_display]*,
+    where filter display is an optional additional string that consumers of the results might use in place of an identifier for display purposes (this parameter, if included, can optionally be quoted).  An example
+    would be *agency:FAA:"Federal Aviation Administration"*, where "FAA" is the agency's ID, and "Federal Aviation Administration" is the name to be used by clients consuming the results.
+
+    Allowed filters for this document type include 'agency', 'docket', 'submitter', 'mentioned', 'type', 'comment_on', and 'date'.  'submitter' and 'mentioned' should use entity IDs, 'type' should be one of the allowed
+    document types, and 'comment_on' should be the document ID of a Federal Regsiter document.
+    """
+
     aggregation_level = 'document'
     allowed_filters = ['agency', 'docket', 'submitter', 'mentioned', 'type', 'comment_on', 'date']
 
@@ -360,6 +369,12 @@ class DocumentSearchResultsView(ESSearchResultsView):
         return DocumentSearchResults(query)
 
 class FRSearchResultsView(DocumentSearchResultsView):
+    """
+    This endpoint is similar to the document search, but only includes Federal Register documents in its results (notices, proposed rules, and rules).
+    """
+
+    name = "Federal Register Document Search Results"
+
     search_type = 'document-fr'
     def get_es_filters(self, extra_terms={}):
         terms = extra_terms.copy()
@@ -368,6 +383,11 @@ class FRSearchResultsView(DocumentSearchResultsView):
         return super(FRSearchResultsView, self).get_es_filters(terms)
 
 class NonFRSearchResultsView(DocumentSearchResultsView):
+    """
+    This endpoint is similar to the document search, but only includes non-Federal-Register documents in its results (comments, supporting material, and "other").
+    """
+    name = "Non-Federal-Register Document Search Results"
+
     search_type = 'document-non-fr'
     def get_es_filters(self, extra_terms={}):
         terms = extra_terms.copy()
@@ -376,6 +396,10 @@ class NonFRSearchResultsView(DocumentSearchResultsView):
         return super(NonFRSearchResultsView, self).get_es_filters(terms)
 
 class DocketSearchResultsView(ESSearchResultsView):
+    """
+    This endpoint provides search results for dockets, searching both the docket titles and the contents of their documents, with weight given to the former over the latter.
+    Filtering is similar to that of documents, with the following types supported: 'agency', 'docket', 'submitter', 'mentioned', and 'type'.
+    """
     aggregation_level = 'docket'
 
     def get_results(self):
@@ -484,6 +508,12 @@ class DocketSearchResults(ESSearchResults):
         return map(stitch_record, s)
 
 class EntitySearchResultsView(MongoSearchResultsView):
+    """
+    This endpoint provides search results for organizations, on their names.
+    Filtering is similar in format to that of documents, with the following types supported: 'agency', 'docket', 'agency_mentioned', and 'docket_mentioned'.
+    The first two filter to organizations that have submitted to that agency or docket, respectively, and last two filter to organizations that have been mentioned
+    in documents in that agency or docket.
+    """
     aggregation_level = 'entity'
 
     # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
@@ -539,6 +569,11 @@ class EntitySearchResults(MongoSearchResults):
 
 
 class AgencySearchResultsView(MongoSearchResultsView):
+    """
+    This endpoint provides search results for agencies, searching on their names.
+    Filtering is similar in format to that of documents, with the following types supported: 'submitter' and 'mentioned', each of which
+    takes an entity ID.  These filters show only agencies that contain documents that either were submitted by or mention the entity with that ID, respectively.
+    """
     aggregation_level = 'agency'
 
     # filters for entities are a little weird -- 'submitter' and 'mentioned' are synonymous, and not actually filters, but just add the entities to the results
@@ -591,6 +626,8 @@ class AgencySearchResults(MongoSearchResults):
         return fields
 
 class DefaultSearchResultsView(APIView):
+    exclude_from_docs = True
+    
     def get(self, request, query):
         parsed = parse_query(query)
         if any([f for f in parsed['filters'] if f[0] == 'docket']):
