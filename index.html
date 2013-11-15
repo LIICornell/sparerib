@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docket Wrench API</title>
+    
+    
+  <link rel="shortcut icon" type="image/ico" href="http://s3.amazonaws.com/assets.sunlightfoundation.com/brisket/1.0/images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="documentup.css">
+  <script type="text/javascript" src="//use.typekit.net/blp6kvr.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+
+</head>
+  <body><div class="sf-header"><div class="container"><a class="sf-logo" href="http://www.sunlightfoundation.com">Sunlight Foundation</a></div></div><div id="container">
+  <div id="nav">
+    
+      <div id="header">
+        <h1><a href="index.html" id="logo">Docket Wrench API</a>
+      </div>
+    
+    <ul id="sections">
+      
+        <li>
+          <a href="#overview">Overview</a>
+          
+        </li>
+      
+        <li>
+          <a href="#api-methods">API Methods</a>
+          
+            <ul>
+              
+                <li>
+                  <a href="#api-methods/agency">Agency</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/docket">Docket</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/document">Document</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/entity">Entity</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/entity-docket-overlap">Entity-Docket Overlap</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/entity-summary">Entity Summary</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/document-search-results">Document Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/federal-register-document-search-results">Federal Register Document Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/non-federal-register-document-search-results">Non-Federal-Register Document Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/docket-search-results">Docket Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/agency-search-results">Agency Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/entity-search-results">Entity Search Results</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/docket-clustering-hierarchy">Docket Clustering Hierarchy</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/single-cluster-document-list">Single-cluster Document List</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/document-with-annotated-for-cluster">Document with Annotated for Cluster</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/document-cluster-chain">Document Cluster Chain</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/clustering-hierarchy-teaser">Clustering Hierarchy Teaser</a>
+                </li>
+              
+                <li>
+                  <a href="#api-methods/clustering-hierarchy-teaser">Clustering Hierarchy Teaser</a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+    </ul>
+    
+    
+      <div class="extra twitter">
+        <iframe allowtransparency="true" frameborder="0" scrolling="no" style="width:162px; height:20px;" src="https://platform.twitter.com/widgets/follow_button.html?screen_name=sunlightlabs&show_count=false"></iframe></div><div class="thanks">powered by <a href="http://documentup.com">DocumentUp</a></div>
+    
+  </div>
+  <div id="content">
+    
+    <h2 id='overview'>Overview</h2 id='overview'>
+<p>This documentation describes the API for <a href="http://docketwrench.sunlightfoundation.com">Docket Wrench</a>, Sunlight Foundation&#39;s regulatory comment analysis tool.
+For more information about Docket Wrench, its data collection methodology, etc., see its <a href="http://docketwrench.sunlightfoundation.com">About page</a></p>
+<p>The base url for the API is <code>/docketwrench.sunlightfoundation.com/api/1.0</code> ; any
+addresses in the below must be appended to the base url. All API calls
+require an active <a href="http://services.sunlightlabs.com/accounts/register/">Sunlight API
+key</a> as a querystring argument. For instance, a call
+to describe docket EPA-HQ-OAR-2009-0234 would look like <code>/docket/EPA-HQ-OAR-2009-0234?apikey=[API key]</code>. API <a href="#methods">methods</a> are described below.</p>
+<p><a id="methods"></a></p>
+<h2 id='api-methods'>API Methods</h2 id='api-methods'>
+<h3 id='api-methods/agency'>Agency</h3 id='api-methods/agency'>
+<pre><code><span class="regexp">/agency/</span>[agency]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint powers Docket Wrench&#39;s agency pages.  Included are general metadata (name, URL, and ID), as well as stats about the dockets the agency manages, and the
+documents within those dockets.  The stats are, for the most part, structured similarly to those provided by the docket endpoint; note, though, that date aggregation is
+by month rather than by week because of the longer time scales involved in agency data.  Additional information is included about noteworthy dockets for that agency: <em>recent_dockets</em>
+contains dockets whose first submissions were most recent, and <em>popular_dockets</em> includes dockets that have had the most submissions.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>agency</strong>: a Regulations.gov agency ID, e.g., &quot;FAA&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/docket'>Docket</h3 id='api-methods/docket'>
+<pre><code><span class="regexp">/docket/</span>[docket_id]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint powers Docket Wrench&#39;s docket pages.  Included are general metadata (title, URL, year, ID, and whether or not it&#39;s a rulemaking docket),
+information about the agency that manages the docket, and stats about the docket&#39;s contents.  Noteworthy stats subkeys include the total document count
+(<em>count</em>), a breakdown of documents by type (<em>type_breakdown</em>, broken down into <em>notice</em>, <em>proposed_rule</em>, <em>rule</em>, <em>public_submission</em>, <em>supporting_material</em>, and <em>other</em>),
+information about the top entities that were recognized as having submitted comments (<em>top_submitter_entities</em>) and that were mentioned (<em>top_text_entities</em>).
+The <em>doc_info</em> key includes a subkey <em>fr_docs</em> the lists and summarizes all Federal Register documents (notices, proposed rules, and rules) within the docket, with metadata.
+<em>weeks</em> is a breakdown of submissions by week over the date range of the receipt of submissions (included separately in the <em>date_range</em> key).</p>
+
+
+<h4>Parameters</h4>
+<p><strong>docket_id</strong>: a Regulations.gov ID, e.g. &quot;EPA-HQ-OAR-2009-0234&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/document'>Document</h3 id='api-methods/document'>
+<pre><code><span class="regexp">/document/</span>[document_id]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint powers Docket Wrench&#39;s document pages.  Included are general metadata (type, title, URL, year, and ID),
+information about the dockey in which the document can be found, and information about agency that manages that docket. 
+Stats are also included about the docket, which powers the docket summary graph on Docket Wrench document pages.
+Additional information included about the document includes summary information and URLs about each piece of text included
+with the comment (either a <em>view</em> or an <em>attachment</em> in Regulations.gov parlance), relevant information about submitting or mentioned
+entities, and <em>details</em> as supplied by Regulations.gov, such as date received, federal register number, etc.  Docket Wrench provides these
+details in two forms, one under the <em>details</em> key which is as provided by Regulations.gov, and the other under the <em>clean_details</em> key, which
+includes much of the same information cleaned up for display on Docket Wrench: dates are pretty, names are combined, some identifiers are standardized,
+and information is grouped and ordered.</p>
+<p>Additionally, if the document is a federal register document (a rule, proposed rule, or notice), the response includes stats about comments submitted on
+the document, if any.  The format for these stats is similar to that for dockets.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>document_id</strong>: a Regulations.gov document ID, e.g., &quot;EPA-HQ-OAR-2009-0234-20377&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/entity'>Entity</h3 id='api-methods/entity'>
+<pre><code>/[<span class="typedef"><span class="keyword">type</span>]/[entity_id]</span></code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint powers Docket Wrench&#39;s organization pages.  Included are general metadata (type, name, URL, and ID),
+as well as stats about documents the entity submitted or was mentioned in.  This functionality is powered by the database
+of entities underlying our Influence Explorer project, and relies on a somewhat-lossy text-matching process to identify
+both submissions and mentions; see the respective methodology pages for Influence Explorer and Docket Wrench for more information.</p>
+<p>Stats are divided into <em>text_mentions</em> and <em>submitter_mentions</em> objects, which are structurally similar to one another, and contain information
+about documents that mention the entity, and documents that the entity likely submitted, respectively.  In each is general metadata about top dockets
+and agencies for each of these document types.  For the agencies, breakdowns of submission by month are included to facilitate drawing of graphs of
+submissions over time.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>entity_id</strong>: an Influence Explorer entity ID, e.g., &quot;d958530f0e2a4979a35af270dfb309a3&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>type</strong>: an Influence Explorer entity type; currently only &quot;organization&quot; is supported. <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/entity-docket-overlap'>Entity-Docket Overlap</h3 id='api-methods/entity-docket-overlap'>
+<pre><code>/<span class="matrix">[entity_type]</span>/<span class="matrix">[entity_id]</span>/<span class="matrix">[document_type]</span>_in_docket/<span class="matrix">[docket_id]</span></code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint powers allows Influence Explorer to show specific documents from a specific docket that mention or were submitted by a specific entity; this information
+if included on Influence Explorer organization pages.  Metadata is structured similarly to the same information on docket, entity, and document endpoints.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>entity_id</strong>: an Influence Explorer entity ID <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>document_type</strong>: either &#39;mentions&#39; or &#39;submissions&#39; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>docket_id</strong>: a Regulations.gov docket ID <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>entity_type</strong>: the type of entity; currently must be &#39;organization&#39; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/entity-summary'>Entity Summary</h3 id='api-methods/entity-summary'>
+<pre><code>/entity_list</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint provides a list of the IDs of all organizations that are recognized to have submitted or be mentioned in at least one document.  In addition to the
+usual JSON output, this endpoint can be used with a <em>Content-Accept</em> header of &quot;application/octet-stream&quot; which will return the entity list in a highly compact binary format
+consisting of just the UUIDs of the entities in question, expressed as pairs of big-endian unsigned longs; see <a href="http://stackoverflow.com/questions/6877096/how-to-pack-a-uuid-into-a-struct-in-python">http://stackoverflow.com/questions/6877096/how-to-pack-a-uuid-into-a-struct-in-python</a>
+for more information about decoding.</p>
+<h4>Parameters</h4>
+<h3 id='api-methods/document-search-results'>Document Search Results</h3 id='api-methods/document-search-results'>
+<pre><code>/search/document/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint searches document text.  Search terms are ANDed together, and quoted strings are allowed.  Additionally, filters can be included, formatted as follows: <em>filter_type:filter_text[:filter_display]</em>,
+where filter display is an optional additional string that consumers of the results might use in place of an identifier for display purposes (this parameter, if included, can optionally be quoted).  An example
+would be <em>agency:FAA:&quot;Federal Aviation Administration&quot;</em>, where &quot;FAA&quot; is the agency&#39;s ID, and &quot;Federal Aviation Administration&quot; is the name to be used by clients consuming the results.</p>
+<p>Allowed filters for this document type include &#39;agency&#39;, &#39;docket&#39;, &#39;submitter&#39;, &#39;mentioned&#39;, &#39;type&#39;, &#39;comment_on&#39;, and &#39;date&#39;.  &#39;submitter&#39; and &#39;mentioned&#39; should use entity IDs, &#39;type&#39; should be one of the allowed
+document types, and &#39;comment_on&#39; should be the document ID of a Federal Regsiter document.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query, e.g., &quot;agency:FAA airplane&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/federal-register-document-search-results'>Federal Register Document Search Results</h3 id='api-methods/federal-register-document-search-results'>
+<pre><code>/search/document-fr/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint is similar to the document search, but only includes Federal Register documents in its results (notices, proposed rules, and rules).</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/non-federal-register-document-search-results'>Non-Federal-Register Document Search Results</h3 id='api-methods/non-federal-register-document-search-results'>
+<pre><code>/search/document-non-fr/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint is similar to the document search, but only includes non-Federal-Register documents in its results (comments, supporting material, and &quot;other&quot;).</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/docket-search-results'>Docket Search Results</h3 id='api-methods/docket-search-results'>
+<pre><code>/search/docket/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint provides search results for dockets, searching both the docket titles and the contents of their documents, with weight given to the former over the latter.
+Filtering is similar to that of documents, with the following types supported: &#39;agency&#39;, &#39;docket&#39;, &#39;submitter&#39;, &#39;mentioned&#39;, and &#39;type&#39;.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/agency-search-results'>Agency Search Results</h3 id='api-methods/agency-search-results'>
+<pre><code>/search/agency/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint provides search results for agencies, searching on their names.
+Filtering is similar in format to that of documents, with the following types supported: &#39;submitter&#39; and &#39;mentioned&#39;, each of which
+takes an entity ID.  These filters show only agencies that contain documents that either were submitted by or mention the entity with that ID, respectively.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/entity-search-results'>Entity Search Results</h3 id='api-methods/entity-search-results'>
+<pre><code>/search/entity/[<span class="keyword">query</span>]</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint provides search results for organizations, on their names.
+Filtering is similar in format to that of documents, with the following types supported: &#39;agency&#39;, &#39;docket&#39;, &#39;agency_mentioned&#39;, and &#39;docket_mentioned&#39;.
+The first two filter to organizations that have submitted to that agency or docket, respectively, and last two filter to organizations that have been mentioned
+in documents in that agency or docket.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>query</strong>: a search query <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/docket-clustering-hierarchy'>Docket Clustering Hierarchy</h3 id='api-methods/docket-clustering-hierarchy'>
+<pre><code><span class="regexp">/docket/[docket_id]/</span>hierarchy</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>Docket Wrench uses hierarchical agglomerative clustering (HAC) to cluster comments on a docket-by-docket basis.  The result of this process is a so-called dendrogram
+in which clusters can be examined in a tree with smaller numbers of loose clusters at the top, dividing into larger numbers of tigher clusters towards the bottom.
+Docket Wrench includes cluster groups at the 50%, 60%, 70%, 80%, and 90% similarity levels.</p>
+<p>This endpoint returns the cluster tree for a given docket.  It includes some general information about the docket&#39;s clustering behavior in the <em>stats</em> object (its agency, and how many documents
+were or were not included in the clustering response, for example).  The actual cluster tree is in <em>cluster_hierarchy</em>, which is a list of the loosest clusters in the docket. Each cluster
+is uniquely identified by a combination of the similarity threshold (the <em>cutoff</em> key), and the numerical ID of a canonical document it contains (the <em>name</em> key).  Thus, each cluster has a <em>cutoff</em>,
+<em>name</em>, <em>size</em> (which is the number of documents it contains), <em>phrases</em>, and <em>children</em>.  <em>children</em> is another list, of the clusters that result from the splitting of that cluster into subclusters as the
+similarity threshold is increased, so each will have a higher similarity threshold than its parent.  A cluster won&#39;t have children if it&#39;s already at the highest threshold (90%), or if no two documents
+it contains are sufficiently similar to still form a cluster at the next threshold of similarity.</p>
+<p>This endpoint can also supply distinguishing phrases for each cluster.  The process of calculating these phrases is computationally expensive, so by default, phrases are only included if they&#39;ve already
+been generated and cached; each cluster&#39;s <em>phrases</em> key will be a list of strings if this is true, or null otherwise.  Setting the <em>require_summaries</em> GET parameter to <em>true</em> will force computation of phrases
+if they haven&#39;t already been generated.  Docket Wrench&#39;s usage pattern is to make an initial call to this endpoint without <em>require_summaries</em>, then make a second call with <em>require_summaries</em> if phrases weren&#39;t
+included in the initial response.  This allows the application to render other parts of the clustering visualization without waiting for phrases to be computed, which is slower than the initial clustering
+calculations.  Other consuming applications may want to follow this same pattern.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>docket_id</strong>: a Regulations.gov docket ID, e.g., &quot;EPA-HQ-OAR-2009-0234&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>require_summaries</strong>: &quot;true&quot; or &quot;false&quot;; defaults to &quot;false&quot; <em>(query parameter; optional)</em></p>
+<h3 id='api-methods/single-cluster-document-list'>Single-cluster Document List</h3 id='api-methods/single-cluster-document-list'>
+<pre><code>/docket/<span class="matrix">[docket_id]</span>/cluster/<span class="matrix">[cluster_id]</span></code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint supplies a list of the documents within a given cluster; it&#39;s used to fill the bottom left pane of the Docket Wrench
+clustering visualization.  The cluster is identified by its representative document ID (<em>name</em> in the full clustering response) and
+a clustering threshold, supplied via the <em>cutoff</em> GET parameter as a number between 0.5 and 0.9, inclusive.</p>
+<p>The response contains a list of documents, ordered by most to least central within the cluster, with the clustering ID of each document,
+its title, and any submitter text that was included with the original document.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>docket_id</strong>: a Regulations.gov docket ID, e.g., &quot;EPA-HQ-OAR-2009-0234&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>cluster_id</strong>: a numerical representative document ID, e.g., &quot;5123&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>cutoff</strong>: The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive. <em>(query parameter; optional)</em></p>
+<h3 id='api-methods/document-with-annotated-for-cluster'>Document with Annotated for Cluster</h3 id='api-methods/document-with-annotated-for-cluster'>
+<pre><code>/docket/<span class="matrix">[docket_id]</span>/cluster/<span class="matrix">[cluster_id]</span>/document/<span class="matrix">[document_id]</span></code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint returns HTML and metadata for a particular comment within a particular cluster for a particular cutoff within a docket.  The HTML is annotated with <em>span</em> tags
+that assign a background color to phrases within the text, where phrases that are more frequent within that document&#39;s cluster at that cutoff level are darker than those that
+are less frequent.  As Docket Wrench&#39;s clustering analysis only examines the first 10,000 characters of a document, documents may be truncated; if they are, the <em>truncated</em> key
+will be set to <em>True</em>.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>docket_id</strong>: a Regulations.gov docket ID, e.g., &quot;EPA-HQ-OAR-2009-0234&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>cluster_id</strong>: a numerical representative document ID, e.g., &quot;5123&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>document_id</strong>: a numerical document ID, e.g., &quot;5123&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>cutoff</strong>: The cutoff for the docket, specified as a number between 0.5 and 0.9, inclusive. <em>(query parameter; optional)</em></p>
+<h3 id='api-methods/document-cluster-chain'>Document Cluster Chain</h3 id='api-methods/document-cluster-chain'>
+<pre><code>/docket/<span class="matrix">[docket_id]</span>/clusters_for_document/<span class="matrix">[document_id]</span></code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint allows clients to determine which clusters at which cutoff levels contain a particular document.  Documents, dockets, and clusters are identified as with other clustering endpoints.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>docket_id</strong>: a Regulations.gov docket ID, e.g., &quot;EPA-HQ-OAR-2009-0234&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<p><strong>document_id</strong>: a numerical document ID, e.g., &quot;5123&quot; <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/clustering-hierarchy-teaser'>Clustering Hierarchy Teaser</h3 id='api-methods/clustering-hierarchy-teaser'>
+<pre><code><span class="regexp">/docket/[item_id]/</span>hierarchy_teaser</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint is somewhat similar to the standard docket clustering view, but with less information; it&#39;s used to show a teaser of the number
+of clusters on regular Docket Wrench docket or document pages, and to decide whether or not to include a link to the full clustering display.  It only
+includes cluster counts, and only includes those counts at the 50% and 80% levels.</p>
+<p>Information will either be about a document or docket, depending on which is requested in the URL: it will be about clusters containing that document if the URL begins with &quot;/document&quot;,
+otherwise it will cover all documents within the docket.  <em>item_id</em> will either be a document ID or a docket ID, accordingly.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>item_id</strong>: a Regulations.gov document or docket ID <em>(path parameter; <strong>required</strong>)</em></p>
+<h3 id='api-methods/clustering-hierarchy-teaser'>Clustering Hierarchy Teaser</h3 id='api-methods/clustering-hierarchy-teaser'>
+<pre><code><span class="regexp">/document/[item_id]/</span>hierarchy_teaser</code></pre>
+<p><em>Methods Supported:</em> GET</p>
+<p>This endpoint is somewhat similar to the standard docket clustering view, but with less information; it&#39;s used to show a teaser of the number
+of clusters on regular Docket Wrench docket or document pages, and to decide whether or not to include a link to the full clustering display.  It only
+includes cluster counts, and only includes those counts at the 50% and 80% levels.</p>
+<p>Information will either be about a document or docket, depending on which is requested in the URL: it will be about clusters containing that document if the URL begins with &quot;/document&quot;,
+otherwise it will cover all documents within the docket.  <em>item_id</em> will either be a document ID or a docket ID, accordingly.</p>
+
+
+<h4>Parameters</h4>
+<p><strong>item_id</strong>: a Regulations.gov document or docket ID <em>(path parameter; <strong>required</strong>)</em></p>
+
+  </div>
+</div>
+</body>
+</html>
