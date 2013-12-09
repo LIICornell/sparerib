@@ -29,7 +29,8 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'locksmith.client_keys.middleware.ClientKeyMiddleware'
+    'locksmith.client_keys.middleware.ClientKeyMiddleware',
+    'sparerib_api.middleware.APIKeyMiddleware',
 )
 
 ROOT_URLCONF = 'sparerib_server.urls'
@@ -51,6 +52,15 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     'locksmith.client_keys.context_processors.client_key_context'
 )
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'sparerib_api.auth.SpareribAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    )
+}
 
 INSTALLED_APPS = (
     'django.contrib.staticfiles',
