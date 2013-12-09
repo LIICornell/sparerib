@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="{% static "css/jquery.pretag.css" %}" type="text/css" />
     <link rel="stylesheet" href="{% static "css/pikaday.css" %}" type="text/css" />
     <link rel="stylesheet" href="{% static "css/style.css" %}">
+    <link rel="stylesheet" href="{% static "css/donorbanner.css" %}">
     <link rel="shortcut icon" href="/static/img/favicon.ico">
 
     <script src="{% static "js/libs/modernizr-2.5.3.min.js" %}"></script>
@@ -34,6 +35,33 @@
 </head>
 <body>
   <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+    
+    <!-- DONOR BANNER -->
+    <div id="donor_banner" class="minimize-donorbanner">
+        <div class="donorcontainer">
+            <div class="bubble">
+                <button value="play" href="" class="notnow toggleButton">Not now</button>
+            </div>
+            <a class="sf_logo" href="http://sunlightfoundation.com">Sunlight Foundation</a>
+            <p class="because">
+                Sunlight Foundation is a nonpartisan nonprofit organization. We depend on the generosity of our supporters to continue our work. With your help, we can double down on our efforts to ensure government is open and accountable.
+            </p>
+            <div class="donationplea">
+                <h2>
+                    <span class="line1">We depend </span>
+                    <span class="line2">on the generosity</span>
+                    <span class="line3">of our supporters</span>
+                </h2>
+                <p>
+                    <em>Take a stand for transparency:</em>
+                    </br>donate to the Sunlight Foundation today!
+                </p>
+                <a class="btn" href="http://sunlightfoundation.com/donate/sdc/">Donate</a>
+            </div>
+        </div>
+    </div>
+    <!-- /DONOR BANNER -->
+
     <header>
         <div class="header-highlight"></div>
         <div class="sunlight-branding">
@@ -148,6 +176,8 @@
 
     <script src="{% static "js/plugins.js" %}"></script>
     <script src="{% static "js/sparerib.js" %}"></script>
+
+    <script src="{% static "js/donorbanner.js" %}"></script>
 
     <script>
     AC_URL = "{{ AC_URL|safe }}";
