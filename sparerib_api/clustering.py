@@ -73,7 +73,7 @@ class DocketHierarchyView(CommonClusterView):
         }
 
         # populate agency info
-        agency = docket.agency
+        agency = docket.agency or docket.id.split("-")[0]
         if agency:
             agency_meta = list(Agency.objects(id=agency).only("name"))
             if agency_meta:
