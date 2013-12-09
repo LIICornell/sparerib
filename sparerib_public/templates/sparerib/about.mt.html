@@ -352,6 +352,10 @@
         <h3 id="methodology-section">Methodology</h3>
         <p>Docket Wrench collects documents from Regulations.gov’s API via nightly batch processes. Based on results of these API responses, source documents are then downloaded from the Regulations.gov servers and a variety of tools such as pdftotext and catdoc are used to extract text from these documents where possible. (Some submissions are scanned from paper copies and may not have undergone OCR processing, making text extraction impossible.) Both the metadata and text are searched for references to any organizations tracked in Sunlight’s <a href="http://influenceexplorer.com">Influence Explorer</a>, and exact matches to either the name of the organization or an any aliases for that organization identified by Sunlight are used to compute statistics. As <a href="http://sunlightlabs.com/blog/2011/name-standardization-name-cleaver/">we previously noted</a>, however, this process is somewhat error-prone and will continue to be, absent the use of real corporate identifiers in influence data.</p>
         <p>Docket Wrench also subjects the text of comments for which text extraction was successful to text similarity and clustering analyses to power our comment similarity visualization. The Sunlight Labs team developed this technology in house. This process is computationally intensive, and some or all of the analysis may not be visible for very large dockets; this remains an active area of development within Labs.</p>
+        
+        <h3 id="api-section">API</h3>
+        <p>Docket Wrench's data is available in machine-readable form via its API.  For more information, see its <a href="http://sunlightlabs.github.io/sparerib/">API documentation</a>.  Note that use of the Docket Wrench API requires a <a href="http://sunlightfoundation.com/api/accounts/register/">Sunlight API key</a>.</p>
+        
         <h3 id="code-section">Code</h3>
         <p>
             This project, as with most of Sunlight Labs’ work, is open source, and its source code is available to the public. Various constituent parts of Docket Wrench are housed in the following libraries:</p>
