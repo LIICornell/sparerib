@@ -1,16 +1,24 @@
 (function($) {
+// API key schenanigans
+var requireKey = function(func) {
+    return function() {
+        var out = func.call(this);
+        return out + (out.indexOf("?") == -1 ? "?" : "&") + "clientkey=" + API_KEY;
+    }
+}
+
 // General models
-var Document = Backbone.Model.extend({ url: function() { return "/api/1.0/document/" + this.id; } });
-var Docket = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id; } });
-var Agency = Backbone.Model.extend({ url: function() { return "/api/1.0/agency/" + this.id; } });
-var Entity = Backbone.Model.extend({ url: function() { return "/api/1.0/entity/" + this.id; } });
-var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: function() {
+var Document = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/document/" + this.id; }) });
+var Docket = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/docket/" + this.id; }) });
+var Agency = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/agency/" + this.id; }) });
+var Entity = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/entity/" + this.id; }) });
+var SearchResults = Backbone.Model.extend({ idAttribute: "query", url: requireKey(function() {
     var qs = _.filter([
         (this.get('in_page') ? "page=" + this.get('in_page') : null),
         (this.get('limit') ? "limit=" + this.get('limit') : null)
     ], function(x) { return x; }).join("&");
     return "/api/1.0/search/" + (this.get('level') ? this.get('level') + '/' : '') + encodeURIComponent(this.id) + (qs ? "?" + qs : '');
-} });
+}) });
 
 // Cluster models
 var DocketClusters = Backbone.Model.extend({
@@ -40,7 +48,7 @@ var DocketClusters = Backbone.Model.extend({
         return computed;
     },
 
-    url: function() {
+    url: requireKey(function() {
         var preselect = this.get('docId');
         var cutoff = this.get('cutoff');
         var require_summaries = this.get('require_summaries')
@@ -49,14 +57,14 @@ var DocketClusters = Backbone.Model.extend({
         if (preselect) qs.push("prepopulate_document=" + preselect);
         if (require_summaries) qs.push("require_summaries=true");
         return "/api/1.0/docket/" + this.id + "/hierarchy?" + qs.join("&");
-    }
+    })
 });
-var Cluster = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.id + "?cutoff=" + this.get('cutoff'); } });
-var ClusterDocument = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.get('cluster_id') + "/document/" + this.id + "?cutoff=" + (this.get('cutoff') ? this.get('cutoff') : "0.5"); } });
-var ClusterChain = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.get('docket_id') + "/clusters_for_document/" + this.id; } });
+var Cluster = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.id + "?cutoff=" + this.get('cutoff'); }) });
+var ClusterDocument = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/docket/" + this.get('docket_id') + "/cluster/" + this.get('cluster_id') + "/document/" + this.id + "?cutoff=" + (this.get('cutoff') ? this.get('cutoff') : "0.5"); }) });
+var ClusterChain = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/docket/" + this.get('docket_id') + "/clusters_for_document/" + this.id; }) });
 
-var ClusterDocketTeaser = Backbone.Model.extend({ url: function() { return "/api/1.0/docket/" + this.id + "/hierarchy_teaser"; } });
-var ClusterDocumentTeaser = Backbone.Model.extend({ url: function() { return "/api/1.0/document/" + this.id + "/hierarchy_teaser"; } });
+var ClusterDocketTeaser = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/docket/" + this.id + "/hierarchy_teaser"; }) });
+var ClusterDocumentTeaser = Backbone.Model.extend({ url: requireKey(function() { return "/api/1.0/document/" + this.id + "/hierarchy_teaser"; }) });
 
 // Template helpers
 var helpers = {

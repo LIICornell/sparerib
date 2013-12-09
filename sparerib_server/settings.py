@@ -29,6 +29,7 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
+    'locksmith.client_keys.middleware.ClientKeyMiddleware'
 )
 
 ROOT_URLCONF = 'sparerib_server.urls'
@@ -40,12 +41,24 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+    'locksmith.client_keys.context_processors.client_key_context'
+)
+
 INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'sparerib_api',
     'sparerib_public',
-    'analysis'
+    'analysis',
+    'locksmith.client_keys'
 )
 
 # hacks to make everything work in pypy
@@ -55,8 +68,6 @@ except ImportError:
     # we're running in pypy
     from psycopg2cffi import compat
     compat.register()
-    
-    import numpypy
 
 try:
     from local_settings import *

@@ -1,4 +1,4 @@
-Django==1.4.3
+Django==1.5.4
 
 wsgiref==0.1.2
 beautifulsoup4==4.1.3
