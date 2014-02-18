@@ -28,7 +28,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'locksmith.client_keys.middleware.ClientKeyMiddleware',
-    'sparerib_api.middleware.APIKeyMiddleware',
+    'locksmith.lightauth.middleware.APIKeyMiddleware',
 )
 
 ROOT_URLCONF = 'sparerib_server.urls'

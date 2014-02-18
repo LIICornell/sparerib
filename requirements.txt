@@ -16,3 +16,4 @@ pyparsing
 -e git+https://github.com/sunlightlabs/regs-models.git#egg=regs_models
 python-memcached
 python-dateutil
+-e git+https://github.com/sunlightlabs/django-locksmith.git@client-keys#egg=locksmith
