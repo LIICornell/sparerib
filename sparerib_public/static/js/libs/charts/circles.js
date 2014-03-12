@@ -743,7 +743,7 @@ var drawBubbles = function(opts) {
         'select': function(id, cutoff) {
             var circle = d3.selectAll('#cluster-' + id + "-" + (100 * cutoff));
             var groupId = circle.attr('data-group-id');
-            var group = d3.selectAll("#cluster-group-" + id);
+            var group = d3.selectAll("#cluster-group-" + groupId);
             group.on("click")(group.datum(), 0, circle);
         }
     }
