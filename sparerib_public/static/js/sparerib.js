@@ -978,14 +978,17 @@ var ClusterView = Backbone.View.extend({
 
                 if (ul.attr('data-cluster-id') == docArea.attr('data-cluster-id')) {
                     // the document area is already showing the right thing, so select the right thing on our side
-                    ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").addClass("cluster-doc-selected");
+                    ul.children("li[data-document-id=" + docArea.attr('data-document-id') + "]").addClass("cluster-doc-selected");
                     this.updateDoclistGraphics();
-                } else if (ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").length > 0) {
-                    // we're already looking at a document within this cluster, but it needs to be reloaded to get the highlighting right
-                    ul.find("li[data-document-id=" + docArea.attr('data-document-id') + "]").eq(0).click();
                 } else {
-                    // just pick the first one
-                    ul.find('li').eq(0).click();
+                    var docItem = ul.children("li[data-document-id=" + docArea.attr('data-document-id') + "]");
+                    if (docItem.length > 0) {
+                        // we're already looking at a document within this cluster, but it needs to be reloaded to get the highlighting right
+                        docItem.eq(0).click();
+                    } else {
+                        // just pick the first one
+                        ul.children().eq(0).click();
+                    }
                 }
             }, this),
             'error': function() {
