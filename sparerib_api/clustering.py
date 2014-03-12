@@ -4,6 +4,7 @@ from analysis.corpus import get_dual_corpora_by_metadata, find_doc_in_hierarchy,
 from analysis.utils import profile
 from django.conf import settings
 from django.http import Http404
+from django.core.cache import cache
 
 from django.db import connection
 import psycopg2.extras
@@ -175,7 +176,19 @@ class SingleClusterView(CommonClusterView):
         h = self.corpus.hierarchy()
         cluster = find_doc_in_hierarchy(h, cluster_id, self.cutoff)
 
-        metadatas = dict(self.corpus.doc_metadatas(cluster['members']))
+        # consider caching for very large clusters
+        _metadatas = lambda: dict(self.corpus.doc_metadatas(cluster['members']))
+        members = tuple(cluster['members'])
+        if len(members) > 1000:
+            key = 'sparerib_api.clustering.cluster-%s-%s-%s' % (docket_id, cluster_id, hash(members))
+            
+            metadatas = cache.get(key)
+            if not metadatas:
+                metadatas = _metadatas()
+                cache.set(key, metadatas)
+        else:
+            # it's little; don't cache
+            metadatas = _metadatas()
 
         return Response({
             'id': cluster['name'],
