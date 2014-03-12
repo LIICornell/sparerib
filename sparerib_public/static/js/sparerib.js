@@ -968,9 +968,12 @@ var ClusterView = Backbone.View.extend({
                 list.removeClass("loading").append(ul);
 
                 var listItems = [];
-                _.each(this.clusterModel.get('documents'), function(item) {
-                    listItems.push("<li data-document-id='" + item.id + "'><span class='cluster-doc-title'>" + item.title + "</span><span class='cluster-doc-submitter'>" + item.submitter + "</span>");
-                });
+                var docs = this.clusterModel.get('documents');
+                var item;
+                for (var i = 0; i < docs.length; i++) {
+                    item = docs[i];
+                    listItems.push(["<li data-document-id='", item.id, "'><span class='cluster-doc-title'>", item.title, "</span><span class='cluster-doc-submitter'>", item.submitter, "</span>"].join(""));
+                };
                 ul.html(listItems.join(""));
 
                 if (ul.attr('data-cluster-id') == docArea.attr('data-cluster-id')) {
