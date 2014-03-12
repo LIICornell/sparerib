@@ -966,9 +966,12 @@ var ClusterView = Backbone.View.extend({
                 // TODO: make this a real template with a real view
                 var ul = $("<ul data-cluster-id='" + Math.round(100*cutoff) + "-" + clusterId + "'>");
                 list.removeClass("loading").append(ul);
+
+                var listItems = [];
                 _.each(this.clusterModel.get('documents'), function(item) {
-                    ul.append("<li data-document-id='" + item.id + "'><span class='cluster-doc-title'>" + item.title + "</span><span class='cluster-doc-submitter'>" + item.submitter + "</span>");
+                    listItems.push("<li data-document-id='" + item.id + "'><span class='cluster-doc-title'>" + item.title + "</span><span class='cluster-doc-submitter'>" + item.submitter + "</span>");
                 });
+                ul.html(listItems.join(""));
 
                 if (ul.attr('data-cluster-id') == docArea.attr('data-cluster-id')) {
                     // the document area is already showing the right thing, so select the right thing on our side
