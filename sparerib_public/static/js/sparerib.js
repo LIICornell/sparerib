@@ -221,6 +221,10 @@ var SearchView = Backbone.View.extend({
         'click .add-date-filter': 'add_date_filter'
     },
 
+    initialize: function (options) {
+        this.options = options || {};
+    },
+
     intertag: function() {
         var options = {
             source: function(request, response) {
@@ -358,6 +362,10 @@ var ResultsView = Backbone.View.extend({
     tagName: 'div',
     id: 'results-view',
     className: 'search-view',
+
+    initialize: function (options) {
+        this.options = options || {};
+    },
 
     events: {
         'click .sidebar .search-tag .ui-icon-close': 'removeTag',
