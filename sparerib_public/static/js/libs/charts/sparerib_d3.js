@@ -360,6 +360,8 @@ D3Charts = {
 
         // attach mean dates to all the data to make the rest of it easier, and tack zeros onto the beginning and end
         _.each(data, function(series) {
+            if (!series.timeline.length) return;
+            
             _.each(series.timeline, function(point) {
                 var d0 = new Date(point.date_range[0]), d1 = new Date(point.date_range[1]);
                 point.mean_date = new Date(d0.getTime() + ((d1 - d0)/2));

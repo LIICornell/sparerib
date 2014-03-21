@@ -148,7 +148,9 @@ var expandWeeks = function(weeks) {
             current.setDate(current.getDate() + 1);
         }
     }
-    out.push(weeks[weeks.length - 1]);
+    if (weeks.length) {
+        out.push(weeks[weeks.length - 1]);
+    }
 
     return out;
 }
