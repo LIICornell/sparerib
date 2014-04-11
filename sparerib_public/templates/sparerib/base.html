@@ -136,9 +136,9 @@
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
         ga('create', 'UA-22821126-32', 'docketwrench.sunlightfoundation.com');
-        ga('send', 'pageview');
         ga('create', 'UA-48789618-1', 'docketwrench.sunlightfoundation.com', {'name': 'global'});
-        ga('global.send', 'pageview');
+
+        API_KEY = "{{ CLIENT_KEY }}";
     </script>
 
     <script src="{% static "js/libs/socialite.min.js" %}"></script>
@@ -147,7 +147,6 @@
     <script src="{% static "js/sparerib.js" %}"></script>
 
     <script>
-    API_KEY = "{{ CLIENT_KEY }}";
     AC_URL = "{{ AC_URL|safe }}";
     </script>
 

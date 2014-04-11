@@ -1296,7 +1296,9 @@ app.bind("all", function(route, router) {
         setMeta({});
     }
 
-    window._gaq.push(['_trackPageview', "/" + url]);
+    var gaUrl = "/" + url;
+    ga('send', 'pageview', gaUrl);
+    ga('global.send', 'pageview', gaUrl);
 });
 
 Backbone.history.start({pushState: true});
