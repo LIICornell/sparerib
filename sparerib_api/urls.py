@@ -26,7 +26,7 @@ urlpatterns = patterns('',
 
     # raw text
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'view'}),
-    url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[0-9a-z]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'attachment'}),
+    url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[A-Z0-9a-z]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'attachment'}),
 
     # clusters
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/hierarchy$', DocketHierarchyView.as_view(), name='docket-hierarchy'),
