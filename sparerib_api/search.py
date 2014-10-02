@@ -22,6 +22,7 @@ from regs_models import *
 
 EASTERN = dateutil.tz.gettz("US/Eastern")
 UTC = dateutil.tz.tzutc()
+ES_INDEX = getattr(settings, 'ES_INDEX', 'regulations')
 
 ### Base search classes ###
 
@@ -177,7 +178,7 @@ class ESSearchResultsView(SearchResultsView):
         } if self.text_query else {'match_all': {}}
 
 class ESSearchResults(object):
-    indices = "regulations"
+    indices = ES_INDEX
     doc_types = None
     _es = None
 
@@ -262,7 +263,7 @@ class MongoSearchResults(object):
                 actual_fmt = [{
                     '_id': match['obj']['_id'],
                     '_type': model._class_name.lower(),
-                    '_index': 'regulations',
+                    '_index': ES_INDEX,
                     '_score': match['score'],
                     '_from_filter': False,
                     'url': self.get_result_url(match['obj']),
@@ -284,7 +285,7 @@ class MongoSearchResults(object):
                 actual_fmt = [{
                     '_id': match['_id'],
                     '_type': model._class_name.lower(),
-                    '_index': 'regulations',
+                    '_index': ES_INDEX,
                     '_score': 99, # arbitrary but high, since they come first
                     '_from_filter': False,
                     'url': self.get_result_url(match),
@@ -296,7 +297,7 @@ class MongoSearchResults(object):
         initial_fmt = [{
             '_id': match['_id'],
             '_type': model._class_name.lower(),
-            '_index': 'regulations',
+            '_index': ES_INDEX,
             '_score': 100, # arbitrary but high, since they come first
             '_from_filter': True,
             'url': self.get_result_url(match),
@@ -627,7 +628,7 @@ def get_similar_dockets(text, exclude_docket):
             ]
         },
         'fields': ['docket_id']
-    })
+    }, indices=ES_INDEX, doc_types=['document'])
 
     docket_ids = [hit['fields']['docket_id'] for hit in results.hits.hits]
     return uniq(docket_ids)
