@@ -56,6 +56,7 @@ class AggregatedView(APIView):
             stats["type_breakdown"] = dict([(doc_type, stats["type_breakdown"].get(doc_type, 0)) for doc_type in Doc.type.choices])
 
             if 'weeks' in stats and len(stats['weeks']) != 0:
+                now = datetime.datetime.now().date()
                 stats['weeks'] = [week for week in prettify_weeks(stats['weeks']) if week['date_range'][0] <= now]
 
 
