@@ -69,6 +69,13 @@ def get_docket_year(docket_id):
     else:
         return None
 
+from dateutil.parser import parse as parse_date
+def force_date(d):
+    if d is None:
+        return d
+    else:
+        return d if type(d) is datetime.datetime else parse_date(d)
+
 def url_quote(s):
     if type(s) == unicode:
         s = s.encode('utf-8', errors='ignore')

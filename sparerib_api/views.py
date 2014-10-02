@@ -56,11 +56,12 @@ class AggregatedView(APIView):
             stats["type_breakdown"] = dict([(doc_type, stats["type_breakdown"].get(doc_type, 0)) for doc_type in Doc.type.choices])
 
             if 'weeks' in stats and len(stats['weeks']) != 0:
-                stats['weeks'] = prettify_weeks(stats['weeks'])
+                stats['weeks'] = [week for week in prettify_weeks(stats['weeks']) if week['date_range'][0] <= now]
 
 
             if 'months' in stats and len(stats['months']) != 0:
-                stats['months'] = prettify_months(stats['months'])
+                now = datetime.datetime.now().date()
+                stats['months'] = [month for month in prettify_months(stats['months']) if month['date_range'][0] <= now]
 
             # limit ourselves to the top five of each match type, and grab their extra metadata
             for label, items in [('top_text_entities', stats['text_entities'].items()), ('top_submitter_entities', stats['submitter_entities'].items())]:
@@ -122,7 +123,7 @@ class DocketView(AggregatedView):
                             'count': fr_doc.stats['count']
                         } if fr_doc.stats else {'count': 0}
                         doc['summary'] = fr_doc.get_summary()
-                        doc['comments_open'] = 'Comment_Due_Date' in fr_doc.details and fr_doc.details['Comment_Due_Date'] > datetime.datetime.now()
+                        doc['comments_open'] = 'Comment_Due_Date' in fr_doc.details and force_date(fr_doc.details['Comment_Due_Date']) > datetime.datetime.now()
 
                         if doc['summary']:
                             summaries.append(doc['summary'])
@@ -182,7 +183,7 @@ class AgencyView(AggregatedView):
         for label, order in [('recent_dockets', '-stats.date_range.0'), ('popular_dockets', '-stats.count')]:
             dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.type_breakdown', 'stats.count').limit(5)
             out[label] = [{
-                'date_range': docket.stats['date_range'],
+                'date_range': [docket.stats['date_range'][0], min(datetime.datetime.now(), docket.stats['date_range'][1])],
                 'count': docket.stats['count'],
                 'comment_count': docket.stats['type_breakdown'].get('public_submission', 0),
                 'title': docket.title,
@@ -222,20 +223,22 @@ class DocumentView(APIView):
 
         # comment-on metadata
         if document.comment_on:
+            # if we don't have all the data built in, grab it from its original record
+            comment_on_doc = document.comment_on if 'title' in document.comment_on else Doc.objects.get(id=document.comment_on['document_id']).to_mongo()
             out['comment_on'] = {
-                "fr_doc": document.comment_on.get('fr_doc', False),  
-                "type": document.comment_on.get('type', None), 
+                "fr_doc": comment_on_doc.get('fr_doc', False),  
+                "type": comment_on_doc.get('type', None), 
                 "id": document.comment_on['document_id'],
                 'url': reverse('document-view', kwargs={'document_id': document.comment_on['document_id']}),
-                "title": document.comment_on['title']
+                "title": comment_on_doc['title']
             }
-            if document.comment_on['agency'] == out['agency']['id'] or not document.comment_on['agency']:
+            if comment_on_doc['agency'] == out['agency']['id'] or not comment_on_doc['agency']:
                 out['comment_on']['agency'] = out['agency']
             else:
                 out['comment_on']['agency'] = {
-                    'id': document.comment_on['agency'],
-                    'url': reverse('agency-view', kwargs={'agency': document.comment_on['agency']}),
-                    'name': Agency.objects(id=document.comment_on['agency']).only("name")[0].name
+                    'id': comment_on_doc['agency'],
+                    'url': reverse('agency-view', kwargs={'agency': comment_on_doc['agency']}),
+                    'name': Agency.objects(id=comment_on_doc['agency']).only("name")[0].name
                 }
         else:
             out['comment_on'] = {}
@@ -365,8 +368,8 @@ class DocumentView(APIView):
                 ('Date Posted', dp('Date_Posted')),
                 (None, dp('Date')), # Swallow this one, since it's always the same as Date_Posted,
                 ('Comment Period', combine(
-                    short_date(dp('Comment_Start_Date')),
-                    short_date(dp('Comment_Due_Date')),
+                    short_date(force_date(dp('Comment_Start_Date'))),
+                    short_date(force_date(dp('Comment_Due_Date'))),
                     sep="&ndash;"
                 )),
 
@@ -419,9 +422,10 @@ class EntityView(APIView):
         stats = entity.stats
         if stats:
             # cleanup, plus stitch on some additional data
+            now = datetime.datetime.now().date()
             for mention_type in ["text_mentions", "submitter_mentions"]:
                 stats[mention_type].update({
-                    'months': prettify_months(stats[mention_type]['months']) if stats[mention_type]['months'] else [],
+                    'months': [month for month in prettify_months(stats[mention_type]['months']) if month['date_range'][0] <= now] if stats[mention_type]['months'] else [],
                 })
 
                 # limit ourselves to the top ten of each match type, and grab their extra metadata
@@ -463,7 +467,7 @@ class EntityView(APIView):
                     docket.update({
                         'title': rdocket.title,
                         'url': reverse('docket-view', kwargs={'docket_id': rdocket.id}),
-                        'year': rdocket.year if rdocket.year else (rdocket.stats['date_range'][0].year if 'date_range' in rdocket.stats else None),
+                        'year': rdocket.year if rdocket.year else (getattr(rdocket.stats['date_range'][0], 'year', None) if 'date_range' in rdocket.stats else None),
                         'rulemaking': rdocket.details.get('Type', 'Nonrulemaking').lower() == 'rulemaking',
                         'agency': rdocket.agency if rdocket.agency else re.split("[-_]", rdocket.id)[0]
                     })
