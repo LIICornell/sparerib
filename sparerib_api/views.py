@@ -213,7 +213,13 @@ class AgencyView(AggregatedView):
         agency = self.item.id
 
         for label, order in [('recent_dockets', '-stats.date_range.0'), ('popular_dockets', '-stats.count')]:
-            dockets = Docket.objects(agency=agency).order_by(order).only('title', 'stats.date_range', 'stats.type_breakdown', 'stats.count').limit(5)
+            docket_query = {'agency': agency}
+
+            # for SEC and CFTC, ignore Regulations.gov dockets here because they're often broken
+            if agency in ('SEC', 'CFTC'):
+                docket_query['source'] = 'sec_cftc'
+
+            dockets = Docket.objects(**docket_query).order_by(order).only('title', 'stats.date_range', 'stats.type_breakdown', 'stats.count').limit(5)
             out[label] = [{
                 'date_range': [docket.stats['date_range'][0], min(datetime.datetime.now(), docket.stats['date_range'][1])],
                 'count': docket.stats['count'],
