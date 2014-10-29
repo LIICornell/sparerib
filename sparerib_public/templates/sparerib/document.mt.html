@@ -36,9 +36,14 @@
             </div>
         </div>
         <% }); %>
+
+        <% if (upstream_urls.length) { %>
         <div class="sidebar-item last">
-            <a href="http://www.regulations.gov/#!documentDetail;D=<%=id%>" class="next">View on Regulations.gov &raquo;</a>
+            <% _.each(upstream_urls, function(upstream) { %>
+            <a href="<%=upstream.url%>">View this docket on <%=upstream.label%> &raquo;</a><br />
+            <% }); %>
         </div>
+        <% } %>
     </div>
 
     <div class="main-column">
@@ -71,11 +76,11 @@
                         <p>Showing text extracted from the
                         <select>
                         <% var i = 0; _.each(attachment.views, function(view) { %>
-                            <option value="<%=i%>"><%=view.file_type%></div>
+                            <option value="<%=i%>"><%=view.file_type_label%></div>
                         <% i++ }); %>
                         </select>
                         version of the document</p>
-                        <a href="#">Download from regulations.gov &raquo;</a>
+                        <a href="#">Download source document &raquo;</a>
                     </div>
                 </div>
             </div>

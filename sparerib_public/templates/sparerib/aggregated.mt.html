@@ -172,9 +172,13 @@
                 <% }); %>
             </ul>
         </div>
+        <% } %>
 
+        <% if (type === "docket" && upstream_urls.length) { %>
         <div class="sidebar-item last">
-            <a href="http://www.regulations.gov/#!docketDetail;D=<%=id%>">View this docket on Regulations.gov &raquo;</a>
+            <% _.each(upstream_urls, function(upstream) { %>
+            <a href="<%=upstream.url%>">View this docket on <%=upstream.label%> &raquo;</a><br />
+            <% }); %>
         </div>
         <% } %>
     </div>

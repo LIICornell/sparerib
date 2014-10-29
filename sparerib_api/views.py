@@ -110,9 +110,29 @@ class DocketView(AggregatedView):
     def get(self, request, *args, **kwargs):
         out = super(DocketView, self).get(request, *args, **kwargs).data
 
+        out['source'] = self.item.source
         stats = out['stats']
         stats['similar_dockets'] = []
         summaries = []
+
+        out['upstream_urls'] = []
+        if out['source'] == 'regulations.gov':
+            out['upstream_urls'].append({
+                'url': 'http://www.regulations.gov/#!docketDetail;D=' + self.item.id,
+                'label': 'Regulations.gov'
+            })
+        elif out['source'] == 'sec_cftc':
+            if 'Source_URL' in self.item.details:
+                out['upstream_urls'].append({
+                    'url': self.item.details['Source_URL'],
+                    'label': 'SEC.gov' if self.item.agency == 'SEC' else 'CFTC.gov'
+                })
+            for replaced in self.item.suppression.get('replaces', []):
+                out['upstream_urls'].append({
+                    'url': 'http://www.regulations.gov/#!docketDetail;D=' + replaced,
+                    'label': 'Regulations.gov'
+                })
+
 
         if stats['count'] > 0:
             # do a similar thing with FR documents
@@ -198,6 +218,7 @@ class AgencyView(AggregatedView):
 
         return Response(out)
 
+TYPE_LABELS = {'doc': 'Word', 'docx': 'Word', 'pdf': 'PDF', 'xpdf': 'XPDF', 'html': 'HTML', 'xml': 'HTML', 'frxml': 'XML', 'crtext': 'HTML', 'msw8': 'Word', 'msw12': 'Word', 'msw6': 'Word', 'msw': 'Word', 'txt': 'Text', 'rtf': 'RTF', 'wp8': 'Word Perfect'}
 class DocumentView(APIView):
     "Regulations.gov document view"
 
@@ -280,6 +301,7 @@ class DocumentView(APIView):
             out['views'].append({
                 'object_id': object_id,
                 'file_type': view.type,
+                'file_type_label': TYPE_LABELS.get(view.type, view.type.upper()),
                 'extracted': view.extracted == 'yes',
                 'url': view.url,
                 'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'view'}) if view.extracted == 'yes' else None
@@ -297,6 +319,7 @@ class DocumentView(APIView):
                 a['views'].append({
                     'object_id': attachment.object_id,
                     'file_type': view.type,
+                    'file_type_label': TYPE_LABELS.get(view.type, view.type.upper()),
                     'extracted': view.extracted == 'yes',
                     'url': view.url,
                     'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'object_id': attachment.object_id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'attachment'}) if view.extracted == 'yes' else None
@@ -358,6 +381,21 @@ class DocumentView(APIView):
         stats['recent_comments'] = recent_comments
 
         out['comment_stats'] = stats
+
+        # links upstream
+        out['source'] = document.source
+        out['upstream_urls'] = []
+        if out['source'] == 'regulations.gov':
+            out['upstream_urls'].append({
+                'url': 'http://www.regulations.gov/#!documentDetail;D=' + document.id,
+                'label': 'Regulations.gov'
+            })
+        elif out['source'] == 'sec_cftc':
+            for replaced in document.suppression.get('replaces', []):
+                out['upstream_urls'].append({
+                    'url': 'http://www.regulations.gov/#!documentDetail;D=' + replaced,
+                    'label': 'Regulations.gov'
+                })
 
         # cleaned-up details
         details = out['details'].copy()
