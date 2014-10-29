@@ -6,7 +6,7 @@
         </ol>
         <% } %>
         <span class="dates">
-            <%=formatDate(stats.date_range[0])%> &mdash; <%=formatDate(stats.date_range[1])%>
+            <%=formatDate(stats.date_range[0])%> &mdash; <%=restrictedFormatDate(stats.date_range[1])%>
         </span>
         <h2><%=(typeof title === "undefined" ? name : title)%></h2>
     </div>

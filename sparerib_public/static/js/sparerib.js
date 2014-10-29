@@ -73,6 +73,12 @@ var helpers = {
         var date = new Date(iso_date);
         return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
     },
+    'restrictedFormatDate': function(iso_date) {
+        var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        var date = new Date(iso_date);
+        date = new Date(Math.min(date, new Date()));
+        return (months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear());
+    },
     'shortFormatDate': function(iso_date) {
         if (iso_date) {
             var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
