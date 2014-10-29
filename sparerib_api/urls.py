@@ -1,14 +1,17 @@
 from django.conf.urls import patterns, url
+from django.views.decorators.cache import cache_page
 from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView
 
 from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, EntitySearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
 from clustering import DocketHierarchyView, SingleClusterView, DocumentClusterView, DocumentClusterChainView, HierarchyTeaserView
 
+HOUR_CACHE = cache_page(3600)
+
 urlpatterns = patterns('',
     # resource pages
-    url(r'^agency/(?P<agency>[A-Z-]+$)', AgencyView.as_view(), name='agency-view'),
-    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+$)', DocketView.as_view(), name='docket-view'),
+    url(r'^agency/(?P<agency>[A-Z-]+$)', HOUR_CACHE(AgencyView.as_view()), name='agency-view'),
+    url(r'^docket/(?P<docket_id>[A-Z0-9_-]+$)', HOUR_CACHE(DocketView.as_view()), name='docket-view'),
     url(r'^document/(?P<document_id>[A-Z0-9_-]+$)', DocumentView.as_view(), name='document-view'),
     url(r'^(?P<type>organization|individual|politician|entity)/(?P<entity_id>[a-f0-9-]+$)', EntityView.as_view(), name='entity-view'),
     # brisket-specific entity endpoints
