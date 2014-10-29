@@ -148,7 +148,13 @@ class DocketView(AggregatedView):
                             'date_range': fr_doc.stats['date_range'],
                             'count': fr_doc.stats['count']
                         } if fr_doc.stats else {'count': 0}
-                        doc['summary'] = fr_doc.get_summary()
+                        
+                        if fr_doc.annotations.get('fr_data', None):
+                            doc['summary'] = fr_doc.annotations['fr_data'].get('abstract', None)
+
+                        if not doc.get('summary', None):
+                            doc['summary'] = fr_doc.get_summary()
+
                         doc['comments_open'] = 'Comment_Due_Date' in fr_doc.details and force_date(fr_doc.details['Comment_Due_Date']) > datetime.datetime.now()
 
                         if doc['summary']:
