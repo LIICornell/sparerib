@@ -468,8 +468,8 @@ class DocketSearchResults(ESSearchResults):
                 agg_data = agg_map[match['_id']]
                 match['fields'].update({
                     'docket_id': agg_map[match['_id']]['_id'],
-                    'date_range': agg_data['stats']['date_range'],
-                    'count': agg_data['stats']['count']
+                    'date_range': agg_data['stats'].get('date_range', []),
+                    'count': agg_data['stats'].get('count', 0)
                 })
                 if 'year' in agg_data:
                     match['fields']['year'] = agg_data['year']
