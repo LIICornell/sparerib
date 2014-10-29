@@ -522,6 +522,12 @@ var AggregatedDetailView = Backbone.View.extend({
                 'success': $.proxy(function() {
                     var jsonModel = this.model.toJSON();
 
+                    // if we're to redirect to a different page, do that and short-circuit the rest of the drawing
+                    if (jsonModel.redirect_to) {
+                        app.navigate(jsonModel.redirect_to.replace("/api/1.0", ""), {trigger: true, replace: true});
+                        return;
+                    }
+
                     var context = _.extend({'submission_count': jsonModel.stats.type_breakdown.public_submission}, helpers, jsonModel);
                     $(this.el).css('display', 'none').html(this.template(context));
 
@@ -631,6 +637,12 @@ var DocumentDetailView = Backbone.View.extend({
             {
                 'success': $.proxy(function() {
                     var context = _.extend({}, helpers, this.model.toJSON());
+
+                    // if we're to redirect to a different page, do that and short-circuit the rest of the drawing
+                    if (context.redirect_to) {
+                        app.navigate(context.redirect_to.replace("/api/1.0", ""), {trigger: true, replace: true});
+                        return;
+                    }
 
                     // tweak attachments a bit
                     context['full_attachments'] = [{'title': 'Main Text', 'attachment': false, 'views': context['views']}].concat(_.map(context['attachments'], function(attachment) {

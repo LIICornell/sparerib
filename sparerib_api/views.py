@@ -50,6 +50,11 @@ class AggregatedView(APIView):
         if rulemaking_field:
             out['rulemaking'] = rulemaking_field.lower() == 'rulemaking'
 
+        if 'replaced_by' in getattr(item, 'suppression', {}):
+            new_kwargs = dict(kwargs)
+            new_kwargs[self.aggregation_field] = item.suppression['replaced_by'][0]
+            out['redirect_to'] = reverse('%s-view' % self.aggregation_level, kwargs=new_kwargs)
+
         stats = item.stats
         if stats:
             # cleanup, plus stitch on some additional data
@@ -93,7 +98,7 @@ class AggregatedView(APIView):
 
             out['stats'] = stats
         else:
-            out['stats'] = {'count': 0}
+            out['stats'] = {'count': 0, 'type_breakdown': dict([(doc_type, 0) for doc_type in Doc.type.choices])}
 
         return Response(out)
 
@@ -221,6 +226,12 @@ class DocumentView(APIView):
             'attachments': [],
             'details': document.details if document.details else {}
         }
+
+        # inter-dataset suppression
+        if 'replaced_by' in document.suppression:
+            new_kwargs = dict(kwargs)
+            new_kwargs['document_id'] = document.suppression['replaced_by'][0]
+            out['redirect_to'] = reverse('document-view', kwargs=new_kwargs)
 
         # comment-on metadata
         if document.comment_on:
