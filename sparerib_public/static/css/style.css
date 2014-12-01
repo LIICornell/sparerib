@@ -178,7 +178,7 @@ header {
 
 }
 
-.header-highlight {
+.header-content {
   position: absolute;
   width: 960px;
   left: 50%;
@@ -186,17 +186,14 @@ header {
   height: 172px;
   top: 0px;
   background: url('../img/bg/header_highlight.png') no-repeat top left;
-}
-
-.header-content {
-  position: relative;
+  position: absolute;
   clear: both;
 }
 
 header h1 {
-    float:left;
+  float:left;
   padding-left: 50px;
-  padding-top: 50px;
+  padding-top: 95px;
   margin: 0;
   padding-right:100px;
 }
@@ -211,7 +208,7 @@ height: 61px;
 
 header ul#top-menu {
   list-style: none;
-  padding: 0;
+  padding: 50px 0 0 0;
   margin: 0;
   width: 150px;
   float:right;
@@ -245,7 +242,7 @@ header ul#top-menu li a:hover {
 header div.social {
   position: absolute;
   left: 665px;
-  top: 7px;
+  top: 57px;
 }
 header div.social div.socialite {
   display: inline-block;
@@ -255,7 +252,7 @@ header div.social .facebook-like {
   display: block;
   margin-right: 6px;
   position: relative;
-  top: -2px;
+  top: -4px;
 }
 header div.social .twitter-share {
   width: 85px;
@@ -953,7 +950,7 @@ table tr.even {
   width: 321px;
   float: right;
   margin-top:0;
-  padding-top:22px;
+  padding-top:17px;
   padding-right:30px;
 }
 #top-search h2, #top-search .result-set {
