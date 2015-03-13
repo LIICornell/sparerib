@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from django.views.decorators.cache import cache_page
-from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, NotFoundView
+from views import AgencyView, DocketView, DocumentView, EntityView, EntityDocketView, EntitySummaryView, RawTextView, FileProxyView, NotFoundView
 
 from search import DocumentSearchResultsView, FRSearchResultsView, NonFRSearchResultsView, DocketSearchResultsView, EntitySearchResultsView, AgencySearchResultsView, DefaultSearchResultsView
 
@@ -27,9 +27,10 @@ urlpatterns = patterns('',
     url(r'^search/entity/(?P<query>.*$)', EntitySearchResultsView.as_view(), name='search-entity-view'),
     url(r'^search/(?P<query>.*$)', DefaultSearchResultsView.as_view(), name='search-default-view'),
 
-    # raw text
+    # raw text and documents
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'view'}),
     url(r'^document/(?P<document_id>[A-Z0-9_-]+)/attachment_(?P<object_id>[A-Z0-9a-z]+)/view_(?P<file_type>[0-9a-z]+)\.(?P<output_format>[0-9a-z]+)$', RawTextView.as_view(), name='raw-text-view', kwargs={'view_type': 'attachment'}),
+    url(r'^document/(?P<document_id>[A-Z0-9_-]+)/file_proxy/(?P<object_id>[A-Z0-9a-z]+)\.(?P<file_type>[0-9a-z]+)$', FileProxyView.as_view(), name='file-proxy-view'),
 
     # clusters
     url(r'^docket/(?P<docket_id>[A-Z0-9_-]+)/hierarchy$', DocketHierarchyView.as_view(), name='docket-hierarchy'),

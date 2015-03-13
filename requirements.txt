@@ -17,3 +17,6 @@ pyparsing
 python-memcached
 python-dateutil
 -e git+https://github.com/sunlightlabs/django-locksmith.git@client-keys#egg=locksmith
+
+python-magic
+django-sendfile

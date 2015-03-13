@@ -23,7 +23,10 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 import pyes
 
-import re, datetime, calendar, urllib, itertools, struct, uuid
+from sendfile import sendfile
+import magic, mimetypes
+
+import re, datetime, calendar, urllib, itertools, struct, uuid, os
 
 class AggregatedView(APIView):
     "Regulations.gov docket view"
@@ -663,6 +666,32 @@ class RawTextView(View):
             return HttpResponse(view.as_text(), content_type='text/plain')
         else:
             return HttpResponse(view.as_html(), content_type='text/html')
+
+class FileProxyView(View):
+    def get(self, request, document_id, file_type, object_id):
+        docs = list(Doc.objects(id=document_id))
+        if not docs:
+            raise Http404("Document not found")
+        doc = docs[0]
+        
+        # figure out which view it is
+        all_views = itertools.chain.from_iterable([doc.views, itertools.chain.from_iterable([attachment.views for attachment in doc.attachments])])
+        matches = [view for view in all_views if view.type == file_type and view.object_id == object_id]
+        if not matches:
+            raise Http404("File record not found")
+        match = matches[0]
+        
+        if not match.downloaded or not match.file_path or not os.path.exists(match.file_path):
+            raise Http404("File not found")
+        
+        # we're good to go; gather some info about the file
+        mimetype = magic.from_file(match.file_path, mime=True)
+        extension = mimetypes.guess_extension(mimetype)
+        if not extension:
+            extension = ".%s" % match.type
+        
+        return sendfile(request, match.file_path, attachment=True, attachment_filename="%s%s" % (match.object_id, extension), mimetype=mimetype)
+        
 
 class NotFoundView(APIView):
     def get(self, request):

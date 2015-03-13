@@ -69,6 +69,8 @@ INSTALLED_APPS = (
     'locksmith.client_keys'
 )
 
+SENDFILE_BACKEND = 'sendfile.backends.simple'
+
 # hacks to make everything work in pypy
 try:
     import psycopg2
@@ -81,3 +83,4 @@ try:
     from local_settings import *
 except:
     pass
+
