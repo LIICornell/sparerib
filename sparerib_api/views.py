@@ -306,8 +306,9 @@ class DocumentView(APIView):
 
         text_entities = set()
         submitter_entities = set(document.submitter_entities if document.submitter_entities else [])
-
-        for view in document.views:
+        
+        # a weird thing happens with iterating over mongoengine lists where they lose references to their parent instances, so do this weird generator thing
+        for view in (document.views[i] for i in xrange(len(document.views))):
             # hack to deal with documents whose scrapes failed but still got extracted
             object_id = document.object_id if document.object_id else view.file_path.split('/')[-1].split('.')[0]
             out['views'].append({
@@ -315,25 +316,25 @@ class DocumentView(APIView):
                 'file_type': view.type,
                 'file_type_label': TYPE_LABELS.get(view.type, view.type.upper()),
                 'extracted': view.extracted == 'yes',
-                'url': view.url,
+                'url': view.download_url,
                 'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'view'}) if view.extracted == 'yes' else None
             })
 
             for entity in view.entities:
                 text_entities.add(entity)
 
-        for attachment in document.attachments:
+        for attachment in (document.attachments[i] for i in xrange(len(document.attachments))):
             a = {
                 'title': attachment.title,
                 'views': []
             }
-            for view in attachment.views:
+            for view in (attachment.views[i] for i in xrange(len(attachment.views))):
                 a['views'].append({
                     'object_id': attachment.object_id,
                     'file_type': view.type,
                     'file_type_label': TYPE_LABELS.get(view.type, view.type.upper()),
                     'extracted': view.extracted == 'yes',
-                    'url': view.url,
+                    'url': view.download_url,
                     'html': reverse('raw-text-view', kwargs={'document_id': document.id, 'object_id': attachment.object_id, 'file_type': view.type, 'output_format': 'html', 'view_type': 'attachment'}) if view.extracted == 'yes' else None
                 })
 
