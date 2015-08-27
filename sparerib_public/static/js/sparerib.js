@@ -44,7 +44,7 @@ var DocketClusters = Backbone.Model.extend({
                 })
             })
         }
-        
+
         return computed;
     },
 
@@ -135,7 +135,7 @@ var expandWeeks = function(weeks) {
     var current = null;
     for (var i = 0; i < weeks.length - 1; i++) {
         out.push(weeks[i]);
-        
+
         current = new Date(weeks[i]['date_range'][1]);
         current.setDate(current.getDate() + 1);
 
@@ -166,7 +166,7 @@ var expandMonths = function(months) {
     var current = null;
     for (var i = 0; i < months.length - 1; i++) {
         out.push(months[i]);
-        
+
         current = new Date(months[i]['date_range'][1]);
         current.setDate(current.getDate() + 1);
 
@@ -311,7 +311,7 @@ var SearchView = Backbone.View.extend({
         if (this.$el.find('select.date-type').length) {
             this.$el.find("input[type=text]").pikaday();
         }
-        
+
         return this;
     },
 
@@ -445,7 +445,7 @@ var ResultsView = Backbone.View.extend({
                         // populate the search input if necessary, but only use responses from docket, document-fr, or document-non-fr, since they support all the filters in the 'all' type
                         if (!searchPopulated && (this.options.depth != "shallow" || _.contains(['docket', 'document', 'document-fr', 'document-non-fr'], model.get('level')))) {
                             var filterSet = this.options.depth == "shallow" ? "all" : model.get('level');
-                            
+
                             // show the filters we're supposed to, and hide the others
                             $searchFilters.filter('.search-filter-magic,.search-filter-editable').removeClass('search-filter-magic').removeClass('search-filter-visible').filter(":visible").addClass("previously-visible");
                             _.each(['editable', 'magic'], function(filterClass) {
@@ -593,7 +593,7 @@ var AggregatedDetailView = Backbone.View.extend({
                 }
             }
         );
-        
+
         if (this.model instanceof Docket && !window.SIMPLE_JS) {
             this.teaserModel = new ClusterDocketTeaser({id: this.model.id});
             var teaserFetch = this.teaserModel.fetch();
@@ -619,7 +619,7 @@ var AggregatedDetailView = Backbone.View.extend({
                 })
             }, this));
         }
-        
+
         setMeta({'pageTitle': this.model instanceof Docket ? 'Docket: ' + this.model.id : 'Agency: ' + this.model.id});
         return this;
     }
@@ -815,7 +815,7 @@ var EntityDetailView = Backbone.View.extend({
 var ClusterView = Backbone.View.extend({
     tagName: 'div',
     id: 'cluster-view',
-    
+
     events: {
         'selectcluster .cluster-map': 'handleSwitchCluster',
         'hovercluster': 'showPhrases',
@@ -833,7 +833,7 @@ var ClusterView = Backbone.View.extend({
         setMeta({'pageTitle': 'Comment Similarity for ' + this.model.id, 'pageDesc': 'Visualize federal rulemaking comments with Docket Wrench.', 'twDesc': 'Visualize federal rulemaking comments with Docket Wrench #dataviz' });
         return this;
     },
-        
+
     renderMap: function() {
         this.$el.find('.cluster-map').html("").addClass('loading');
         this.$el.find('.cluster-breakdown').html("");
@@ -881,7 +881,7 @@ var ClusterView = Backbone.View.extend({
         return this;
     },
 
-    renderSummary: function(stats) {        
+    renderSummary: function(stats) {
         var percentage = Math.round(100 * stats.clustered / (stats.clustered + stats.unclustered));
 
         var pie = SpareribCharts.cluster_piechart(this.$el.find(".cluster-breakdown").get(0), [{"type": "unclustered", "percentage": 100 - percentage}, {"type": "clustered", "percentage": percentage}]);
@@ -912,7 +912,7 @@ var ClusterView = Backbone.View.extend({
             var $div = $("<div>").html(text).css({'position': 'absolute', 'left': (coords[0] + 150) + 'px', 'bottom': (250 - coords[1]), 'width': '265px', 'font-size': '80%'});
             $container.append($div);
         });
-        
+
         SpareribCharts.brace(pie, 445, 230, pie.selectAll('.slice-clustered')[0][0].getBoundingClientRect().width, "up");
         SpareribCharts.brace(pie, 445, 240, 885, "down");
         pie.append("line").attr("x1", 445).attr("x2", 445).attr("y1", 230).attr("y2", 240).style("stroke", "#cbc5b9").style("stroke-width", "1px");
@@ -923,7 +923,7 @@ var ClusterView = Backbone.View.extend({
     },
 
     renderDoclistGraphics: function() {
-        
+
         var svg = d3.select(this.el).selectAll('.cluster-docs').insert("svg", ".cluster-doc");
         svg
             .style('width', '75px')
@@ -984,7 +984,7 @@ var ClusterView = Backbone.View.extend({
         }
 
         this.clusterModel = new Cluster({'cutoff': cutoff, 'docket_id': this.model.id, 'id': clusterId});
-        
+
         var list = $(this.el).find('.cluster-doc-list');
         list.html("").addClass('loading');
 
@@ -1023,7 +1023,7 @@ var ClusterView = Backbone.View.extend({
                 console.log('failed');
             }
         });
-        
+
         if (typeof inChain !== "undefined" && inChain) {
             // the new cluster that's been selected appears to be in the same chain as the current cluster, so we can preemptively reload the current document
             this.switchDoc(this.clusterModel.id, docArea.attr('data-document-id'), true);
@@ -1078,10 +1078,10 @@ var ClusterView = Backbone.View.extend({
         } else {
             docArea.html("").addClass("loading");
         }
-        
+
 
         docArea.attr('data-cluster-id', targetCid);
-        
+
         var oldDocId = docArea.attr('data-document-id');
         docArea.attr('data-document-id', docId);
 
@@ -1122,7 +1122,7 @@ var ClusterView = Backbone.View.extend({
                 console.log('failed');
             }
         });
-        
+
         if (docId != oldDocId) {
             this.chainModel = new ClusterChain({'docket_id': this.model.id, 'id': docId});
             this.chainModel.fetch({
@@ -1155,14 +1155,14 @@ var setMeta = function(meta) {
     var head = $('head');
     head.find('title').html(m.title);
 
-    if (_.contains(["Home", "About", "Search"], m.pageTitle)) {
+    if (_.contains(["Home", "About", "Search", "Deprecation"], m.pageTitle)) {
         head.find('meta[name=og\\:title]').attr('content', m.pageDesc);
         head.find('meta[name=og\\:description]').attr('content', m.altDesc);
     } else {
         head.find('meta[name=og\\:title]').attr('content', m.title);
         head.find('meta[name=og\\:description]').attr('content', m.pageDesc);
     }
-    
+
 
     meta_fragment = Backbone.history.getFragment();
     head.find('meta[name=og\\:url]').attr('content', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
@@ -1178,7 +1178,7 @@ var setMeta = function(meta) {
         var fbLink = $('<a class="socialite facebook-like" href="http://facebook.com/sharer/sharer.php?" data-layout="button_count">Facebook</a>');
         fbLink.attr('data-url', 'http://docketwrench.sunlightfoundation.com/' + meta_fragment);
         fbLink.attr('data-text', m.pageDesc);
-        
+
         social.html('');
         social.append(fbLink);
         social.append(twLink);
@@ -1187,7 +1187,7 @@ var setMeta = function(meta) {
     }
 }
 // Router
-var AppRouter = Backbone.Router.extend({   
+var AppRouter = Backbone.Router.extend({
     initialize: function() {
         // routes
 
@@ -1196,7 +1196,7 @@ var AppRouter = Backbone.Router.extend({
         this.route("docket/:id", "docketDetail");
         this.route("agency/:id", "agencyDetail");
         this.route(/^(organization|individual|politician|entity)\/([a-zA-Z0-9-]*)\/([a-z0-9-]*)$/, "entityDetail");
-        
+
         // search
         this.route("search/:term/:page", "defaultSearchResults");
         this.route("search/:term", "defaultSearchResults");
@@ -1211,6 +1211,7 @@ var AppRouter = Backbone.Router.extend({
         // static stuff
         this.route("", "home");
         this.route("about", "about");
+        this.route("deprecation", "deprecation");
         this.route("404", "notFound");
 
         // load the upper search box at the beginning
@@ -1253,7 +1254,7 @@ var AppRouter = Backbone.Router.extend({
             sv.intertag();
         })
     },
- 
+
     documentDetail: function(id) {
         var doc = new Document({'id': id});
         var view = new DocumentDetailView({model: doc});
@@ -1296,6 +1297,11 @@ var AppRouter = Backbone.Router.extend({
         $('#main').html(view.render().el);
     },
 
+    deprecation: function() {
+        var view = new StaticView({id: 'deprecation'});
+        $('#main').html(view.render().el);
+    },
+
     notFound: function() {
         var view = new StaticView({id: '404'});
         $('#main').html(view.render().el);
@@ -1307,7 +1313,7 @@ window.app = app;
 window.SIMPLE_JS = false;
 
 app.bind("all", function(route, router) {
-    var url;  
+    var url;
     url = Backbone.history.getFragment();
 
     if (url != meta_fragment) {

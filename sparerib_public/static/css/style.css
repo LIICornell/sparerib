@@ -1696,3 +1696,44 @@ a[href=\#] {
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
 }
+
+/*
+ * Pulse animation
+*/
+
+@-webkit-keyframes pulse {
+    0% { background-color: #ff982e; }
+    50% { background-color: #ffad5c; }
+    100% { background-color: #ff982e; }
+}
+@keyframes pulse {
+    0% { background-color: #ff982e; }
+    50% { background-color: #ffad5c; }
+    100% { background-color: #ff982e; }
+}
+
+.deprecation-notice {
+    position: relative;
+    top: -2px;
+    border-top: 1px solid #eb7500;
+    border-bottom: 1px solid #eb7500;
+    background-color: #ff982e;
+
+    -webkit-animation-name: pulse;
+    animation-name: pulse;
+    -webkit-animation-duration: 3s;
+    animation-duration: 3s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+    -webkit-animation-timing-function: ease-in-out;
+    animation-timing-function: ease-in-out;
+    -webkit-animation-iteration-count: infinite;
+    animation-iteration-count: infinite;
+}
+.deprecation-notice p {
+    display: block;
+    width: 890px;
+    margin: 0 auto;
+    padding: 10px 0;
+    text-align: center;
+}
